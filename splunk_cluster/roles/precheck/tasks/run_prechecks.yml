@@ -1,0 +1,11 @@
+---
+
+#- include_tasks: "{{ playbook_dir }}/roles/common/tasks/os_install_packages.yml"
+
+#- include_tasks: "{{ playbook_dir }}/roles/common/tasks/precheck_ssh.yml"
+
+#- include_tasks: "{{ playbook_dir }}/roles/common/tasks/precheck_splunk_ports.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/precheck_servers.yml"
+
+

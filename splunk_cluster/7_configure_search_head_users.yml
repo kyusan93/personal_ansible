@@ -1,0 +1,6 @@
+
+# Search Head users
+- name: Search head users
+  hosts: search_head,deployer
+  roles:
+    - { role: configure_search_head_users, tags: configure_search_head_users }

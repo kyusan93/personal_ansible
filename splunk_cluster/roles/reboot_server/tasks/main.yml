@@ -1,0 +1,158 @@
+
+- name: Put splunk into maintenance mode
+  shell:
+    cmd: "/opt/splunk/bin/splunk enable maintenance-mode -auth {{splunk_id}}:{{splunk_password}} --answer-yes"
+  register: splunk_maintenance
+  become: yes
+  become_user: splunk
+  when: splunk_server_type == 'master'
+  
+- name: Stop splunk
+  shell:
+    #cmd: /opt/splunk/bin/splunk stop
+    cmd: systemctl stop Splunkd 
+  register: splunk_stop
+  become: yes
+  #become_user: splunk
+  when: splunk_server_type == 'master' or splunk_server_type == 'search_head' or splunk_server_type == 'console'or splunk_server_type == 'heavy_forwarder'
+
+- name: Bring splunk indexer offline
+  shell:
+    cmd: "/opt/splunk/bin/splunk offline -auth {{splunk_id}}:{{splunk_password}} --answer-yes --no-prompt"
+  register: splunk_stop
+  become: yes
+  become_user: splunk
+  when: splunk_server_type == 'indexer'
+
+- name: Get last line of slunkd.log
+  shell: |
+    tail -1 {{splunk_log_path}}
+  register: last_line
+  become: yes
+  when: splunk_server_type == 'indexer'
+
+- name: Print last line in the splunkd.log
+  ansible.builtin.debug:
+    msg: "Last line: {{last_line.stdout}}"
+  when: splunk_server_type == 'indexer'
+
+  
+- name: Wait until splunk is stopped
+  shell:
+    cmd: /opt/splunk/bin/splunk status
+  register: splunk_status
+  failed_when: splunk_status.stderr != ''
+  become: yes
+  become_user: splunk
+  until: "{{'splunkd is not running.' in splunk_status.stdout}}"
+  retries: "{{(splunk_stop_timeout_int | int /15)|int}}"
+  delay: 15
+
+- name: Fail if splunk is still running
+  assert:
+    that:
+      - "{{'splunkd is not running.' in splunk_status.stdout}}"
+    fail_msg: "splunkd is still running afer stop command was sent"
+
+- name: Update stop_splunk_services status
+  set_fact:
+    stop_splunk_services: "Completed"
+
+- name: Reboot server
+  reboot:
+    post_reboot_delay: 20
+  become: yes
+  become_user: root
+  when: not (bypass_reboot|default(false))
+
+# This gives the command a chance to throw an error
+- name: Check splunk status
+  shell:
+    cmd: /opt/splunk/bin/splunk status
+  register: splunk_post_reboot_status
+  become: yes
+  become_user: splunk
+  failed_when: splunk_post_reboot_status.stderr != ''
+
+# Error will not be thrown until time out is reached
+- name: Check splunk status
+  shell:
+    cmd: /opt/splunk/bin/splunk status
+  register: splunk_post_reboot_status
+  become: yes
+  become_user: splunk
+  failed_when: splunk_post_reboot_status.stderr != ''
+  until: "{{'splunkd is running' in splunk_post_reboot_status.stdout}}"
+  retries: "{{(splunk_start_up_timeout/splunk_start_up_delay) | int}}"
+  delay: "{{splunk_start_up_delay | int}}"
+
+- name: Fail if splunk is not running
+  assert:
+    that:
+      - "{{'splunkd is running' in splunk_post_reboot_status.stdout}}"
+    fail_msg: "splunkd is not running afer reboot"
+
+
+- name: Updated post_patch_health_check status
+  set_fact:
+    post_patch_health_check: "Passed"
+
+- name: Take out of maintenance mode
+  shell:
+    cmd: "/opt/splunk/bin/splunk disable maintenance-mode -auth {{splunk_id}}:{{splunk_password}} --answer-yes"
+  register: splunk_maintenance
+  become: yes
+  become_user: splunk
+  when: splunk_server_type == 'master'
+
+- name: Check the log file for indexers
+  block:
+
+  - name: Get first line of splunkd.log
+    shell: |
+      head -1 {{splunk_log_path}}
+    become: yes
+    register: firstline
+
+  - name: Get the timestamp 
+    ansible.builtin.set_fact: 
+      lastlinetimestamp: "{{last_line.stdout | string | regex_search(timestamp_regex_text) | string }}"
+      firstlinetimestamp: "{{firstline.stdout | string | regex_search(timestamp_regex_text) | string}}"
+      search_regex: "{{ last_line.stdout|regex_escape()}}((.|\\n)*){{needle|regex_escape()}}"
+
+  - name: Check is log file rotated
+    ansible.builtin.set_fact:
+      is_log_file_rotated: "{{ ((lastlinetimestamp | to_datetime(datetime_format_text)) - (firstlinetimestamp | to_datetime(datetime_format_text))).total_seconds() < 0 }}"
+
+  - name: Get search regex value when log file is rotated
+    ansible.builtin.set_fact:
+      search_regex: "{{needle|regex_escape()}}"
+    when: is_log_file_rotated
+
+  - name: Print last line in the splunkd.log
+    ansible.builtin.debug:
+      msg: "Search regex: {{search_regex}}, Log file rotated: {{is_log_file_rotated}}"
+
+  - name: "Check for initClustering (peer): Ready, proceeding with indexing' in splunk logs"
+    wait_for:
+      path: "{{splunk_log_path}}"
+      search_regex: "{{search_regex}}"
+      delay: 5
+      msg: "Timed out waiting for 'initClustering (peer): Ready, proceeding with indexing' to appear in the splunkd.log."
+      timeout: "{{indexer_ready_check_timeout | int}}"
+    become: yes
+  when: splunk_server_type == 'indexer'
+
+# - name: "Check for initClustering (peer): Ready, proceeding with indexing' in splunk logs"
+#   wait_for:
+#     path: "{{splunk_log_path}}"
+#     search_regex: "{{last_line.stdout|regex_escape()}}((.|\\n)*){{needle|regex_escape()}}"
+#     delay: 5
+#     msg: "Timed out waiting for 'initClustering (peer): Ready, proceeding with indexing' to appear in the splunkd.log."
+#     timeout: "{{indexer_ready_check_timeout | int}}"
+#   become: yes
+#   when: splunk_server_type == 'indexer'
+
+- name: Updated reboot_server status
+  set_fact:
+    reboot_server: "Completed"

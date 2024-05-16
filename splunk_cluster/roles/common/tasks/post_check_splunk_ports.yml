@@ -1,0 +1,62 @@
+---
+  
+- name: "Check for splunk service - Search Head to Indexers"
+  become: true
+  shell: curl --noproxy "*" -k https://{{ item.0 }}:{{ item.1.dst_port }}
+  with_nested:
+    - "{{ groups['indexer'] }}"
+    - "{{ base.ports.searchHead_indexer }}"    
+  when: "'search_head' in group_names"
+  ignore_errors: true
+    
+- name: "Check for splunk service - Indexers to Indexers"
+  become: true
+  shell: curl {{ item.0 }}:{{ item.1.dst_port }}
+  with_nested:
+    - "{{ groups['indexer'] }}"
+    - "{{ base.ports.indexer_indexer }}"    
+  when: "'indexer' in group_names"
+  ignore_errors: true
+
+- name: "Check for splunk service - Indexers to Master Node"
+  become: true
+  shell: curl --noproxy "*" -k https://{{ item.0 }}:{{ item.1.dst_port }}
+  with_nested:
+    - "{{ groups['cluster_master'] }}"
+    - "{{ base.ports.indexer_masterNode }}"    
+  when: "'indexer' in group_names"
+  ignore_errors: true
+  
+- name: "Check for splunk service - All to Indexer"
+  become: true
+  shell: curl -v --silent http://{{ item.0 }}:{{ item.1.dst_port }} --stderr - | grep Accept
+  with_nested:
+    - "{{ groups['indexer'] }}"
+    - "{{ base.ports.all_indexer }}"
+  ignore_errors: true
+
+- name: "Check for splunk service - Search Head to Search Head"
+  become: true
+  shell: curl http://{{ item.0 }}:{{ item.1.dst_port }}
+  with_nested:
+    - "{{ groups['search_head'] }}"
+    - "{{ base.ports.searchHead_searchHead }}"    
+  when: "'search_head' in group_names"
+  ignore_errors: true
+
+- name: "Check for splunk service - Search Head to Deployer"
+  become: true
+  shell: curl --noproxy "*" -k https://{{ item.0 }}:{{ item.1.dst_port }}
+  with_nested:
+    - "{{ groups['deployer'] }}"
+    - "{{ base.ports.searchHead_deployer }}"    
+  when: "'search_head' in group_names"
+  ignore_errors: true
+
+- name: "Check for splunk service - All to license master"
+  become: true
+  shell: curl --noproxy "*" -k https://{{ item.0 }}:{{ item.1.dst_port }}
+  with_nested:
+    - "{{ groups['license_master'] }}"
+    - "{{ base.ports.all_licenseMaster }}"    
+  ignore_errors: true     

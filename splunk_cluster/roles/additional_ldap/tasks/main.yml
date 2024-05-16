@@ -1,0 +1,4 @@
+---
+
+- name: Configure ldap
+  import_tasks: configure_ldap.yml

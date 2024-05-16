@@ -1,0 +1,66 @@
+---
+
+- name: Check inputs.conf exists
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  stat:
+    path: "{{ splunk.home }}/etc/system/local/inputs.conf"
+  register: system_local_inputs_exists_result
+
+- name: Retrieve current sslPassword
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  shell: "cat {{ system_local_inputs_exists_result.stat.path }} | grep sslPassword | cut -d'=' -f2 | awk '$1=$1'"
+  failed_when: inputs_sslPassword.rc > 1
+  when: system_local_inputs_exists_result.stat.exists
+  register: inputs_sslPassword
+
+- name: Get decrypted sslPassword Splunk hash
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  command: "{{ splunk.home }}/bin/splunk show-decrypted --value '{{ inputs_sslPassword.stdout }}'"
+  register: current_sslPassword_unhash
+  when: system_local_inputs_exists_result.stat.exists and inputs_sslPassword.stdout != ''
+
+- name: Set sslPassword
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    current_sslPassword: "{% if(system_local_inputs_exists_result.stat.exists and inputs_sslPassword.stdout != '') %}{{ current_sslPassword_unhash.stdout }}{% else %}'INVALID_SSLPASSWORD'{% endif %}"
+
+- name: Remove splunktcp input
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
+    section: "splunktcp://{{ splunk.ports.indexer_receiving if splunk.ports.indexer_receiving is defined else '9997' }}"
+    option: "disabled"
+    value: "1"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+  register: splunktcp_disabled
+  
+- name: Configure SSL inputs
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
+    section: "{{ item.section }}"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+  with_items:
+    - {section: "splunktcp-ssl:{{ splunk.ports.indexer_receiving }}", key: "disabled", value: "0"}
+    - {section: "SSL", key: "requireClientCert", value: "{{ splunk.ssl.requireClientCert }}"}
+    - {section: "SSL", key: "serverCert", value: "$SPLUNK_HOME/etc/auth/{{ base.company_name }}/{{ host_suffix }}_app_cert.pem"}
+    - {section: "SSL", key: "sslVersions", value: "tls1.2"}
+    - {section: "SSL", key: "cipherSuite", value: "{{ splunk.ssl.cipherSuite }}"}
+    - {section: "SSL", key: "ecdhCurves", value: "{{ splunk.ssl.ecdhCurves }}"}
+
+#    - {section: "SSL", key: "sslPassword", value: "{{ splunk.ssl.sslPassword }}"}
+    - {section: "SSL", key: "sslPassword", value: "{% if(current_sslPassword == splunk.ssl.sslPassword) %}{{ inputs_sslPassword.stdout }}{% else %}{{ splunk.ssl.sslPassword }}{% endif %}"}
+  register: splunktcp_ssl_configured
+  
+
+

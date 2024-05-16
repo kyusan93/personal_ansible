@@ -1,0 +1,40 @@
+---
+
+- name: Check /etc/init.d/splunk exists
+  become: true
+  stat:
+    path: /etc/init.d/splunk
+  register: initd_exist
+
+- name: Check /etc/systemd/system/Splunkd.service exists
+  become: true
+  stat:
+    path: /etc/systemd/system/Splunkd.service
+  register: systemd_exist
+  
+- name: Enable Splunk to run at boot time - systemd
+  become: true
+  command: "{{ splunk.home }}/bin/splunk enable boot-start -systemd-managed 1 -user {{ splunk.nix.user}}"
+  when: 
+    - splunk.systemd == 'true'
+    - not systemd_exist.stat.exists
+
+- name: Enable Splunk to run at boot time - initd
+  become: true
+  command: "{{ splunk.home }}/bin/splunk enable boot-start -systemd-managed 0 -user {{ splunk.nix.user}}"
+  when: 
+    - splunk.systemd == 'false'
+    - not initd_exist.stat.exists
+
+- name: Update initd conf
+  become: true
+  template:
+    src: "{{ playbook_dir }}/roles/common/templates/initd.j2"
+    dest: "/etc/init.d/splunk"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: '0700'
+  when: 
+    - splunk.systemd == 'false'
+    - not initd_exist.stat.exists
+

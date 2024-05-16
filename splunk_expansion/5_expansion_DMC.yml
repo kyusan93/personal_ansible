@@ -1,0 +1,9 @@
+---
+
+#Configure search head configuration
+- name: Setup Distributed Monitoring Console
+  hosts: "{{ servers | default('monitoring_console') }}"
+  order: sorted
+  max_fail_percentage: 0
+  roles:
+    - { role: monitoring_console, tags: monitoring_console }

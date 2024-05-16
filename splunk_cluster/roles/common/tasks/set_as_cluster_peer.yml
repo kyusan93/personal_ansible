@@ -1,0 +1,6 @@
+---
+
+- name: Configure cluster peer
+  command: "{{ splunk.home }}/bin/splunk edit cluster-config -mode {{ cluster_mode_type }} -master_uri https://{{ splunk.cluster.master_url }}:{{ splunk.ports.mgmt }} -site 'site'{{ host_site | default('1') }} -replication_port {{ splunk.ports.cluster_replication }} -secret {{ splunk.pass4SymmKey }} -auth {{ splunk.admin.username }}:{{ splunk.admin.password }}"
+  become: true
+  become_user: "{{ splunk.nix.user }}"

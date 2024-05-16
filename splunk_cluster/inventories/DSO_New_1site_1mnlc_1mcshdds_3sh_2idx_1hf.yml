@@ -1,0 +1,75 @@
+---
+all:
+ children:
+  search_head:
+    hosts:
+      #site 1 searchhead
+      192.168.56.211:
+        host_suffix: "dso-sh111"
+        host_site: '1'
+      192.168.56.212:
+        host_suffix: "dso-sh112"
+        host_site: '1'
+      192.168.56.213:
+        host_suffix: "dso-sh113"
+        host_site: '1'
+
+  indexer:
+    hosts:
+      #site 1 indexer
+      192.168.56.221:
+        host_suffix: "dso-idx111"
+        host_site: '1'
+        host_guid: '9780359C-6072-41BB-AF66-18554A87C8BA'
+      192.168.56.222:
+        host_suffix: "dso-idx112"
+        host_site: '1'
+        host_guid: '79D1DD4E-F2BE-4878-8E82-3E32FD5F9B4F'
+
+  license_master:
+    hosts:
+      192.168.56.201:
+        host_suffix: "dso-mgmt111"
+        host_site: '1'
+
+  monitoring_console:
+    hosts:
+      192.168.56.202:
+        host_suffix: "dso-mgmt112"
+        host_site: '1'
+
+  cluster_master:
+    hosts:
+      192.168.56.201:
+        host_suffix: "dso-mgmt111"
+        host_site: '1'
+        available_sites:
+          - 'site1'
+
+  deployment_server:
+    hosts:
+      192.168.56.202:
+        host_suffix: "dso-mgmt112"
+        host_site: '1'
+
+  deployer:
+    hosts:
+      192.168.56.202:
+        host_suffix: "dso-mgmt112"
+        host_site: '1'
+        
+  heavy_forwarder:
+    hosts:
+      192.168.56.231:
+        host_suffix: "dso-hf111"
+        host_site: '1'
+
+  universal_forwarder:
+    hosts:
+
+  universal_forwarder_windows:
+    hosts:
+
+  rsyslog:
+    hosts:
+      192.168.56.231:

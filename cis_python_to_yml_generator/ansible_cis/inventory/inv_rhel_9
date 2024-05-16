@@ -1,0 +1,8 @@
+---
+
+
+all:
+  children:
+    rhel_9:
+      hosts:
+        127.0.0.1:

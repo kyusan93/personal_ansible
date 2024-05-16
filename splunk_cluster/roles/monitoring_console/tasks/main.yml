@@ -1,0 +1,4 @@
+---
+
+- name: Configure configure monitoring console
+  import_tasks: configure_monitoring_console.yml

@@ -1,0 +1,73 @@
+---
+all:
+ children:
+  search_head:
+    hosts:
+      #site 1 searchhead
+      152.9.72.21:
+        host_suffix: "hz-sh01"
+        host_site: '1'
+      152.9.72.22:
+        host_suffix: "hz-sh02"
+        host_site: '1'
+      152.9.72.23:
+        host_suffix: "hz-sh03"
+        host_site: '1'
+
+  indexer:
+    hosts:
+      #site 1 indexer
+      152.9.72.24:
+        host_suffix: "hz-m-in01"
+        host_site: '1'
+      152.9.72.25:
+        host_suffix: "hz-m-in02"
+        host_site: '1'
+      152.9.72.26:
+        host_suffix: "hz-m-in03"
+        host_site: '1'
+
+  license_master:
+    hosts:
+      152.9.72.42:
+        host_suffix: "hz-m-man01"
+        host_site: '1'
+
+  monitoring_console:
+    hosts:
+      152.9.72.43:
+        host_suffix: "hz-m-man02"
+        host_site: '1'
+
+  cluster_master:
+    hosts:
+      152.9.72.42:
+        host_suffix: "hz-m-man01"
+        host_site: '1'
+        available_sites:
+          - 'site1'
+
+  deployment_server:
+    hosts:
+      152.9.72.43:
+        host_suffix: "hz-m-man02"
+        host_site: '1'
+
+  deployer:
+    hosts:
+      152.9.72.43:
+        host_suffix: "hz-m-man02"
+        host_site: '1'
+
+  heavy_forwarder:
+    hosts:
+      152.9.72.20:
+        host_suffix: "hz-m-hf01"
+        host_site: '1'
+
+  universal_forwarder:
+    hosts:
+
+  universal_forwarder_windows:
+    hosts:
+

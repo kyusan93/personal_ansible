@@ -1,0 +1,7 @@
+---
+
+- name: Uninstall Splunk
+  hosts: all
+  roles:
+    - { role: "uninstall_splunk", tags: "uninstall_splunk" }
+

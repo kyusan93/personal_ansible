@@ -1,0 +1,43 @@
+---
+
+# Step 1: Put generated p7bs in monitoring console, /etc/auth/company/CSR/p7b/
+# Step 2: using a loop, find all p7b files, convert p7b to pem
+
+- name: Check if certificate folder exists
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  stat:
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/CSR/p7b"
+  register: p7b_files_exist
+
+- name: Find p7b files in directory
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  find:
+    paths: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/CSR/p7b"
+    patterns: '*.p7b'
+  register: p7b  
+
+- name: Convert p7b to pem
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  shell: "openssl pkcs7 -in {{item.path}} -inform DER -print_certs -out {{item.path}}.pem"
+  ignore_errors: true
+  with_items: "{{ p7b.files }}"
+  when: "'monitoring_console' in group_names"
+
+- name: Find pem files in directory
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  find:
+    paths: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/CSR/p7b"
+    patterns: '*.pem'
+  register: pem
+
+- name: Regex replace file name of pem file
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  shell: "cd {{ splunk.home }}/etc/auth/{{ base.company_name }}/CSR/p7b; rename .soe.sgnet.gov.sg.p7b.pem .pem *.soe.sgnet.gov.sg.p7b.pem;"
+  when: "'monitoring_console' in group_names"
+
+

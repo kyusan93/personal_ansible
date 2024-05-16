@@ -1,0 +1,43 @@
+---
+
+- name: Check for license file exists
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  stat:
+    path: "{{ splunk.home }}/etc/licenses/enterprise/enterprise.lic"
+  register: license_exist
+
+- name: Creates /etc/licenses/enterprise/ directory
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  file:
+    path: "{{ splunk.home }}/etc/licenses/enterprise/"
+    state: directory
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: 0700
+    recurse: yes
+  when: not license_exist.stat.exists
+
+- name: Copy license to license master
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  copy: 
+    src: "{{ playbook_dir }}/roles/common/files/license.lic"
+    dest: "{{ splunk.home }}/etc/licenses/enterprise/enterprise.lic"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: 0644
+  when: not license_exist.stat.exists
+  
+- name: Check if license installed
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  shell: "echo $({{ splunk.home }}/bin/splunk list licenses -auth {{ splunk.admin.username }}:{{ splunk.admin.password }} | grep group_id:Trial)"
+  register: license_installed
+
+- name: Install license
+  command: "{{ splunk.home }}/bin/splunk add licenses {{ splunk.home }}/etc/licenses/enterprise/enterprise.lic -auth {{ splunk.admin.username }}:{{ splunk.admin.password }}"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  when: license_installed.stdout != ""

@@ -1,0 +1,8 @@
+---
+
+# Setup Universal Forwarder For Windows
+- name: Setup Universal Forwarder for Windows
+  hosts: "{{ servers | default('universal_forwarder_windows') }}"
+  order: sorted
+  roles:
+    - { role: universal_forwarder_windows, tags: universal_forwarder_windows }

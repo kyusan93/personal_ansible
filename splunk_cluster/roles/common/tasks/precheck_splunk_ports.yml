@@ -1,0 +1,327 @@
+---
+
+- name: Copy nc rpm
+  copy:
+    src: "{{ playbook_dir }}/roles/common/files/installer/nmap-ncat-7.70-5.el8.x86_64.rpm"
+    dest: /tmp/nmap-ncat-7.70-5.el8.x86_64.rpm
+    mode: 0644
+    owner: "{{ splunk.nix.svc_account }}"
+    group: "{{ splunk.nix.svc_account }}"
+  become: true
+
+- name: Install nc rpm
+  become: true
+  yum:
+     name: /tmp/nmap-ncat-7.70-5.el8.x86_64.rpm
+     state: present
+     disable_gpg_check: true
+
+- name: Gather facts on listening ports
+  become: true
+  listen_ports_facts:
+
+- name: Run nc listen to Splunk ports for cluster_master
+  become: true
+  shell: "{% if(item.dst_port not in ansible_facts.tcp_listen  | map(attribute='port') | sort | list) %}nohup bash -c 'while true; do nc -l -p {{item.dst_port}}; done' 2>&1 & echo $!{% else %}echo '{{ ansible_host }} is already listening to {{ item.dst_port }}'{% endif %}"
+  with_items: "{{base.ports.cluster_master}}"
+  register: create_listening_ports
+  until: create_listening_ports is not failed
+  retries: 5
+  async : 5
+  poll: 2
+  when:
+    - groups['cluster_master'] is defined
+    - groups['cluster_master'] | length
+    - inventory_hostname in groups['cluster_master']
+    - item.checkrequired
+
+- name: Gather facts on listening ports
+  become: true
+  listen_ports_facts:
+
+- name: Run nc listen to Splunk ports for monitoring_console
+  become: true
+  shell: "{% if(item.dst_port not in ansible_facts.tcp_listen  | map(attribute='port') | sort | list) %}nohup bash -c 'while true; do nc -l -p {{item.dst_port}}; done' 2>&1 & echo $!{% else %}echo '{{ ansible_host }} is already listening to {{ item.dst_port }}'{% endif %}"
+  with_items: "{{base.ports.monitoring_console}}"
+  register: create_listening_ports
+  until: create_listening_ports is not failed
+  retries: 5
+  async : 5
+  poll: 2  
+  when:
+    - groups['monitoring_console'] is defined
+    - groups['monitoring_console'] | length
+    - inventory_hostname in groups['monitoring_console']
+    - item.checkrequired
+
+- name: Gather facts on listening ports
+  become: true
+  listen_ports_facts:
+
+- name: Run nc listen to Splunk ports for deployer
+  become: true
+  shell: "{% if(item.dst_port not in ansible_facts.tcp_listen  | map(attribute='port') | sort | list) %}nohup bash -c 'while true; do nc -l -p {{item.dst_port}}; done' 2>&1 & echo $!{% else %}echo '{{ ansible_host }} is already listening to {{ item.dst_port }}'{% endif %}"
+  with_items: "{{ base.ports.deployer }}"
+  register: create_listening_ports
+  until: create_listening_ports is not failed
+  retries: 5
+  async : 5
+  poll: 2
+  when:
+    - groups['deployer'] is defined
+    - groups['deployer'] | length
+    - inventory_hostname in groups['deployer']
+    - item.checkrequired
+
+- name: Gather facts on listening ports
+  become: true
+  listen_ports_facts:
+
+- name: Run nc listen to Splunk ports for license_master
+  become: true
+  shell: "{% if(item.dst_port not in ansible_facts.tcp_listen  | map(attribute='port') | sort | list) %}nohup bash -c 'while true; do nc -l -p {{item.dst_port}}; done' 2>&1 & echo $!{% else %}echo '{{ ansible_host }} is already listening to {{ item.dst_port }}'{% endif %}"
+  with_items: "{{base.ports.license_master}}"
+  register: create_listening_ports
+  until: create_listening_ports is not failed
+  retries: 5
+  async : 5
+  poll: 2
+  when:
+    - groups['license_master'] is defined
+    - groups['license_master'] | length
+    - inventory_hostname in groups['license_master']
+    - item.checkrequired
+
+- name: Gather facts on listening ports
+  become: true
+  listen_ports_facts:
+
+- name: Run nc listen to Splunk ports for deployment_server
+  become: true
+  shell: "{% if(item.dst_port not in ansible_facts.tcp_listen  | map(attribute='port') | sort | list) %}nohup bash -c 'while true; do nc -l -p {{item.dst_port}}; done' 2>&1 & echo $!{% else %}echo '{{ ansible_host }} is already listening to {{ item.dst_port }}'{% endif %}"
+  with_items: "{{base.ports.deployment_server}}"
+  register: create_listening_ports
+  until: create_listening_ports is not failed
+  retries: 5
+  async : 5
+  poll: 2
+  when:
+    - groups['deployment_server'] is defined
+    - groups['deployment_server'] | length
+    - inventory_hostname in groups['deployment_server']
+    - item.checkrequired
+
+- name: Gather facts on listening ports
+  become: true
+  listen_ports_facts:
+
+- name: Run nc listen to Splunk ports for search_head
+  become: true
+  shell: "{% if(item.dst_port not in ansible_facts.tcp_listen  | map(attribute='port') | sort | list) %}nohup bash -c 'while true; do nc -l -p {{item.dst_port}}; done' 2>&1 & echo $!{% else %}echo '{{ ansible_host }} is already listening to {{ item.dst_port }}'{% endif %}"
+  with_items: "{{base.ports.search_head}}"
+  register: create_listening_ports
+  until: create_listening_ports is not failed
+  retries: 5
+  async : 5
+  poll: 2
+  when:
+    - groups['search_head'] is defined
+    - groups['search_head'] | length
+    - inventory_hostname in groups['search_head']
+    - item.checkrequired
+
+- name: Gather facts on listening ports
+  become: true
+  listen_ports_facts:
+
+- name: Run nc listen to Splunk ports for indexer
+  become: true
+  shell: "{% if(item.dst_port not in ansible_facts.tcp_listen  | map(attribute='port') | sort | list) %}nohup bash -c 'while true; do nc -l -p {{item.dst_port}}; done' 2>&1 & echo $!{% else %}echo '{{ ansible_host }} is already listening to {{ item.dst_port }}'{% endif %}"
+  with_items: "{{base.ports.indexer}}"
+  register: create_listening_ports
+  until: create_listening_ports is not failed
+  retries: 5
+  async : 5
+  poll: 2
+  when:
+    - groups['indexer'] is defined
+    - groups['indexer'] | length
+    - inventory_hostname in groups['indexer']
+    - item.checkrequired
+
+- name: Gather facts on listening ports
+  become: true
+  listen_ports_facts:
+
+- name: Run nc listen to Splunk ports for heavy_forwarder
+  become: true
+  shell: "{% if(item.dst_port not in ansible_facts.tcp_listen  | map(attribute='port') | sort | list) %}nohup bash -c 'while true; do nc -l -p {{item.dst_port}}; done' 2>&1 & echo $!{% else %}echo '{{ ansible_host }} is already listening to {{ item.dst_port }}'{% endif %}"
+  with_items: "{{base.ports.heavy_forwarder}}"
+  register: create_listening_ports
+  until: create_listening_ports is not failed
+  retries: 5
+  async : 5
+  poll: 2
+  when:
+    - groups['heavy_forwarder'] is defined
+    - groups['heavy_forwarder'] | length
+    - inventory_hostname in groups['heavy_forwarder']
+    - item.checkrequired
+
+- name: Test service port via curl for cluster_master
+  become: true
+  wait_for:
+    host: "{{inventory_hostname}}"
+    port: "{{item.dst_port}}"
+    timeout: 5
+  ignore_errors: yes
+  with_items:
+    - "{{base.ports.cluster_master}}"
+  when:
+    - groups['cluster_master'] is defined
+    - groups['cluster_master'] | length
+    - inventory_hostname in groups['cluster_master']
+    - item.checkrequired
+  register: test_port_results_cluster_master
+
+- name: Test service port via curl for monitoring_console
+  become: true
+  wait_for:
+    host: "{{inventory_hostname}}"
+    port: "{{item.dst_port}}"
+    timeout: 5
+  ignore_errors: yes
+  with_items:
+    - "{{base.ports.monitoring_console}}"
+  when:
+    - groups['deployer'] is defined
+    - groups['deployer'] | length
+    - inventory_hostname in groups['monitoring_console']
+    - item.checkrequired
+  register: test_port_results_monitoring_console
+
+- name: Test service port via curl for deployer
+  become: true
+  wait_for:
+    host: "{{inventory_hostname}}"
+    port: "{{item.dst_port}}"
+    timeout: 5
+  ignore_errors: yes
+  with_items:
+    - "{{base.ports.deployer}}"
+  when:
+    - groups['deployer'] is defined
+    - groups['deployer'] | length
+    - inventory_hostname in groups['deployer']
+    - item.checkrequired
+  register: test_port_results_deployer
+
+- name: Test service port via curl for license_master
+  become: true
+  wait_for:
+    host: "{{inventory_hostname}}"
+    port: "{{item.dst_port}}"
+    timeout: 5
+  ignore_errors: yes
+  with_items:
+    - "{{base.ports.license_master}}"
+  when:
+    - groups['license_master'] is defined
+    - groups['license_master'] | length
+    - inventory_hostname in groups['license_master']
+    - item.checkrequired
+  register: test_port_results_license_master
+
+- name: Test service port via curl for deployment_server
+  become: true
+  wait_for:
+    host: "{{inventory_hostname}}"
+    port: "{{item.dst_port}}"
+    timeout: 5
+  ignore_errors: yes
+  with_items:
+    - "{{base.ports.deployment_server}}"
+  when:
+    - groups['deployment_server'] is defined
+    - groups['deployment_server'] | length
+    - inventory_hostname in groups['deployment_server']
+    - item.checkrequired
+  register: test_port_results_deployment_server
+
+- name: Test service port via curl for search_head
+  become: true
+  wait_for:
+    host: "{{inventory_hostname}}"
+    port: "{{item.dst_port}}"
+    timeout: 5
+  ignore_errors: yes
+  with_items:
+    - "{{base.ports.search_head}}"
+  when:
+    - groups['search_head'] is defined
+    - groups['search_head'] | length
+    - inventory_hostname in groups['search_head']
+    - item.checkrequired
+  register: test_port_results_search_head
+
+- name: Test service port via curl for indexer
+  become: true
+  wait_for:
+    host: "{{inventory_hostname}}"
+    port: "{{item.dst_port}}"
+    timeout: 5
+  ignore_errors: yes
+  with_items:
+    - "{{base.ports.indexer}}"
+  when:
+    - groups['indexer'] is defined
+    - groups['indexer'] | length
+    - inventory_hostname in groups['indexer']
+    - item.checkrequired
+  register: test_port_results_indexer
+
+- name: Test service port via curl for heavy_forwarder
+  become: true
+  wait_for:
+    host: "{{inventory_hostname}}"
+    port: "{{item.dst_port}}"
+    timeout: 5
+  ignore_errors: yes
+  with_items:
+    - "{{base.ports.heavy_forwarder}}"
+  when:
+    - groups['heavy_forwarder'] is defined
+    - groups['heavy_forwarder'] | length
+    - inventory_hostname in groups['heavy_forwarder']
+    - item.checkrequired
+  register: test_port_results_heavy_forwarder
+
+- name: Kill nc process
+  become: true
+  shell: "pkill nc && pkill bash"
+  register: shell_exists
+  failed_when: shell_exists.rc != 1 and shell_exists.rc != 0
+
+- name: Uninstall nc rpm
+  become: true
+  yum:
+     name: nmap-ncat*
+     state: absent
+
+- name: Remove file
+  become: true
+  file:
+     path: /tmp/nmap-ncat-7.70-5.el8.x86_64.rpm
+     state: absent
+
+- fail: msg="The execution has failed because of errors."
+  when: item is match("Timeout.*")
+  with_items:
+    - "{{test_port_results_cluster_master | json_query('results[*].msg') | list}}"
+    - "{{test_port_results_deployer | json_query('results[*].msg') | list}}"
+    - "{{test_port_results_search_head | json_query('results[*].msg') | list}}"
+    - "{{test_port_results_indexer | json_query('results[*].msg') | list}}"
+    - "{{test_port_results_heavy_forwarder | json_query('results[*].msg') | list}}"
+    - "{{test_port_results_license_master | json_query('results[*].msg') | list}}"
+    - "{{test_port_results_deployment_server | json_query('results[*].msg') | list}}"
+    - "{{test_port_results_monitoring_console | json_query('results[*].msg') | list}}"

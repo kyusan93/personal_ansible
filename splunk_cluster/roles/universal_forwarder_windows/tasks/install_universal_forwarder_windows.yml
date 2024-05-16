@@ -1,0 +1,5 @@
+---
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/install_universal_forwarder_windows.yml"
+
+#- include_tasks: "{{ playbook_dir }}/roles/common/tasks/ping.yml"

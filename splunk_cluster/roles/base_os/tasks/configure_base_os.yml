@@ -1,0 +1,12 @@
+---
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/os_set_hostname.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/os_configure_etc_hosts.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/os_disable_firewalld.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/os_install_packages.yml"
+ 
+#- include_tasks: "{{ playbook_dir }}/roles/common/tasks/os_configure_chrony_ntp.yml"
+   

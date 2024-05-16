@@ -1,0 +1,55 @@
+item, check, issue, recommendation, priority
+1.01, "Asset Ratio", "Asset count is lower than expected for an organisation of this size", "Review asset lookup data for completeness", medium
+1.02, "Assets Observed", "Lower observed asset count than expected for an organisation of this size", "Review whether assets are configured to send data into Splunk", medium
+1.03, "Identity Ratio", "Identity count is lower than expected for an organisation of this size", "Review identity lookup data for completeness", medium
+1.04, "Identities Observed", "Lower observed identity count than expected for an organisation of this size", "Review whether authentication data is complete", medium
+1.05, "Asset Priority Missing", "Assets identified without priority defined", "Review asset priority assignment method.", medium
+1.06, "High Percentage with Critical Asset Priority", "High percentage of critical assets", "Review asset priority assignment method, checking accuracy of assets tagged as critical priority.", low
+1.07, "High Percentage with High Asset Priority", "High percentage of high priority assets", "Review asset priority assignment method, checking accuracy of assets tagged as high priority.", low
+1.08, "Identity Priority Missing", "Identities without priority defined", "Review methods used to classify identity priority.", medium
+1.09, "High Percentage with Critical Identity Priority", "High percentage of critical priority identities", "Review identities priority assignment method, checking accuracy of assets tagged as critical priority.", low
+1.10, "High Percentage with High Identity Priority", "High percentage of high priority identities", "Review identities priority assignment method, checking accuracy of assets tagged as high priority.", low
+1.11, "Highly Privileged Identities", "High percentage of privileged identities", "Review the number of privileged identities.", medium
+1.12, "Static Asset/Identities", "Asset/Identity may be static, this will lead to stale contextual data.", "Identify methods to automate population of asset and identity data.", medium
+1.13, "Dynamic Updates Scheduled", "Dynamic updates aren't scheduled", "Enable scheduled population of asset and identity data.", medium 
+2.01, "No Enabled Correlation Searches", "There are currently no correlation searches enabled", "Review and implement correlation searches", high
+2.02, "Enabled Correlation Search Count", "Low number of correlation searches enabled", "Do we have sufficient covereage of detection content? Review correlation searches with a view to identifying additional content", medium
+2.03, "Cron Schedule Issue", "Potential scheduling issue.", "Adjust schedule offsets to ensure scheduling load is evenly distributed.", medium
+2.04, "Runtime Issue", "Runtime sometimes exceeds timerange chosen", "Review correlation search content for efficiency improvements.", high
+2.05, "Memory Issue", "Search consuming >20% of memory.", "Review correlation search content for memory efficiency improvements.", medium
+2.06, "CPU Issue", "Search consuming >20% of cpu.", "Review correlation search content for CPU efficiency improvements.", medium
+2.07, "Skip Issue", "Skipping or Deferring more than 5% or searches.", "Review infrastructure capacity (concurrency limits), search scheduling and search performance.", high
+2.08, "Realtime search configured", "Realtime searches are resource hungry, evaluate requirement", "Review the requirement for real time search. In most cases, the only time real time is required is where there is an active, automated resonse to an alert firing. i.e. disabling a user account.", medium
+2.09, "Expensive commands used", "Expensive commands used.", "Review use of expensive commands.  Commands like 'transaction' can often be replaced with a 'stats' equivalent which will be more performant.", low
+2.10, "Commands with known limitations used", "Commmands such as join and append are in use.", "Review use of commands like 'join' and 'append'.  Limitations of these commands can have unintended but hidden consequences. i.e. autofinalised or maximum results returned.", low
+2.11, "Notable Events", "No notable events fired", "Review if the scheduler is working, content is enabled and whether sufficient data is being sent to Splunk.  NOTE: this could also be indicative of a highly tuned system.", high
+2.12, "Risk Based Alerting", "Risk Based Alerting is not in use", "Opportunity to implement higher fidelity alerting with RBA.", low
+2.13, "Use Data Model Acceleration", "Correlation search is using a data model that isnt accelerated", "Review data model acceleration configuration.  Performance can be improved if using accelerated data models", medium
+2.14, "Unused accelerated data model", "Acceleration may not be required", "Data model acceleration is enabled, but is not used by any correlation search.  Review the need for acceleration to be enabled for the given data model", low
+3.01, "Investigations Use", "Investigations do not appear to be used", "Review operations processes.  Investigative activities may be carried out in an external system.", low
+3.02, "Incident Review Use", "Incident review does not appear to be used", "Review operations processes.  We should expect to see some level of activity in Incident Review, however it is possible incidents are reviewed in an external system.", medium
+3.03, "Notable Suppression Use", "Notable suppressions do not appear to be used", "Review methods used to tune correlation rules.  Notable suppressions are one method.  NOTE: A lack of notable suppressions does not mean that correlation searches are not being tuned.", low 
+4.01, "Threat Intel Download", "Threat Intelligence download error observed", "Review Threat Intel download configuration.", medium
+4.02, "Threat Intel Integrations", "Threat Intelligence Framework does not appear to be used", "Review whether the Threat Intelligence Framework is in use.  NOTE: It is possible an external threat intelligence platform is in use", medium
+5.01, "Data imbalance", "Potential data imbalance present. This may have search performance implications", "Review infrastructure configuration for 'funneling' effects, commonly caused when using a low number of Heavy Forwarders, or where Forwarders don't have a complete list of indexers", medium
+5.02, "Ingestion Lag", "Data appears to be arriving late. This may impact detection content", "Review data ingestion methods, and if lag is expected ensure detection content takes that into account.  NOTE: Some of those highlighted may be batch/bulk ingestion", medium
+5.03, "Timestamp Issue", "Timestamp issues have been observed, they can impact the accuracy of detection content", "Review data ingestion configuration.", medium
+5.04, "Acceleration Enabled", "Acceleration is disabled.", "Review if the datamodel is in use, if so, enable acceleration to improve performance.", low
+5.05, "Acceleration Size", "Acceleration size is small.", "Review whether the data model has sufficient data.", low
+5.06, "Acceleration Lag", "Acceleration/Data ingestion may be lagging.", "Review whether data associated with a data model is arriving in a timely manner.", medium
+5.07, "CIM Macros", "CIM Macros have not been defined.", "Review and configure cim macros for each data model to improve data model performance.", low
+5.08, "Acceleration Completion", "Acceleration is enabled but not complete.", "Review acceleration processes.  There may be delays in completing acceleration due to data ingestion lag, or because acceleration searches are skipping.", medium
+5.09, "Datamodel Error", "Datamodel error recorded.", "Review the applicable error.", medium
+5.10, "Authentication Datamodel Data", "Authentication datamodel data inconsistencies.", "Review data model inconsistencies.", medium
+5.11, "Change Datamodel Data", "Change datamodel data inconsistencies.", "Review data model inconsistencies.", medium
+5.12, "Email Datamodel Data", "Email datamodel data inconsistencies.", "Review data model inconsistencies.", medium
+5.13, "IDS Datamodel Data", "IDS datamodel data inconsistencies.", "Review data model inconsistencies.", medium
+5.14, "Malware Datamodel Data", "Malware datamodel data inconsistencies.", "Review data model inconsistencies.", medium
+5.15, "Network Resolution Datamodel Data", "Network Resolution datamodel data inconsistencies.", "Review data model inconsistencies.", medium
+5.16, "Network Session Datamodel Data", "Network Session datamodel data inconsistencies.", "Review data model inconsistencies.", medium
+5.17, "Network Traffic Datamodel Data", "Network Traffic datamodel data inconsistencies.", "Review data model inconsistencies.", medium
+5.18, "Updates Datamodel Data", "Update datamodel data inconsistencies.", "Review data model inconsistencies.", medium
+5.19, "Vulnerability Datamodel Data", "Vulnerability datamodel data inconsistencies.", "Review data model inconsistencies.", medium
+5.20, "Web Datamodel Data", "Web datamodel data inconsistencies.", "Review data model inconsistencies.", medium
+5.21, "Data Truncation Issue", "Data source appears to be truncating", "Review sourcetype configuration TRUNCATE value.  Truncation may result in data integrity issues", medium
+5.22, "Possible data exclusion from Data models", "Datamodel missing data", "Review CIM indexes macro for appropriateness", medium

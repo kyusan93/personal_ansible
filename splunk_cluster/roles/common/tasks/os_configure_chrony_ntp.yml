@@ -1,0 +1,13 @@
+---
+
+# Configure NTP
+- name: Configure NTP
+  lineinfile:
+    path: "/etc/chrony.conf"
+    line: "Server 192.168.56.40"
+    
+- name: Restart Chronyd to update ntp
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: chronyd

@@ -1,0 +1,113 @@
+---
+
+- name: Pre-requisite check for certificates
+  hosts: localhost
+  tasks:
+    - name: set variable
+      set_fact:
+        home_path: "{{ playbook_dir }}"
+        
+    # - name: Pre-requisite check for web key for indexer in ansible controller
+      # become: true
+      # stat:
+        # path: "{{home_path}}/roles/common/files/ssl/{{ hostvars[item].host_suffix }}_web_key.pem"
+      # register: idx_web_key
+      # with_items: 
+        # - "{{ groups['expansion_indexer'] }}"
+      # when: 
+        # - "'expansion_indexer' in groups" 
+      # failed_when: not idx_web_key.stat.exists
+
+    - name: Pre-requisite check for web key for search head in ansible controller
+      become: true
+      stat:
+        path: "{{home_path}}/roles/common/files/ssl/{{ hostvars[item].host_suffix }}_web_key.pem"
+      register: sh_web_key
+      with_items: 
+        - "{{ groups['expansion_search_head'] }}"
+      when: 
+        - "'expansion_search_head' in groups" 
+      failed_when: not sh_web_key.stat.exists
+  
+    # - name: Pre-requisite check for web cert for indexer in ansible controller
+      # become: true
+      # stat:
+        # path: "{{home_path}}/roles/common/files/ssl/{{ hostvars[item].host_suffix }}_web_cert.pem"
+      # register: idx_web_cert
+      # with_items: 
+        # - "{{ groups['expansion_indexer'] }}"
+      # when: 
+        # - "'expansion_indexer' in groups" 
+      # failed_when: not idx_web_cert.stat.exists
+        
+    - name: Pre-requisite check for web cert for search head in ansible controller
+      become: true
+      stat:
+        path: "{{home_path}}/roles/common/files/ssl/{{ hostvars[item].host_suffix }}_web_cert.pem"
+      register: sh_web_cert
+      with_items: 
+        - "{{ groups['expansion_search_head'] }}"
+      when: 
+        - "'expansion_search_head' in groups" 
+      failed_when: not sh_web_cert.stat.exists
+        
+    - name: Pre-requisite check for app cert for indexer in ansible controller
+      become: true
+      stat:
+        path: "{{home_path}}/roles/common/files/ssl/{{ hostvars[item].host_suffix }}_app_cert.pem"
+      register: idx_app_cert
+      with_items: 
+        - "{{ groups['expansion_indexer'] }}"
+      when: 
+        - "'expansion_indexer' in groups" 
+      failed_when: not idx_app_cert.stat.exists
+        
+    - name: Pre-requisite check for app cert for search head in ansible controller
+      become: true
+      stat:
+        path: "{{home_path}}/roles/common/files/ssl/{{ hostvars[item].host_suffix }}_app_cert.pem"
+      register: sh_app_cert
+      with_items: 
+        - "{{ groups['expansion_search_head'] }}"
+      when: 
+        - "'expansion_search_head' in groups" 
+      failed_when: not sh_app_cert.stat.exists
+      
+- name: Pre-requisite check for number of search heads
+  hosts: all
+  vars:
+    sh_count: "{{ groups['search_head'] | length }}"
+    esh_count: "{{ groups['expansion_search_head'] | length }}"
+
+  tasks:
+    - name: 
+      fail:
+        msg: "Number of Search Heads in cluster is not odd number. Please ensure that total number of search heads is in odd number."
+      when: "{{ ((sh_count|int + esh_count|int) % 2) == 0 }}"
+      
+# - name: Setup base config on Splunk servers
+  # hosts: expansion_*
+  # max_fail_percentage: 0
+  # roles:
+    # - { role: base_splunk, tags: base_splunk }
+    
+# Configure indexer configuration
+# - name: Setup indexer
+  # hosts: expansion_indexer
+  # order: sorted
+  # max_fail_percentage: 0
+  # roles:
+    # - { role: indexer, tags: indexer }
+
+# - name: Expansion Indexer Verification
+  # hosts: all
+  # roles:
+    # - { role: post_expansion, tags: post_expansion }
+
+# Configure search head configuration
+# - name: Setup search head
+  # hosts: "{{ servers | default('expansion_search_head') }}"
+  # order: sorted
+  # max_fail_percentage: 0
+  # roles:
+    # - { role: search_head, tags: search_head }

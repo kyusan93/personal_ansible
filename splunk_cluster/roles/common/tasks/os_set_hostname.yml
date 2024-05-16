@@ -1,0 +1,6 @@
+---
+
+- name: Assign hostnames
+  become: true
+  hostname:
+    name: "{{ host_suffix }}"

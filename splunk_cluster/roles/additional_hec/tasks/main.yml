@@ -1,0 +1,4 @@
+---
+
+- name: Configure hec 
+  import_tasks: configure_hec.yml

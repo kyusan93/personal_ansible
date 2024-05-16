@@ -1,0 +1,5 @@
+---
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/configure_indexer_apps.yml"
+  when:
+    - "ansible_host in groups['cluster_master'] or (groups['cluster_master'] | length<1 and ansible_host in groups['indexer'])"

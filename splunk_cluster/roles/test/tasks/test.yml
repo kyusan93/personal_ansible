@@ -1,0 +1,39 @@
+- name: Create Splunk_TA_ForIndexers
+  uri:
+    url: "https://{{ ansible_host }}:{{ splunk.ports.web }}/en-US/splunkd/__raw/services/data/appmaker/makeapp"
+    method: POST
+    body: "routine=make_index_time_properties:makeIndexTimeProperties&spec={'include_indexes':true,'include_properties':true}"
+    body_format: raw
+    headers:
+      Content-Type: application/x-www-form-urlencoded
+    url_username: "{{ splunk.admin.username }}"
+    url_password: "{{ splunk.admin.password }}"
+    status_code: 200, 303
+    validate_certs: false
+    force_basic_auth: true
+  register: download_ta_results
+  when:
+    - "(ansible_host in groups['search_head'][0])"
+
+- name: DEBUG
+  debug:
+    msg: "{{ download_ta_results }}"
+
+- name: Download Splunk_TA_ForIndexers
+  get_url:
+    url: "https://{{ ansible_host }}:{{ splunk.ports.web }}/en-US/splunkd/__raw/services/data/appmaker/makeapp"
+    dest: /tmp/test.tar.gz
+    url_username: "{{ splunk.admin.username }}"
+    url_password: "{{ splunk.admin.password }}"
+    validate_certs: false
+    force_basic_auth: true
+#  register: result
+#  until: "result.status == 200 or result.status ==201"
+#  retries: 5
+#  delay: 10
+  when:
+    - "(ansible_host in groups['search_head'][0])"
+
+#- name: DEBUG
+#  debug:
+#    msg: "{{ result }}"

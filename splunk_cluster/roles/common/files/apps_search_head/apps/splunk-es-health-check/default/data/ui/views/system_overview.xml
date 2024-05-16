@@ -1,0 +1,376 @@
+<form version="1.1" theme="dark">
+  <label>System Overview</label>
+  <fieldset submitButton="false">
+    <input type="time" token="field1">
+      <label></label>
+      <default>
+        <earliest>-7d@d</earliest>
+        <latest></latest>
+      </default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <table>
+        <title>Forwarder health</title>
+        <search>
+          <query>index="_internal" source="*metrics.log" group=tcpin_connections version=*|
+eval sourceHost=if(isnull(hostname), sourceHost,hostname) |
+eval connectionType=case(fwdType=="uf","Universal Forwarder", fwdType=="lwf", "Light Weight Forwarder",fwdType=="full", "Splunk Indexer", connectionType=="cooked" or connectionType=="cookedSSL","Splunk Forwarder", connectionType=="raw" or connectionType=="rawSSL","Legacy Forwarder") |
+eval build=if(isnull(build),"n/a",build) |
+eval version=if(isnull(version),"pre 4.2",version) |
+eval guid=if(isnull(guid),sourceHost,guid) |
+eval os=if(isnull(os),"n/a",os)|
+eval arch=if(isnull(arch),"n/a",arch) |
+eval my_splunk_server = splunk_server |
+fields connectionType sourceIp sourceHost sourcePort destPort kb tcp_eps tcp_Kprocessed tcp_KBps my_splunk_server build version os arch |
+eval lastReceived = if(kb&gt;0, _time, null) |
+stats first(sourceIp) as sourceIp first(connectionType) as connectionType first(sourcePort) as sourcePort first(build) as build first(version) as version first(os) as os first(arch) as arch max(_time) as lastConnected max(lastReceived) as lastReceived sum(kb) as kb avg(tcp_eps) as avg_eps by sourceHost |
+stats first(sourceIp) as sourceIp first(connectionType) as connectionType first(sourcePort) as sourcePort first(build) as build first(version) as version first(os) as os first(arch) as arch max(lastConnected) as lastConnected max(lastReceived) as lastReceived first(kb) as KB first(avg_eps) as eps by sourceHost |
+eval status = if(isnull(KB) or lastConnected&lt;(info_max_time-900),"missing",if(lastConnected&gt;(lastReceived+300) or KB==0,"quiet","active"))
+| sort sourceHost
+| eval lastConnected = strftime(lastConnected,"%m/%d/%y %H:%M:%S")
+| eval lastReceived = strftime(lastReceived,"%m/%d/%y %H:%M:%S")</query>
+          <earliest>-60m@m</earliest>
+          <latest>now</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>GB Per Day  (total indexed volume)</title>
+        <search>
+          <query>index="_internal" source="*metrics.log" group="per_index_thruput" NOT series=_* | eval gB_sent=kb/1024/1024  | timechart per_day(gB_sent)</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisY2.enabled">false</option>
+        <option name="charting.axisY2.scale">inherit</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>GB Per Day  (total indexed volume) by indexer</title>
+        <search>
+          <query>index="_internal" source="*metrics.log" group="per_index_thruput" NOT series=_* | eval gB_sent=kb/1024/1024  | timechart per_day(gB_sent) by host useother=f</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.axisTitleY.text">GB</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisY2.enabled">false</option>
+        <option name="charting.axisY2.scale">inherit</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>GB Received by Sourcetype</title>
+        <search>
+          <query>index="_internal" source="*metrics.log" group=per_sourcetype_thruput NOT series=_* | eval gB_sent=kb/1024/1024  | timechart per_day(gB_sent) by series useother=f</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisY2.enabled">false</option>
+        <option name="charting.axisY2.scale">inherit</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Successful User Logins (by user)</title>
+        <search>
+          <query>index=_audit info="succeeded"|rex "action=(?P&lt;my_action&gt;login[^\,]+)"| search my_action="login attempt"|timechart span=1d count by user</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisY2.enabled">false</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>Adhoc Searches  (by user)</title>
+        <search>
+          <query>index=_internal  sourcetype=splunkd_access "/services/search/jobs" | kv access-extractions | search uri=/services/search/jobs/* user!="-"| rex "(?&lt;run_time&gt;\d+)ms" | timechart eval(sum(run_time)/1000) by user</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="charting.axisY.scale">log</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.secondaryAxis.scale">log</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisY2.enabled">false</option>
+        <option name="charting.axisY2.scale">inherit</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Search Summary  (by user)</title>
+        <search>
+          <query>index=_audit action=search (id=* OR search_id=*) | eval search_id = if(isnull(search_id), id, search_id) | replace '*' with * in search_id |  rex "search='(?&lt;search&gt;.*?)', autojoin" | search search_id!=scheduler_* | convert num(total_run_time) | eval user = if(user="n/a", null(), user) | stats min(_time) as _time first(user) as user max(total_run_time) as total_run_time first(search) as search by search_id | search search=search* search!=*_internal* search!=*_audit* | chart median(total_run_time) as "Median search time" perc95(total_run_time) as "95th Percentile search time" sum(total_run_time) as "Total search time" count as "Search count" max(_time) as "Last use" by user | fieldformat "Last use" = strftime('Last use', "%F %T.%Q %:z")</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="wrap">true</option>
+        <option name="rowNumbers">false</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">row</option>
+        <option name="count">10</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>20 Most Popular Dashboard Views</title>
+        <search>
+          <query>index=_internal source=*web_access.log* /app/   | rex "GET /[^/]+/app/(?&lt;app_view&gt;[^/ ?]+/[^/ ?]+) "  | search app_view=*| top limit=20 app_view</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="wrap">true</option>
+        <option name="rowNumbers">false</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="count">10</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.chart">pie</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisY2.enabled">false</option>
+        <option name="charting.axisY2.scale">inherit</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>Most Popular Apps [Total Search/View time taken (by app)]</title>
+        <search>
+          <query>index=_internal source=*web_access.log* /app/ | rex "GET /[^/]+/app/(?&lt;app_view&gt;[^/ ?]+/[^/ ?]+) " | search app_view=* | rex field=app_view "(?&lt;app&gt;[^/]*)/" | search app!=launcher | stats sum(spent) AS totalTimeInMS by app</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.chart">pie</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisY2.enabled">false</option>
+        <option name="charting.axisY2.scale">inherit</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Total search usage in sec (by user)</title>
+        <search>
+          <query>index=_internal "/services/search/jobs" | kv access-extractions | search uri=/services/search/jobs/* user!="-" | rex "(?&lt;run_time&gt;\d+)ms" | timechart span=1h eval(sum(run_time)/1000) by user</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.chart.nullValueMode">connect</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisY2.enabled">false</option>
+        <option name="charting.axisY2.scale">inherit</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Longest Running Interactive Searches in seconds</title>
+        <search>
+          <query>index=_audit source=*audit*    user!=splunk* user!="" action=search (id=* OR search_id=*) NOT scheduler__* | eval search_id=if(isnull(search_id), id, search_id) | replace '*' with * in search_id | search search_id!=rt_* search_id!=searchparsetmp* search_id!=scheduler__*| rex "search='(?&lt;search&gt;.*?)', autojoin" | rex "savedsearch_name=\"(?&lt;savedsearch_name&gt;.*?)\"\]\[" | eval search=case(isnotnull(search),search,isnull(search) AND savedsearch_name!="","Scheduled search name : ".savedsearch_name,isnull(search) AND savedsearch_name=="","SID : ".search_id) | convert num(total_run_time) | eval user = if(user="n/a", "nobody", user) | stats min(_time) as _time last(user) as user max(total_run_time) as total_run_time last(search) as search by search_id | search search_id=* search!=typeahead* search!="|history*" search!=*_internal* search!=*_audit* | sort - total_run_time | head 25</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="wrap">true</option>
+        <option name="rowNumbers">false</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">-45</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.axisY2.enabled">false</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="drilldown">cell</option>
+        <option name="count">10</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Longest Running Scheduled Searches in seconds</title>
+        <search>
+          <query>index=_audit source=*audit* user!=splunk* user!="" action=search (id=* OR search_id=*) scheduler__* | eval search_id=if(isnull(search_id), id, search_id) | replace '*' with * in search_id | search search_id!=rt_* search_id!=searchparsetmp* | rex "search='(?&lt;search&gt;.*?)', autojoin" | search search_id=scheduler__* | rex "savedsearch_name=\"(?&lt;savedsearch_name&gt;.*?)\"\]\[" | eval search=case(isnotnull(search),search,isnull(search) AND savedsearch_name!="","Scheduled search name : ".savedsearch_name,isnull(search) AND savedsearch_name=="","SID : ".search_id) | convert num(total_run_time) | eval user = if(user="n/a", "nobody", user) | stats min(_time) as _time last(user) as user max(total_run_time) as total_run_time last(search) as search by search_id | search search_id=* search!=typeahead* search!="|history*" search!=*_internal* search!=*_audit* | sort - total_run_time | head 25</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="wrap">true</option>
+        <option name="rowNumbers">false</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="count">10</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.axisY2.enabled">false</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="drilldown">row</option>
+      </table>
+    </panel>
+  </row>
+</form>

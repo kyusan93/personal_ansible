@@ -1,0 +1,6 @@
+---
+
+- name: Delete splunk rpm package
+  file:
+    path: /tmp/{{ splunk.package_file }}
+    state: absent

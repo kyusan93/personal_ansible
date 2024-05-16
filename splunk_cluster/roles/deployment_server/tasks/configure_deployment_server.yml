@@ -1,0 +1,12 @@
+---
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/create_deployment_server_hf_outputs_app.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/create_deployment_server_hf_outputs_serverclass.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/enable_deployment_server.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/set_as_license_slave.yml"
+  when: 'ansible_host not in groups["license_master"]'
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/restart_splunk.yml"

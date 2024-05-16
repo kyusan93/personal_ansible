@@ -1,0 +1,14 @@
+---
+
+- name: restart_splunk
+  command: "{{ splunk.home }}/bin/splunk restart --answer-yes --accept-license"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  register: task_result
+  until: task_result.rc == 0
+  retries: 5
+  delay: 10
+
+- name: wait_for_splunkd_management_port
+  wait_for:
+    port: "{{ splunk.ports.web }}"

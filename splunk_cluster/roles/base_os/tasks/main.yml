@@ -1,0 +1,3 @@
+---
+
+- import_tasks: configure_base_os.yml

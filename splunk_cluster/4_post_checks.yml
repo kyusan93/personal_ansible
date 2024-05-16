@@ -1,0 +1,8 @@
+---
+
+# Post-Checks on Splunk
+- name: Check if splunk ports are accessible
+  gather_facts: false
+  hosts: all
+  roles:
+    - { role: post_checks, tags: post_checks }

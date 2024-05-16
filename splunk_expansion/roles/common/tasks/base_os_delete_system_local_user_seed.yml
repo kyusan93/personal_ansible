@@ -1,0 +1,16 @@
+---
+
+- name: Check if system local directory exists
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  stat:
+    path: "{{ splunk.home }}/etc/system/local/user-seed.conf"
+  register: userseedfile
+
+- name: Delete user-seed.conf file
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  file:
+    path: "{{ splunk.home }}/etc/system/local/user-seed.conf"
+    state: absent
+  when: userseedfile.stat.exists

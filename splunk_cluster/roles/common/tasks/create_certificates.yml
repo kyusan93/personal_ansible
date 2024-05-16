@@ -1,0 +1,223 @@
+---
+
+- name: Check for Splunk certiticates directory exists
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  stat:
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/"
+  register: splunk_cert_dir_exist
+
+- name: Creates certificates directory
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  file:
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/"
+    state: directory
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: 0700
+    recurse: yes
+  when: not splunk_cert_dir_exist.stat.exists
+
+- name: Check server_web_key.pem exists
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  stat:
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_key.pem"
+  register: webkey_exist
+  when:    
+    - "'universal_forwarder' not in group_names"
+
+- name: Check server_app_key.pem exists
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  stat:
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_app_key.pem"
+  register: appkey_exist
+  when:    
+    - "'universal_forwarder' not in group_names"
+  
+- name: Check forwarder_app_key.pem exists
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  stat:
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/forwarder_app_key.pem"
+  register: forwarderkey_exist
+  when:
+    - "'universal_forwarder' in group_names or 'indexer' in group_names"
+
+- name: Copy all certificates and csr to monitoring console
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  copy:
+    src: "{{ item }}"
+    dest: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: 0700
+  with_fileglob:
+    - "{{ base.awx_tmp_dir }}*.pem"
+    - "{{ base.awx_tmp_dir }}*.csr"
+  when: "'monitoring_console' in group_names"
+
+- name: Copy server_web_key.pem and CA.pem certificates
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  copy:
+    src: "{{ item }}"
+    dest: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: 0700
+  with_fileglob:
+    - "{{ base.awx_tmp_dir }}{{ host_suffix }}_web_key.pem"
+    - "{{ base.awx_tmp_dir }}{{ splunk.ssl.cacert_name }}.pem"
+  when: 
+    - "'universal_forwarder' not in group_names"
+    - webkey_exist is defined
+    - webkey_exist.stat.exists == false 
+
+- name: Copy server_app_key.pem and CA.pem certificates
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  copy:
+    src: "{{ item }}"
+    dest: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: 0700
+  with_fileglob:
+    - "{{ base.awx_tmp_dir }}{{ host_suffix }}_app_key.pem"
+  when: 
+    - "'universal_forwarder' not in group_names"
+    - appkey_exist is defined
+    - appkey_exist.stat.exists == false 
+
+- name: Copy forwarder_app_key.pem and CA.pem certificates
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  copy:
+    src: "{{ item }}"
+    dest: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: 0700
+  with_fileglob:
+    - "{{ base.awx_tmp_dir }}forwarder_app_key.pem"
+    - "{{ base.awx_tmp_dir }}{{ splunk.ssl.cacert_name }}.pem"
+  when:
+    - "'universal_forwarder' in group_names or 'indexer' in group_names"
+    - forwarderkey_exist is defined
+    - forwarderkey_exist.stat.exists == false 
+
+- name: Copy server app certificates to server_app_cert.pem
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  copy:
+    src: "{{ item }}"
+    dest: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_app_cert.pem"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: 0700
+  with_fileglob:
+    - "{{ base.awx_tmp_dir }}{{ host_suffix }}_app.pem"
+  when: 
+    - "'universal_forwarder' not in group_names"
+    - appkey_exist is defined
+    - appkey_exist.stat.exists == false 
+
+- name: Copy forwarder app certificates to forwarder_app_cert.pem
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  copy:
+    src: "{{ item }}"
+    dest: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/forwarder_app_cert.pem"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: 0700
+  with_fileglob:
+    - "{{ base.awx_tmp_dir }}forwarder_app.pem"
+  when:
+    - "'universal_forwarder' in group_names or 'indexer' in group_names"
+    - forwarderkey_exist is defined
+    - forwarderkey_exist.stat.exists == false 
+
+- name: Append server_app_key.pem and CA.pem to server_app_cert.pem
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  blockinfile: 
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_app_cert.pem"
+    block: "{{ item }}"
+    marker: ""
+  no_log: true
+  with_items:
+    - "{{ lookup('file', '{{ base.awx_tmp_dir }}{{ host_suffix }}_app_key.pem') }}"
+    - "{{ lookup('file', '{{ base.awx_tmp_dir }}{{ splunk.ssl.cacert_name }}.pem') }}"
+  when: 
+    - "'universal_forwarder' not in group_names"
+    - appkey_exist is defined
+    - appkey_exist.stat.exists == false 
+
+- name: Append forwarder_app_key.pem and CA.pem to forwarder_app_cert.pem
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  blockinfile: 
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/forwarder_app_cert.pem"
+    block: "{{ item }}"
+    marker: ""
+  no_log: true
+  with_items:
+    - "{{ lookup('file', '{{ base.awx_tmp_dir }}forwarder_app_key.pem') }}"
+    - "{{ lookup('file', '{{ base.awx_tmp_dir }}{{ splunk.ssl.cacert_name }}.pem') }}"
+  when:
+    - "'universal_forwarder' in group_names or 'indexer' in group_names"
+    - forwarderkey_exist is defined
+    - forwarderkey_exist.stat.exists == false 
+
+- name: Copy server web certificates to server_web_cert.pem
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  copy:
+    src: "{{ item }}"
+    dest: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: 0700
+  with_fileglob:
+    - "{{ base.awx_tmp_dir }}{{ host_suffix }}_web.pem"    
+  when: 
+    - "'universal_forwarder' not in group_names"
+    - webkey_exist is defined
+    - webkey_exist.stat.exists == false 
+
+- name: Append CA.pem to server_web_cert.pem
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  blockinfile:
+    marker: ""
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem" 
+    block: "{{ lookup('file', '{{ base.awx_tmp_dir }}{{ splunk.ssl.cacert_name }}.pem') }}"
+  when: 
+    - "'universal_forwarder' not in group_names"
+    - webkey_exist is defined
+    - webkey_exist.stat.exists == false 
+
+- name: Check server_web_key.pem exists
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  stat:
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_key.pem"
+  register: webkey_exist
+  when: 
+    - "'universal_forwarder' not in group_names"
+
+- name: Decrypt server.key
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  command: "openssl rsa -in {{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_key.pem -out {{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key -passin pass:{{ splunk.ssl.sslPassword }}"
+  when: 
+    - "'universal_forwarder' not in group_names"
+    - webkey_exist is defined
+    - webkey_exist.stat.exists 
+
+

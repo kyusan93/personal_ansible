@@ -1,0 +1,22 @@
+---
+
+- name: Start splunk
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  command: "{{ splunk.home }}/bin/splunk start --answer-yes --accept-license"
+  when: splunk.systemd != 'true'
+  
+- name: Start splunk - systemd
+  become: true
+  systemd:
+    name: Splunkd
+    enabled: yes
+    state: started
+  when: splunk.systemd == 'true'
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_wait_for_splunk_instance.yml"
+  vars:
+    splunk_instance: "{{ ansible_host }}"
+  when:    
+    - "'universal_forwarder' not in group_names"
+

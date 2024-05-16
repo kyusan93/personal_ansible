@@ -1,0 +1,36 @@
+---
+
+#msiexec.exe /i splunkforwarder-8.2.1.msi DEPLOYMENT_SERVER=10.60.16.165:8089 RECEIVING_INDEXER=10.60.16.165:9997 SPLUNKUSERNAME=spladmin SPLUNKPASSWORD=P@ssw0rd LAUNCHSPLUNK=1 WINEVENTLOG_SEC_ENABLE=1 WINEVENTLOG_SYS_ENABLE=1 AGREETOLICENSE=Yes /quiet
+
+- name: Copy Splunk UF Windows Package
+  win_copy:
+    src: "{{ playbook_dir }}/roles/common/files/installer/{{ windows.package_file }}"
+    dest: "{{ windows.packagedir }}"
+  when: "'universal_forwarder_windows' in group_names"
+
+- name: Install Splunk package
+  win_package: 
+    path: "{{ windows.packagedir }}"
+    arguments: 
+    - /quiet
+    - "INSTALLDIR={{ windows.installdir }}"
+#Must put
+    - 'DEPLOYMENT_SERVER={{ windows.deployment_server }}:8089'
+#Configure only if not deploying through app
+    - 'RECEIVING_INDEXER={{ windows.receiving_indexer }}:9997'
+    - "SPLUNKUSERNAME={{splunk.admin.username}}"
+    - "SPLUNKPASSWORD={{splunk.admin.password}}"
+    - "WINEVENTLOG_APP_ENABLE={{ windows.WINEVENTLOG_APP_ENABLE }}"
+    - "WINEVENTLOG_SEC_ENABLE={{ windows.WINEVENTLOG_SEC_ENABLE }}"
+    - "WINEVENTLOG_SYS_ENABLE={{ windows.WINEVENTLOG_SYS_ENABLE }}"
+    - "WINEVENTLOG_FWD_ENABLE={{ windows.WINEVENTLOG_FWD_ENABLE }}"
+    - "WINEVENTLOG_SET_ENABLE={{ windows.WINEVENTLOG_SET_ENABLE }}"
+    - "LAUNCHSPLUNK={{ windows.LAUNCHSPLUNK }}"
+    - 'AGREETOLICENSE=Yes'
+  when: "'universal_forwarder_windows' in group_names"
+  
+- name: Cleanup Splunk package file
+  win_file:
+    path: "{{ windows.packagedir }}"
+    state: absent
+  when: "'universal_forwarder_windows' in group_names"

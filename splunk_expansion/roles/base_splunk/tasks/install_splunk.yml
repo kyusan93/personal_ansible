@@ -1,0 +1,65 @@
+---
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_os_disable_firewalld.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_os_configure_iptables.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_os_configure_etc_hosts.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_create_user_group.yml"
+
+#- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_configure_thp.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_configure_ulimits.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_check_splunk_installed.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_copy_splunk_package_file.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_install_splunk.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_check_splunkd_status.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_create_system_local_user_seed.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_disable_first_time_password_prompt.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_configure_splunk_boot_start.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_configure_certificates.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_create_system_local_server.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_create_system_local_web.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_configure_password_policy.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_create_local_outputs.yml"
+  when:
+    - '"indexer" in groups and ansible_host not in groups["indexer"]'
+    - '"expansion_indexer" in groups and ansible_host not in groups["expansion_indexer"]'
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_create_system_local_inputs.yml"
+  when: 
+    - '"indexer" in groups or "expansion_indexer" in groups'
+    - 'ansible_host in groups["indexer"] or ansible_host in groups["expansion_indexer"]'
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_disable_webui.yml"
+  when: 
+    - '"indexer" in groups or "expansion_indexer" in groups'
+    - 'ansible_host in groups["indexer"] or ansible_host in groups["expansion_indexer"]'
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_disable_monitoring_console.yml"
+  when:
+    - '"monitoring_console" in groups'
+    - 'ansible_host not in groups["monitoring_console"]'
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/start_splunk.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_disable_popup.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_delete_splunk_installer.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_delete_system_local_user_seed.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/restart_splunk.yml"

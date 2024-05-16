@@ -1,0 +1,7 @@
+---
+
+# Convert Certificates obtained from PKI team and convert them to .pem format
+- name: Convert certificates
+  hosts: "{{ servers | default('monitoring_console') }}"
+  roles:
+    - { role: convert_p7b, tags: convert_p7b }

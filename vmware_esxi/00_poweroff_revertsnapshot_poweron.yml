@@ -1,0 +1,7 @@
+---
+- name: Poweroff, Revert Snapshot, Poweron
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  roles:
+    - { role: poweroff_revertsnapshot_poweron }

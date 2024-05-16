@@ -1,0 +1,12 @@
+---
+
+- name: Ensure hostname is in /etc/hosts
+  become: true
+  lineinfile:
+      dest: /etc/hosts
+      regexp: '.*{{ item }}$'
+      line: "{{item}} {{ hostvars[item].host_suffix }} {{ hostvars[item].host_suffix }}.{{ hostvars[item].base.fqdn }} {{item}}"
+      state: present
+  with_items: "{{ groups.all }}"
+  when: "item not in groups['universal_forwarder'] and item not in groups['universal_forwarder_windows']"
+

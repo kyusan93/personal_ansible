@@ -1,0 +1,4 @@
+---
+
+- name: Configure deployer
+  import_tasks: configure_deployer.yml

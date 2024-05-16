@@ -1,0 +1,152 @@
+---
+
+- name: Creates backup certificates directory
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  file:
+    path: "{{ splunk.home }}/etc/auth/backup/{{ base.company_name }}/"
+    state: directory
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: 0700
+    recurse: yes
+    
+- name: Copy existing certificates to backup directory
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  copy: 
+    src: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/"
+    dest: "{{ splunk.home }}/etc/auth/backup/{{ base.company_name }}/"
+    remote_src: yes 
+    directory_mode: yes
+    
+- name: Delete certificates directory
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  file:
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/"
+    state: absent
+    
+- name: Creates certificates directory
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  file:
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/"
+    state: directory
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: 0700
+    recurse: yes
+    
+- name: Check server_web_key.pem exists
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  stat:
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_key.pem"
+  register: webkey_exist
+
+- name: Check server_app_key.pem exists
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  stat:
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_app_key.pem"
+  register: appkey_exist
+
+- name: Copy server_web_key.pem and CA.pem certificates
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  copy:
+    src: "{{ item }}"
+    dest: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: 0700
+  with_fileglob:
+    - "{{ base.awx_tmp_dir }}{{ host_suffix }}_web_key.pem"
+    - "{{ base.awx_tmp_dir }}{{ splunk.ssl.cacert_name }}.pem"
+  when: not webkey_exist.stat.exists
+
+- name: Copy server_app_key.pem and CA.pem certificates
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  copy:
+    src: "{{ item }}"
+    dest: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: 0700
+  with_fileglob:
+    - "{{ base.awx_tmp_dir }}{{ host_suffix }}_app_key.pem"
+    - "{{ base.awx_tmp_dir }}{{ splunk.ssl.cacert_name }}.pem"
+  when: not appkey_exist.stat.exists
+
+- name: Copy server app certificates to server_app_cert.pem
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  copy:
+    src: "{{ item }}"
+    dest: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_app_cert.pem"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: 0700
+  with_fileglob:
+    - "{{ base.awx_tmp_dir }}{{ host_suffix }}_app.pem"
+  when: not appkey_exist.stat.exists
+
+- name: Append server_app_key.pem and CA.pem to server_app_cert.pem
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  blockinfile: 
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_app_cert.pem"
+    block: "{{ item }}"
+    marker: ""
+  when: not appkey_exist.stat.exists
+  no_log: true
+  with_items:
+    - "{{ lookup('file', '{{ base.awx_tmp_dir }}{{ host_suffix }}_app_key.pem') }}"
+    - "{{ lookup('file', '{{ base.awx_tmp_dir }}{{ splunk.ssl.cacert_name }}.pem') }}"
+
+- name: Copy server web certificates to server_web_cert.pem
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  copy:
+    src: "{{ item }}"
+    dest: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: 0700
+  with_fileglob:
+    - "{{ base.awx_tmp_dir }}{{ host_suffix }}_web.pem"
+  when: not webkey_exist.stat.exists
+
+- name: Append CA.pem to server_web_cert.pem
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  blockinfile:
+    marker: ""
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    block: "{{ lookup('file', '{{ base.awx_tmp_dir }}{{ splunk.ssl.cacert_name }}.pem') }}"
+  when: not webkey_exist.stat.exists
+
+- name: Check server_web_key.pem exists
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  stat:
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_key.pem"
+  register: webkey_exist
+
+- name: Decrypt server.key
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  command: "openssl rsa -in {{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_key.pem -out {{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key -passin pass:{{ splunk.ssl.sslPassword }}"
+  when: webkey_exist.stat.exists
+
+- name: Change server.key owner
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  file:
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+    owner: "{{ splunk.service_name }}"
+    group: "{{ splunk.service_name }}"
+ 
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/restart_splunk.yml" 

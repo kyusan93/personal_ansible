@@ -1,0 +1,22 @@
+---
+
+- name: Install keepalived
+  become: true
+  yum:
+    name: "keepalived"
+    update_cache: yes
+  ignore_errors: True
+
+- name: Configure keepalived
+  become: true
+  template: 
+    src: "keepalived.conf.j2"
+    dest: "/etc/keepalived/keepalived.conf"
+
+- name: Start keepalived
+  become: true
+  service: 
+    name: "keepalived"
+    state: "restarted"
+    enabled: yes
+

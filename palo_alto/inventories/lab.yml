@@ -1,0 +1,10 @@
+---
+all:
+  children:
+    panorama:
+      hosts:
+        10.60.18.20:
+    fw:
+      hosts:
+        10.60.18.21:
+#        10.60.18.22:

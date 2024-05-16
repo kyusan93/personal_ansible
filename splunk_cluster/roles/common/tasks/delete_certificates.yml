@@ -1,0 +1,49 @@
+---
+
+- name: "Delete all existing certificates - {{ splunk.ssl.cacert_name }}.pem"
+  file:
+    path: "{{ base.awx_tmp_dir }}{{ splunk.ssl.cacert_name }}.pem"
+    state: absent
+  
+- name: "Delete all existing certificates - {{ splunk.ssl.cacert_name }}_key.pem"
+  file:
+    path: "{{ base.awx_tmp_dir }}{{ splunk.ssl.cacert_name }}_key.pem"
+    state: absent
+  
+- name: Delete all existing certificates - All host web_key.pem
+  file:
+    path: "{{ base.awx_tmp_dir }}{{ hostvars[item].host_suffix }}_web_key.pem"
+    state: absent
+  with_items:
+    - "{{ groups['all'] }}"
+  
+- name: Delete all existing certificates - All host app_key.pem
+  file:
+    path: "{{ base.awx_tmp_dir }}{{ hostvars[item].host_suffix }}_app_key.pem"
+    state: absent
+  with_items:
+    - "{{ groups['all'] }}"
+  
+- name: Delete all existing certificates - forwarder_app_key.pem
+  file:
+    path: "{{ base.awx_tmp_dir }}forwarder_app_key.pem"
+    state: absent
+  
+- name: Delete all existing certificates - All host web.csr
+  file:
+    path: "{{ base.awx_tmp_dir }}{{ hostvars[item].host_suffix }}_web.csr"
+    state: absent
+  with_items:
+    - "{{ groups['all'] }}"
+  
+- name: Delete all existing certificates - All host app.csr
+  file:
+    path: "{{ base.awx_tmp_dir }}{{ hostvars[item].host_suffix }}_app.csr"
+    state: absent
+  with_items:
+    - "{{ groups['all'] }}"
+  
+- name: Delete all existing certificates - forwarder_app.csr
+  file:
+    path: "{{ base.awx_tmp_dir }}forwarder_app.csr"
+    state: absent

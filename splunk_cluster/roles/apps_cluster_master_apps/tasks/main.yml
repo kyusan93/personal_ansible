@@ -1,0 +1,4 @@
+---
+
+- name: Update master apps apps 
+  import_tasks: update_master_apps_apps.yml

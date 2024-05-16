@@ -1,0 +1,5 @@
+---
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/indexer_precheck.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/indexer_rebalance_data.yml"

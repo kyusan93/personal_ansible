@@ -1,0 +1,6 @@
+# Configure ldap configuration
+- name: Setup ldap
+  hosts: all
+  roles:
+    - { role: additional_ldap, tags: ldap }
+

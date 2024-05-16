@@ -1,0 +1,98 @@
+---
+
+# 7.1 - Disable unnecessary Splunk services
+
+- name: "7.1 - Check that web.conf exists"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  stat:
+    path: "{{ splunk.home }}/etc/system/default/web.conf"
+  register: web_conf
+
+- name: "[Results] 7.1 - Check that web.conf exists"  
+  fail:
+    msg: "web.conf not found!"
+  when: web_conf.stat.exists == False
+  ignore_errors: true
+
+#If configuration is changed, line does not exists in file. Failing audit test.
+#For indexers only
+- name: "7.1 - Check that startwebserver = 0"
+  lineinfile:
+    path: "{{ splunk.home }}/etc/system/default/web.conf"
+    line: "startwebserver = 0"
+    state: present
+  check_mode: yes
+  register: startWebServer
+  when: 
+    - web_conf.stat.exists
+    - "'indexer' in group_names"
+
+- name: "[Results] 7.1 - Check that startwebserver = 0"  
+  fail:
+    msg: "startwebserver != 0"
+  when: 
+    - startWebServer is changed
+    - web_conf.stat.exists
+    - "'indexer' in group_names"
+  ignore_errors: true
+
+- name: "[Results] 7.1 - Check that startwebserver = 0"  
+  debug:
+    msg: "Passed! startwebserver = 0"
+  when: 
+    - startWebServer is not changed
+    - web_conf.stat.exists   
+    - "'indexer' in group_names"    
+
+#########################################################################################################################################################################
+
+# 7.3 - Disable Auto-Update    
+
+- name: "7.3 - Check that web.conf exists"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  stat:
+    path: "{{ splunk.home }}/etc/system/local/web.conf"
+  register: web_conf
+
+- name: "[Results] 7.3 - Check that web.conf exists"
+  fail:
+    msg: "web.conf not found!"
+  when: web_conf.stat.exists == False
+  ignore_errors: true
+
+#If configuration is changed, line does not exists in file. Failing audit test.
+- name: "7.3 - Check that updateCheckerBaseURL  = 0"
+  lineinfile:
+    path: "{{ splunk.home }}/etc/system/local/web.conf"
+    line: "updateCheckerBaseURL = 0"
+    state: present
+  check_mode: yes
+  register: autoUpdate
+  when: 
+    - web_conf.stat.exists
+    
+- name: "[Results] 7.3 - Check that updateCheckerBaseURL  = 0"
+  fail:
+    msg: "updateCheckerBaseURL != 0"
+  when: 
+    - autoUpdate is changed
+    - web_conf.stat.exists
+  ignore_errors: true
+
+- name: "[Results] 7.3 - Check that updateCheckerBaseURL  = 0"
+  debug:
+    msg: "Passed! updateCheckerBaseURL = 0"
+  when: 
+    - autoUpdate is not changed
+    - web_conf.stat.exists   
+
+# - name: "Output btool output of web.conf"
+  # become: true
+  # become_user: "{{ splunk.nix.user }}"
+  # shell: "{{ splunk.home }}/bin/splunk btool web list | grep updateCheckerBaseURL"
+  # register: updateCheckerBaseURL_btool
+
+# - debug:
+    # msg: " {{ updateCheckerBaseURL_btool }} "

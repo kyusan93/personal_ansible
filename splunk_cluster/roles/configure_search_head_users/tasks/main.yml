@@ -1,0 +1,4 @@
+---
+
+- name: Update search head users
+  import_tasks: configure_search_head_users.yml

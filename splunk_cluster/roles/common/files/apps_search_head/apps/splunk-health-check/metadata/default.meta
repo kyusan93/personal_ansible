@@ -1,0 +1,4 @@
+[]
+access = read : [ * ], write : [ admin, power ]
+import = splunk_monitoring_console, splunk_management_console, search
+

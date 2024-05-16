@@ -1,0 +1,5 @@
+---
+
+- name: Configure keepalive
+  import_tasks: configure_keepalive.yml
+

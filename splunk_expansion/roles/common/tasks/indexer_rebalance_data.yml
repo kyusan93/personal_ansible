@@ -1,0 +1,19 @@
+---
+
+- name: debug
+  debug: 
+    msg: " {{  hostvars[item].expansion_peer_status.rc}}"
+  with_items: "{{ groups.expansion_indexer }}"
+  when: 
+    - "'cluster_master' in group_names" 
+    - hostvars[item].expansion_peer_status.rc == 0 
+
+- name: Indexer Cluster Rebalance Data
+  command: "{{ splunk.home }}/bin/splunk rebalance cluster-data -action start -searchable true -auth {{ splunk.admin.username }}:{{ splunk.admin.password }}"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  when: 
+    - "'cluster_master' in group_names"
+    # - hostvars[item].expansion_peer_status.rc == 0 
+  # with_items: "{{ groups.expansion_indexer }}"
+

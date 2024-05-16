@@ -1,0 +1,4 @@
+- name: Cleanup all after installation
+  hosts: all
+  roles:
+    - { role: cleanup, tags: cleanup }

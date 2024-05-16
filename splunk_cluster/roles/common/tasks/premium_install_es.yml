@@ -1,0 +1,131 @@
+---
+
+- name: Set the path
+  set_fact:
+    apps_path: "{{ splunk.home }}/etc/{% if ansible_host in groups['deployer'] and groups['deployer'] | length>0 %}shcluster/{% endif %}apps/"
+
+- name: Configure web.conf for big file upload and timeout
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/web.conf"
+    section: "{{ item.section }}"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+  with_items:
+    - {section: "settings", key: "max_upload_size", value: "2048"}
+    - {section: "settings", key: "splunkdConnectionTimeout", value: "3000"}
+  when:
+    - "('shcluster' in apps_path and ansible_host in groups['deployer']) or ('shcluster' not in apps_path and ansible_host in groups['search_head'][0] and groups['deployer'] | length<1)"
+  register: web_conf_result
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/restart_splunk.yml"
+  when: web_conf_result is changed
+
+- name: Copy es
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  copy:
+    src: "{{ item }}"
+    dest: "{{ apps_path }}"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: 0700
+    force: yes
+  register: deploy_apps
+  with_fileglob:
+    - "{{playbook_dir}}/roles/common/files/premium_apps/splunk-enterprise-security*.spl"
+  when:
+    - "('shcluster' in apps_path and ansible_host in groups['deployer']) or ('shcluster' not in apps_path and ansible_host in groups['search_head'][0] and groups['deployer'] | length<1)"
+
+- name: Set the file path of splunk es
+  find:
+    paths: "{{apps_path}}"
+    file_type: file
+    patterns: 'splunk-enterprise-security*.spl'
+  register: es_path
+  when:
+    - "('shcluster' in apps_path and ansible_host in groups['deployer']) or ('shcluster' not in apps_path and ansible_host in groups['search_head'][0] and groups['deployer'] | length<1)"
+
+- name: DEBUG
+  debug:
+    msg: "{{ es_path.files[0].path }}"
+  when:
+    - "('shcluster' in apps_path and ansible_host in groups['deployer']) or ('shcluster' not in apps_path and ansible_host in groups['search_head'][0] and groups['deployer'] | length<1)"
+
+#curl -sivk -u spladmin:'P@ssw0rd12345' https://192.168.56.202:8089/services/apps/local -d filename="true" -d name="/opt/splunk/etc/shcluster/apps/splunk-enterprise-security_720.spl" -d update="true"
+- name: "Install es" 
+  uri:
+    url: "https://{{ ansible_host }}:{{ splunk.ports.mgmt }}/services/apps/local"
+    method: POST
+    body: "filename=true&name={{ es_path.files[0].path }}&update=true"
+    body_format: raw
+    headers:
+      Content-Type: application/x-www-form-urlencoded
+    url_username: "{{ splunk.admin.username }}"
+    url_password: "{{ splunk.admin.password }}"
+    status_code: 200,201
+    validate_certs: false
+    force_basic_auth: true
+  register: install_es_results
+#  until: "install_es_results.status == 200 or install_es_results.status ==201"
+#  retries: 5
+#  delay: 30
+  when:
+    - "('shcluster' in apps_path and ansible_host in groups['deployer']) or ('shcluster' not in apps_path and ansible_host in groups['search_head'][0] and groups['deployer'] | length<1)"
+
+- name: DEBUG
+  debug:
+   msg: "{{ install_es_results }}"
+
+- name: Run install es
+  shell: |
+    {{ splunk.home }}/bin/splunk search '| essinstall --deployment_type {% if "shcluster" in apps_path %}shc_deployer{% else %}search_head{% endif %} --ssl_enablement ignore' -auth {{ splunk.admin.username }}:{{ splunk.admin.password }}
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  when:
+    - "('shcluster' in apps_path and ansible_host in groups['deployer']) or ('shcluster' not in apps_path and ansible_host in groups['search_head'][0] and groups['deployer'] | length<1)"
+    - "(install_es_results.status == 200) or (install_es_results.status == 201)"
+  register: run_install_es_results
+
+- name: DEBUG
+  debug:
+   msg: "{{ run_install_es_results }}"
+  when:
+    - "('shcluster' in apps_path and ansible_host in groups['deployer']) or ('shcluster' not in apps_path and ansible_host in groups['search_head'][0] and groups['deployer'] | length<1)"
+    - "(install_es_results.status == 200) or (install_es_results.status == 201)"
+
+- name: DEBUG
+  debug:
+    msg: "{{ run_install_es_results.stdout_lines | last }}"
+  ignore_errors: true
+  when:
+    - "('shcluster' in apps_path and ansible_host in groups['deployer']) or ('shcluster' not in apps_path and ansible_host in groups['search_head'][0] and groups['deployer'] | length<1)"
+    - "(install_es_results.status == 200) or (install_es_results.status == 201)"
+
+- name: Apply shcluster bundle
+  command: "{{ splunk.home }}/bin/splunk apply shcluster-bundle -target https://{{ groups['search_head'] | first }}:{{ splunk.ports.mgmt }} -auth {{ splunk.admin.username }}:{{ splunk.admin.password }} --answer-yes"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  until: "apply_shcluster_results.rc == 0"
+  retries: 10
+  delay: 60
+  when:
+    - run_install_es_results is changed
+    - "'shcluster' in apps_path"
+  register: apply_shcluster_results
+
+- name: DEBUG
+  debug:
+    msg: "{{ apply_shcluster_results }}"
+  when:
+    - run_install_es_results is changed
+    - "'shcluster' in apps_path"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/restart_splunk.yml"
+  when:
+    - run_install_es_results is changed
+    - "'shcluster' not in apps_path"
+

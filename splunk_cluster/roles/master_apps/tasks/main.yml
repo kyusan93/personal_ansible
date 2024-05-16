@@ -1,0 +1,4 @@
+---
+
+- name: Configure master apps and deploy to all indexers
+  import_tasks: configure_master_apps.yml

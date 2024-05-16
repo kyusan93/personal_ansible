@@ -1,0 +1,11 @@
+---
+
+- name: Test SSH
+  wait_for: 
+    host: "{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}"
+    port: "{{ item.dst_port }}" 
+    timeout: 1
+  with_items: "{{ base.ports.ssh }}"
+  any_errors_fatal: true
+  connection: local
+

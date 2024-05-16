@@ -1,0 +1,31 @@
+---
+
+- name: sign the CSR for Splunk Web
+  openssl_certificate:
+    path: "{{ base.awx_tmp_dir }}{{ hostvars[item].host_suffix }}_web.pem"
+    csr_path: "{{ base.awx_tmp_dir }}{{ hostvars[item].host_suffix }}_web.csr"
+    ownca_path: "{{ base.awx_tmp_dir }}CA.pem"
+    ownca_privatekey_path: "{{ base.awx_tmp_dir }}CA_key.pem"
+    provider: ownca
+  with_items:
+    - "{{ groups['all'] }}"
+  when: "item not in groups['universal_forwarder'] and item not in groups['universal_forwarder_windows']"
+    
+- name: sign the CSR for Splunk App
+  openssl_certificate:
+    path: "{{ base.awx_tmp_dir }}{{ hostvars[item].host_suffix }}_app.pem"
+    csr_path: "{{ base.awx_tmp_dir }}{{ hostvars[item].host_suffix }}_app.csr"
+    ownca_path: "{{ base.awx_tmp_dir }}CA.pem"
+    ownca_privatekey_path: "{{ base.awx_tmp_dir }}CA_key.pem"
+    provider: ownca
+  with_items:
+    - "{{ groups['all'] }}"
+  when: "item not in groups['universal_forwarder'] and item not in groups['universal_forwarder_windows']"
+
+- name: sign the CSR for forwarder App
+  openssl_certificate:
+    path: "{{ base.awx_tmp_dir }}forwarder_app.pem"
+    csr_path: "{{ base.awx_tmp_dir }}forwarder_app.csr"
+    ownca_path: "{{ base.awx_tmp_dir }}CA.pem"
+    ownca_privatekey_path: "{{ base.awx_tmp_dir }}CA_key.pem"
+    provider: ownca

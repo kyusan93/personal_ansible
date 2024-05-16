@@ -1,0 +1,5 @@
+---
+
+#- include_tasks: "{{ playbook_dir }}/roles/common/tasks/delete_certificates.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/generate_csr.yml"

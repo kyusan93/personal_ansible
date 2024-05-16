@@ -1,0 +1,83 @@
+<dashboard theme="dark" version="1.1">
+  <label>Threat Intelligence</label>
+  <description>We are looking for evidence that threat intelligence feeds are being downloaded and integrated into Enterprise Security</description>
+  <search id="threat_intel_summary">
+    <query>| stats count 
+| eval intel="cert email file http ip process registry service threat_group user"
+| fields intel
+| makemv intel
+| mvexpand intel
+| join type=outer intel [| inputlookup certificate_intel | eval intel="cert" | stats count by intel threat_key
+| append [| inputlookup email_intel | eval intel="email" | stats count by intel threat_key]
+| append [| inputlookup file_intel | eval intel="file" | stats count by intel threat_key]
+| append [| inputlookup http_intel | eval intel="http" | stats count by intel threat_key]
+| append [| inputlookup ip_intel | eval intel="ip" | stats count by intel threat_key]
+| append [| inputlookup process_intel | eval intel="process" | stats count by intel threat_key]
+| append [| inputlookup registry_intel | eval intel="registry" | stats count by intel threat_key]
+| append [| inputlookup service_intel | eval intel="service" | stats count by intel threat_key]
+| append [| inputlookup threat_group_intel | eval intel="threat_group" | stats count by intel threat_key]
+| append [| inputlookup user_intel | eval intel="user" | stats count by intel threat_key]]
+| fillnull value=0 count</query>
+    <progress>
+      <condition match="'job.resultCount'== 0">
+        <set token="show_intel_html">1</set>
+      </condition>
+      <condition>
+        <unset token="show_intel_html"></unset>
+      </condition>
+    </progress>
+  </search>
+  <row>
+    <panel depends="$show_intel_html$">
+      <title>Threat Intelligence Type Summary</title>
+      <html>No threat intel data</html>
+    </panel>
+    <panel rejects="$show_intel_html$">
+      <title>Threat Intelligence Type Summary - Intel Type</title>
+      <chart>
+        <search base="threat_intel_summary">
+          <query>| stats sum(count) AS total by intel</query>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel depends="$show_intel_key_html$">
+      <title>Threat Intelligence Type Summary - Threat Key</title>
+      <html>No threat intel data</html>
+    </panel>
+    <panel rejects="$show_intel_key_html$">
+      <title>Threat Intelligence Source Summary</title>
+      <chart>
+        <search base="threat_intel_summary">
+          <query>| stats sum(count) AS total by threat_key</query>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_intel_key_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_intel_key_html"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Threat Intelligence Download Summary</title>
+      <table>
+        <search id="ti">
+          <query>| rest splunk_server=local count=0 /services/data/inputs/threatlist | search disabled="0" | where NOT match(title,"^local_") | rename title as stanza | table stanza,disabled,type,description,url,weight | join type=outer stanza [| rest splunk_server=local count=0 /services/admin/inputstatus/ModularInputs%3Amodular%20input%20commands | transpose | rex field=column "\(threatlist:\/\/(?&lt;stanza&gt;[^\)]+)" | search stanza=* | eval _time=strptime('row 1',"%Y-%m-%dT%H:%M:%S%z") | eval exit_status=if(column LIKE "%exit status description",replace('row 1',"exited\s+with\s+code\s+(\d+)","\1"),null()) | eventstats first(exit_status) as exit_status by stanza | stats first(exit_status) as exit_status,min(_time) as firstTime,max(_time) as lastTime by stanza | eval run_duration=round(lastTime-firstTime,1)] | join type=outer stanza [search index=_internal sourcetype=threatintel:download file="threatlist.py:download_*" earliest=-48h@h latest=now | stats latest(status) as download_status by stanza] | rename lastTime as _time | table _time stanza disabled type url weight exit_status download_status run_duration</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+</dashboard>

@@ -1,0 +1,8 @@
+---
+
+# Setup Rsyslog
+- name: Setup Rsyslog
+  hosts: "{{ servers | default('rsyslog') }}"
+  order: sorted
+  roles:
+    - { role: rsyslog, tags: rsyslog }

@@ -1,0 +1,6 @@
+
+# Install and Setup Splunk Enterprise Security
+- name: Install and setup splunk es
+  hosts: search_head,deployer
+  roles:
+    - { role: premium_install_es, tags: premium_install_es }

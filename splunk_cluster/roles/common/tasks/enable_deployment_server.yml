@@ -1,0 +1,13 @@
+---
+
+- name: Define outputs serverClass
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/serverclass.conf"
+    section: "serverClass:empty"
+    option: whitelist.0
+    value: "*"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+  when: not serverclass_conf.stat.exists

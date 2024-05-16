@@ -1,0 +1,29 @@
+---
+
+- name: Configure web.conf
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/web.conf"
+    section: "{{ item.section }}"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: 0644
+  with_items:
+    - {section: "settings", key: "enableSplunkWebSSL", value: "true"}
+    - {section: "settings", key: "serverCert", value: "etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"}
+    - {section: "settings", key: "privKeyPath", value: "etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"}
+    - {section: "settings", key: "sslVersions", value: "tls1.2"}
+    - {section: "settings", key: "cipherSuite", value: "{{ splunk.ssl.cipherSuite }}"}
+    - {section: "settings", key: "ecdhCurves", value: "{{ splunk.ssl.ecdhCurves }}"}
+    - {section: "settings", key: "tools.sessions.timeout", value: "{{ splunk.web.session_timeout }}"}
+    - {section: "settings", key: "ui_inactivity_timeout", value: "{{ splunk.web.inactivity_timeout }}"}
+    - {section: "settings", key: "httpport", value: "{{ splunk.ports.web }}"}
+    - {section: "settings", key: "login_content", value: "{{ splunk.web.login_banner }}"}
+  register: web_configured
+
+# Restart only when Splunk is running and when any of the above have changed
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/restart_splunk.yml"
+  when: web_configured is changed

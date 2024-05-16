@@ -1,0 +1,4 @@
+---
+
+- name: Configure heavy forwarder
+  import_tasks: configure_heavy_forwarder.yml

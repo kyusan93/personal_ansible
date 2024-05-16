@@ -1,0 +1,4 @@
+---
+
+- name: Configure search head
+  import_tasks: configure_search_head.yml

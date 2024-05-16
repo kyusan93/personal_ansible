@@ -1,0 +1,6 @@
+Hostname, Server Type, Pre Patch Security Patch List, Pre Patch Health Check, Has Pending Updates, Packages Updated, Has Kernel Patch, Splunk Services Stopped, Rebooted, Post Patch Health Check, Post Patch Security Patch List
+{% for item in flat_vars %}
+"{{ item['inventory_hostname'] | default("") | replace('"','""')}}","{{ item['splunk_server_type'] | default("") | replace('"','""')}}","{{ item['pre_patch_file_content']['content'] | b64decode| replace('"','""')}}","{{ item['pre_patch_health_check'] | default("") | replace('"','""')}}","{{ item['has_pending_updates'] | default("") | replace('"','""')}}","{{ item['yum_updates']['results'] | default([]) | join('\n') | replace('"','""')}}","{{ item['has_kernel_updates'] | default("") | replace('"','""')}}","{{ item['stop_splunk_services'] | default("") | replace('"','""')}}","{{ item['reboot_server'] | default("") | replace('"','""')}}","{{ item['post_patch_health_check'] | default("") | replace('"','""')}}","{{ item['post_patch_file_content']['content'] | default("") | b64decode| replace('"','""')}}"
+{% endfor %}
+
+

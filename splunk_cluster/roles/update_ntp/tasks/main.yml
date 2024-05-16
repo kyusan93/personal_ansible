@@ -1,0 +1,7 @@
+---
+
+- name: Restart chronyd
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: chronyd

@@ -1,0 +1,7 @@
+---
+
+- name: Setup base config on Splunk servers
+  hosts: expansion_*
+  max_fail_percentage: 0
+  roles:
+    - { role: base_splunk, tags: base_splunk }

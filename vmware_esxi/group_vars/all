@@ -1,0 +1,12 @@
+vsphere:
+  hostname: 192.168.1.5
+  username: "administrator@vsphere.local"
+  password: "P@ssw0rd"
+  
+  datacenter: "InternalLAB"
+  folder: "/InternalLAB/vm/Security (12)"
+  template: "JG_RHEL_BASE"
+
+#  snapshot_name: "SplunkInstalledSSLonServer"
+  snapshot_name: "Initial"
+#  snapshot_name: "SplunkInstalled"

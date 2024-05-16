@@ -1,0 +1,93 @@
+---
+all:
+ children:
+  search_head:
+    hosts:
+      #site 1 searchhead
+      192.168.56.111:
+        host_suffix: "splk-sh11"
+        host_site: '1'
+      192.168.56.112:
+        host_suffix: "splk-sh12"
+        host_site: '1'
+      #site 2 searchhead
+      192.168.56.211:
+        host_suffix: "splk-sh21"
+        host_site: '2'
+
+  indexer:
+    hosts:
+      #site 1 indexer
+      192.168.56.121:
+        host_suffix: "splk-idx11"
+        host_site: '1'
+      192.168.56.122:
+        host_suffix: "splk-idx12"
+        host_site: '1'
+      #site 2 indexer
+      192.168.56.221:
+        host_suffix: "splk-idx21"
+        host_site: '2'
+      192.168.56.222:
+        host_suffix: "splk-idx22"
+        host_site: '2'
+
+  license_master:
+    hosts:
+      192.168.56.101:
+        host_suffix: "splk-mgt11"
+        host_site: '1'
+
+  monitoring_console:
+    hosts:
+      192.168.56.101:
+        host_suffix: "splk-mgt11"
+        host_site: '1'
+
+  cluster_master:
+    hosts:
+      192.168.56.101:
+        host_suffix: "splk-mgt11"
+        host_site: '1'
+        available_sites:
+          - 'site1'
+          - 'site2'
+      192.168.56.102:
+        host_suffix: "splk-mgt21"
+        host_site: '2'
+        available_sites:
+          - 'site1'
+          - 'site2'
+
+  deployment_server:
+    hosts:
+      192.168.56.101:
+        host_suffix: "splk-mgt11"
+        host_site: '1'
+
+  deployer:
+    hosts:
+      192.168.56.101:
+        host_suffix: "splk-mgt11"
+        host_site: '1'
+        
+  heavy_forwarder:
+    hosts:
+      192.168.56.131:
+        host_suffix: "splk-hf11"
+        host_site: '1'
+      192.168.56.132:
+        host_suffix: "splk-hf12"
+        host_site: '1'
+        
+  keepalive:
+    hosts:
+      192.168.56.131:
+        host_suffix: "splk-hf11"
+        host_site: '1'
+        keepalived_role: 'MASTER'
+      192.168.56.132:
+        host_suffix: "splk-hf12"
+        host_site: '1'
+        keepalived_role: 'BACKUP'
+

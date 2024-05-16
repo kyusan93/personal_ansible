@@ -1,0 +1,6 @@
+---
+
+- name: Setup keepalived HA
+  hosts: "{{ servers | default('keepalive') }}"
+  roles:
+    - { role: "additional_keepalive", tags: "additional_keepalive" }

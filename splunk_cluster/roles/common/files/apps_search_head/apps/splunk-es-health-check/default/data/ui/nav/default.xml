@@ -1,0 +1,19 @@
+<nav search_view="search">
+  <view name="core_prep" default='true'/>
+  <view name="core_overview" />
+  <view name="forwarders_overview" />
+  <view name="search_overview" />
+  <view name="data_overview" />
+  <collection label="Data">
+    <view name="es_datamodel_info" />
+    <view name="es_datamodel_compliance" />
+    <view name="es_data_model_missing" />
+  </collection>
+  <collection label="Enterprise Security">
+    <view name="es_assets_and_identities" />
+    <view name="es_correlation_search_review" />
+    <view name="es_incident_management" />
+    <view name="es_threat_intelligence" />
+  </collection>
+  <view name="search" />
+</nav>

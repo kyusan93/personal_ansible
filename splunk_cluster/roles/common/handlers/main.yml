@@ -1,0 +1,10 @@
+---
+
+- name: reload systemctl daemon
+  include_tasks: ../handlers/restart-systemctl_daemon.yml
+
+- name: restart_splunk
+  include_tasks: ../handlers/restart-splunkd.yml
+
+- name: saveiptables
+  include_tasks: ../handlers/saveiptables.yml

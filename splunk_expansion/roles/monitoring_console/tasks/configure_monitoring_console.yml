@@ -1,0 +1,16 @@
+---
+
+#- include_tasks: "{{ playbook_dir }}/roles/common/tasks/create_local_outputs.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/set_as_license_slave.yml"
+  when: 'ansible_host not in groups["license_master"]'
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/dmc_cleanup.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/add_search_peers.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/dmc_create_dmc_peers.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/dmc_add_dmc_peers.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/restart_splunk.yml"

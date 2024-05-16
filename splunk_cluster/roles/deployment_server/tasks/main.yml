@@ -1,0 +1,4 @@
+---
+
+- name: Configure deployment server
+  import_tasks: configure_deployment_server.yml

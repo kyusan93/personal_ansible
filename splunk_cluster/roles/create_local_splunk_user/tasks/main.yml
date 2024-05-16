@@ -1,0 +1,4 @@
+---
+
+- name: Create Local Splunk User
+  import_tasks: create_local_splunk_user.yml

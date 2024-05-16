@@ -1,0 +1,64 @@
+---
+# 2. Account Management
+
+# 2.1 Ensure admin account is secured
+
+- name: "2.1 Run the below search string to verify that admin account is secured"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  shell: "{{ splunk.home }}/bin/splunk {{ item }} "
+  with_items:
+   - logout
+   - list user -auth {{ splunk.admin.username }}:changeme
+  register: secureAcct
+  ignore_errors: true
+  when:
+    - "'search_head' in group_names"
+  
+- name: "[Results] 2.1 Run the below search string to verify that admin account is secured"
+  debug:
+    msg: "{{ secureAcct.results | map(attribute='stderr') | join('') }} with password changeme at {{ now(fmt='%Y-%m-%d %H:%M:%S') }}"
+  ignore_errors: true
+  when:
+    - "'search_head' in group_names"
+
+##########################################################################################################################################################################
+
+# 2.3 Ensure users are assigned the correct roles
+
+- name: "2.3 Run the below search string to verify that users are assigned the correct roles"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  shell: " cat {{ splunk.home }}/etc/system/local/authentication.conf "
+  register: roleAssign
+  ignore_errors: true
+  when:
+    - "'search_head' in group_names"
+  
+- name: "[Results] 2.3 Run the below search string to verify that users are assigned the correct roles"
+  debug:
+    msg: "{{ roleAssign.stdout.split('\n') }}"
+  ignore_errors: true
+  when:
+    - "'search_head' in group_names"
+
+##########################################################################################################################################################################
+
+# 2.4 Local accounts must be named accounts (N.A. for breakglass / service accounts.)
+
+
+- name: "2.4 Run the below search string to ensure local accounts are named accounts"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  shell: "{{ splunk.home }}/bin/splunk list user -auth {{ splunk.admin.username }}:{{ splunk.admin.password }}"
+  register: accountNamed
+  ignore_errors: true
+  when:
+    - "'search_head' in group_names"
+  
+- name: "[Results] 2.4 Run the below search string to ensure local accounts are named accounts"
+  debug:
+    msg: "{{ accountNamed.stdout.replace('\t', '').split('\n') }}"
+  ignore_errors: true
+  when:
+    - "'search_head' in group_names"

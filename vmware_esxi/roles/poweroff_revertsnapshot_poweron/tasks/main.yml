@@ -1,0 +1,52 @@
+---
+#- name: Get information about folders
+#  community.vmware.vmware_folder_info:
+#    hostname: "{{ vsphere.hostname }}"
+#    username: "{{ vsphere.username }}"
+#    password: "{{ vsphere.password }}"
+#    datacenter: "{{ vsphere.datacenter }}"
+#    validate_certs: false
+#  delegate_to: localhost
+#  register: vcenter_folder_info
+#
+#- name: DEBUG - Get information about folders
+#  debug:
+#    msg: "{{ vcenter_folder_info }}"
+
+- name: Set powerstate of a virtual machine to poweroff by using name
+  community.vmware.vmware_guest:
+    hostname: "{{ vsphere.hostname }}"
+    username: "{{ vsphere.username }}"
+    password: "{{ vsphere.password }}"
+    name: "{{ item }}"
+    state: poweredoff
+    validate_certs: false
+  delegate_to: localhost
+  loop: "{{ groups['all'] }}"
+
+- name: Revert to a snapshot
+  community.vmware.vmware_guest_snapshot:
+    hostname: "{{ vsphere.hostname }}"
+    username: "{{ vsphere.username }}"
+    password: "{{ vsphere.password }}"
+    name: "{{ item }}"
+    datacenter: "{{ vsphere.datacenter }}"
+    folder: "{{ vsphere.folder }}"
+    state: revert
+    snapshot_name: "{{ vsphere.snapshot_name }}"
+    validate_certs: false
+  delegate_to: localhost
+  loop: "{{ groups['all'] }}"
+
+- name: Set powerstate of a virtual machine to poweron by using name
+  community.vmware.vmware_guest:
+    hostname: "{{ vsphere.hostname }}"
+    username: "{{ vsphere.username }}"
+    password: "{{ vsphere.password }}"
+    name: "{{ item }}"
+    state: poweredon
+    validate_certs: false
+  delegate_to: localhost
+  loop: "{{ groups['all'] }}"
+
+

@@ -1,0 +1,80 @@
+---
+
+- name: Pre-requisite check for app certificates in ansible controller
+  find:
+    path: "{{ item }}"
+    file_type: file
+    hidden : true
+  register: app_cert_check
+  with_fileglob:
+    - "{{ playbook_dir }}/roles/common/files/ssl/{{ splunk.ssl.cacert_name }}.pem"
+    - "{{ playbook_dir }}/roles/common/files/ssl/{{ host_suffix }}_app_cert.pem"
+  delegate_to: 127.0.0.1
+
+- name: Pre-requisite check for web certificates in ansible controller
+  become: true
+  find:
+    path: "{{ item }}"
+    file_type: file
+    hidden : true
+  register: web_cert_check
+  with_fileglob:
+    - "{{ playbook_dir }}/roles/common/files/ssl/{{ host_suffix }}_web_key.pem"
+  delegate_to: 127.0.0.1
+  when: 
+    - "'expansion_indexer' not in group_names"
+
+- name: Check for Splunk certiticates directory exists in server
+  become: true
+  stat:
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/"
+  register: splunk_cert_dir_exist
+
+- name: Creates certificates directory
+  become: true
+  file:
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/"
+    state: directory
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: 0700
+    recurse: yes
+  when: not splunk_cert_dir_exist.stat.exists
+  
+- name: Check if certificate directory is empty
+  become: true
+  find:
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}"
+    file_type: file
+    hidden : true
+  register: check_file
+
+- name: Clean certificate directory if not empty
+  become: true 
+  file:
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}"
+    state: absent
+  with_items: "{{ check_file['files'] }}"
+  
+- name: Move certificates to directory
+  become: true
+  copy:
+    src: "{{ item }}"
+    dest: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: 0700
+  with_fileglob:
+    - "{{ playbook_dir }}/roles/common/files/ssl/{{ host_suffix }}_web_key.pem"
+    - "{{ playbook_dir }}/roles/common/files/ssl/{{ splunk.ssl.cacert_name }}.pem"
+    - "{{ playbook_dir }}/roles/common/files/ssl/{{ host_suffix }}_app_cert.pem"
+    - "{{ playbook_dir }}/roles/common/files/ssl/{{ host_suffix }}_web_cert.pem"
+
+- name: Decrypt server.key
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  command: "openssl rsa -in {{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_key.pem -out {{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key -passin pass:{{ splunk.ssl.sslPassword }}"
+  when: 
+    - "'universal_forwarder' not in group_names"
+    - "'expansion_indexer' not in group_names"
+

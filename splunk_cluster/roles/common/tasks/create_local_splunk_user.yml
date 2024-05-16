@@ -1,0 +1,8 @@
+---
+
+- name: Create local splunk user account
+  become: true
+  become_user: splunk
+  shell: 
+    cmd: "/opt/splunk/bin/splunk add user {{splunk_id}} -role Admin -password {{splunk_password}} -auth {{ splunk.admin.username}}:{{ splunk.admin.password }}"
+    

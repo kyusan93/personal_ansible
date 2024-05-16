@@ -1,0 +1,12 @@
+---
+
+panorama:
+ username: "admin"
+ password: "P@ssw0rd"
+
+fw:
+ username: "admin"
+ password: "P@ssw0rd"
+ config_path: "/tmp/fwconfig/"
+ software_path: "/tmp/fwsoftware/"
+ content_path: "/tmp/fwcontent/"

@@ -1,0 +1,13 @@
+---
+#Configure indexer configuration
+- name: Setup indexer
+  hosts: expansion_indexer
+  order: sorted
+  max_fail_percentage: 0
+  roles:
+    - { role: indexer, tags: indexer }
+
+- name: Expansion Indexer Verification
+  hosts: all
+  roles:
+    - { role: post_expansion, tags: post_expansion }

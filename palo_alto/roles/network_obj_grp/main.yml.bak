@@ -1,0 +1,19 @@
+---
+- name: Generate api key
+  uri: 
+    url: "https://{{ panorama_host }}/api/?type=keygen&user={{ panorama _username }}&password={{ panorama_password }}"
+    method: GET
+    register: api_key
+
+- name: Show api key
+  debug:
+    msg: "{{ api_key | regex_findall('<key>(\w+)</key>') }}"
+
+- name: Get all devices
+  uri:
+    url: "https://{{ panorama_host }}/api/?key={{ api_key }}&type=op&cmd=<show><devices><all></all></devices></show>"
+    register: all_devices
+
+- name: Show all devices
+  debug:
+    msg: "test: {{ all_devices }}"

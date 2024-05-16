@@ -1,0 +1,9 @@
+---
+
+- name: Install Splunk package
+  become: true
+  yum: 
+    name: "{{ base.awx_tmp_dir }}{{ splunk.package_file }}"
+    disable_gpg_check: True
+  when: not splunk_exist.stat.exists
+

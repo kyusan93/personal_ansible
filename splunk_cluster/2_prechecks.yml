@@ -1,0 +1,8 @@
+---
+
+# Prechecks - to stop playbook if fail
+- name: Prechecks
+  hosts: all
+  gather_facts: true
+  roles:
+    - { role: precheck, tags: precheck }

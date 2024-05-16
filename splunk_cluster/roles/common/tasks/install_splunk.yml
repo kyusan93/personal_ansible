@@ -1,0 +1,10 @@
+---
+
+- name: Install Splunk package
+  become: true
+  yum: 
+    name: "/tmp/{{ splunk.package_file }}"
+    disable_gpg_check: true
+    cacheonly: true
+  when: not splunk_exist.stat.exists
+

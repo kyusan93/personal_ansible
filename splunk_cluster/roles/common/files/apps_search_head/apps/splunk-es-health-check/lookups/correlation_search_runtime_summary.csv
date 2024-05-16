@@ -1,0 +1,154 @@
+title,"min_runtime","avg_runtime","max_runtime","execution_count"
+"Bucket Copy Trigger","0.6","0.7","5.9",391
+"DA-ESS-ThreatIntelligence_Threat_Intelligence Data Model Acceleration","0.3","0.3","0.4",2023
+"DA-ESS-ThreatIntelligence_Threat_Intelligence Data Model Summary Director","0.2","0.3","0.3",721
+"DMC Asset - Build Standalone Asset Table","0.1","0.1","0.3",26
+"RapidDiag Telemetry: CLI access statistics","0.4","0.5","0.7",16
+"RapidDiag Telemetry: Execution statistics","0.4","0.5","0.7",16
+"RapidDiag Telemetry: UI access statistics","0.2","0.3","0.4",16
+"SA-NetworkProtection_Domain_Analysis Data Model Acceleration","0.3","0.4","0.5",2023
+"SA-NetworkProtection_Domain_Analysis Data Model Summary Director","0.3","0.3","0.4",746
+"SA-ThreatIntelligence_Incident_Management Data Model Acceleration","0.3","0.3","0.4",2023
+"SA-ThreatIntelligence_Incident_Management Data Model Summary Director","0.2","0.2","0.3",722
+"SA-ThreatIntelligence_Risk Data Model Acceleration","0.4","0.4","0.6",2023
+"SA-ThreatIntelligence_Risk Data Model Summary Director","0.3","0.3","0.5",700
+"Splunk_ML_Toolkit - ML-SPL - Sourcetype Inference","0.9","0.9","1.0",7
+"Splunk_ML_Toolkit - ML-SPL - Telemetry Gen","0.7","0.7","0.7",7
+"Splunk_SA_CIM_Authentication Data Model Acceleration","0.6","0.7","0.9",2023
+"Splunk_SA_CIM_Authentication Data Model Summary Director","0.4","0.4","0.7",738
+"Splunk_SA_CIM_Certificates Data Model Acceleration","0.1","0.2","0.4",2023
+"Splunk_SA_CIM_Certificates Data Model Summary Director","0.1","0.2","0.3",835
+"Splunk_SA_CIM_Change Data Model Acceleration","0.3","0.4","0.6",2021
+"Splunk_SA_CIM_Change Data Model Summary Director","0.3","0.4","0.5",715
+"Splunk_SA_CIM_Email Data Model Acceleration","0.2","0.2","0.5",2023
+"Splunk_SA_CIM_Email Data Model Summary Director","0.2","0.2","0.4",855
+"Splunk_SA_CIM_Endpoint Data Model Acceleration","0.1","0.2","0.5",2023
+"Splunk_SA_CIM_Endpoint Data Model Summary Director","0.1","0.2","0.3",746
+"Splunk_SA_CIM_Endpoint.Filesystem Data Model Acceleration","0.4","0.6","5.6",2023
+"Splunk_SA_CIM_Endpoint.Filesystem Data Model Summary Director","0.3","0.4","0.6",846
+"Splunk_SA_CIM_Endpoint.Processes Data Model Acceleration","0.1","0.2","0.3",2023
+"Splunk_SA_CIM_Endpoint.Processes Data Model Summary Director","0.1","0.2","0.3",748
+"Splunk_SA_CIM_Endpoint.Registry Data Model Acceleration","0.4","0.5","0.7",2023
+"Splunk_SA_CIM_Endpoint.Registry Data Model Summary Director","0.2","0.3","0.4",744
+"Splunk_SA_CIM_Endpoint.Services Data Model Acceleration","0.1","0.2","0.3",2023
+"Splunk_SA_CIM_Endpoint.Services Data Model Summary Director","0.1","0.2","0.3",750
+"Splunk_SA_CIM_Intrusion_Detection Data Model Acceleration","0.1","0.2","1.2",2023
+"Splunk_SA_CIM_Intrusion_Detection Data Model Summary Director","0.1","0.2","0.3",787
+"Splunk_SA_CIM_Malware Data Model Acceleration","0.1","0.2","0.3",2023
+"Splunk_SA_CIM_Malware Data Model Summary Director","0.1","0.2","0.3",798
+"Splunk_SA_CIM_Network_Resolution Data Model Acceleration","0.2","0.2","0.3",2021
+"Splunk_SA_CIM_Network_Resolution Data Model Summary Director","0.1","0.2","0.3",759
+"Splunk_SA_CIM_Network_Sessions Data Model Acceleration","0.1","0.2","0.3",2021
+"Splunk_SA_CIM_Network_Sessions Data Model Summary Director","0.1","0.2","0.3",744
+"Splunk_SA_CIM_Network_Traffic Data Model Acceleration","0.2","0.3","0.4",2023
+"Splunk_SA_CIM_Network_Traffic Data Model Summary Director","0.2","0.2","0.3",754
+"Splunk_SA_CIM_Performance Data Model Acceleration","0.2","0.3","0.5",2023
+"Splunk_SA_CIM_Performance Data Model Summary Director","0.2","0.3","0.4",744
+"Splunk_SA_CIM_Splunk_Audit Data Model Acceleration","0.6","1.5","5.9",2023
+"Splunk_SA_CIM_Splunk_Audit Data Model Summary Director","0.3","0.4","0.6",721
+"Splunk_SA_CIM_Splunk_Audit.Modular_Actions Data Model Acceleration","0.3","0.4","0.6",2023
+"Splunk_SA_CIM_Splunk_Audit.Modular_Actions Data Model Summary Director","0.2","0.3","0.4",731
+"Splunk_SA_CIM_Splunk_Audit.View_Activity Data Model Acceleration","0.5","1.2","5.6",2023
+"Splunk_SA_CIM_Splunk_Audit.View_Activity Data Model Summary Director","0.2","0.3","0.5",731
+"Splunk_SA_CIM_Ticket_Management Data Model Acceleration","0.1","0.2","0.5",2023
+"Splunk_SA_CIM_Ticket_Management Data Model Summary Director","0.1","0.2","0.3",744
+"Splunk_SA_CIM_Updates Data Model Acceleration","0.1","0.2","0.3",2021
+"Splunk_SA_CIM_Updates Data Model Summary Director","0.1","0.2","0.3",794
+"Splunk_SA_CIM_Vulnerabilities Data Model Acceleration","0.1","0.2","0.3",2023
+"Splunk_SA_CIM_Vulnerabilities Data Model Summary Director","0.1","0.2","0.3",755
+"Splunk_SA_CIM_Web Data Model Acceleration","0.1","0.2","0.4",2023
+"Splunk_SA_CIM_Web Data Model Summary Director","0.1","0.2","0.4",945
+"Threat - ICANN Top Level Domain - Lookup Gen",,,,15
+"Threat - Mitre Attack - Lookup Gen",,,,19
+"Threat - Mozilla Public Suffix - Lookup Gen",,,,15
+"Threat - Threat Intelligence By CIDR - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Certificate Common Name - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Certificate Common Name Wildcard - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Certificate Organization - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Certificate Organization Wildcard - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Certificate Serial - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Certificate Unit - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Certificate Unit Wildcard - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Domain - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Email - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Email Subject - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Email Subject Wildcard - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Email Wildcard - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By File Hash - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By File Name - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By File Name Wildcard - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By HTTP User Agent - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By HTTP User Agent Wildcard - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Process - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Process Hash - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Process Wildcard - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Registry Path - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Registry Path Wildcard - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Registry Value Name - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Registry Value Name Wildcard - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Registry Value Text - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Registry Value Text Wildcard - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Service - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By Service Wildcard - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By System - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By URL - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By URL Wildcard - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By User - Lookup Gen",,,,1020
+"Threat - Threat Intelligence By User Wildcard - Lookup Gen",,,,1020
+"\","4.6","6.5","9.3",6
+"correlation_search_base","3.0","3.0","3.0",1
+"instrumentation.usage.admissionRules.report","0.3","0.5","0.7",4
+"instrumentation.usage.authMethod.config","0.1","0.1","0.2",5
+"instrumentation.usage.healthMonitor.report","0.1","0.1","0.1",4
+"instrumentation.usage.passwordPolicy.config","0.1","0.2","0.4",5
+"instrumentation.usage.smartStore.config","0.5","0.6","1.1",5
+"instrumentation.usage.workloadManagement.report","0.2","0.3","0.5",4
+"risk_attrib","0.1","0.1","0.1",1
+search1,"0.0","0.5","3.3",52
+search10,"0.1","12.7","32.3",15
+search11,"0.1","1.5","3.3",12
+search12,"0.0","16.3","35.8",12
+search13,"0.1","1.9","3.3",9
+search14,"0.0","21.7","36.1",9
+search15,"0.1","0.2","0.3",8
+search16,"0.1","1.0","1.9",8
+search17,"0.1","0.2","0.4",8
+search18,"0.1","1.2","2.0",7
+search19,"0.1","0.1","0.1",2
+search2,"0.0","4.7","35.4",43
+search20,"0.1","0.2","0.3",2
+search21,"0.0","0.0","0.0",1
+search22,"0.1","0.1","0.1",1
+search23,"0.1","0.1","0.1",1
+search24,"0.1","0.1","0.1",1
+search25,"0.1","0.1","0.1",1
+search26,"0.1","0.1","0.1",1
+search27,"0.1","0.1","0.1",1
+search28,"0.1","0.1","0.1",1
+search3,"0.0","0.8","4.4",42
+search4,"0.0","1.2","6.8",38
+search5,"0.0","1.8","7.6",32
+search6,"0.0","23.3","138.8",29
+search7,"0.0","1.6","10.5",26
+search8,"0.1","0.7","3.6",25
+search9,"0.0","0.8","3.2",21
+"threatmatch://certificate_common_name","1.1","1.3","1.5",338
+"threatmatch://certificate_organization","1.1","1.3","1.5",338
+"threatmatch://certificate_serial","0.7","0.9","1.1",337
+"threatmatch://certificate_unit","1.1","1.3","1.4",337
+"threatmatch://dest","1.5","1.7","4.5",336
+"threatmatch://domain","2.1","2.3","2.6",337
+"threatmatch://email","1.4","1.7","1.9",338
+"threatmatch://email_subject","0.7","0.9","1.1",338
+"threatmatch://file_hash","1.5","1.7","2.4",337
+"threatmatch://file_name","1.4","1.6","1.8",337
+"threatmatch://http_user_agent","0.7","0.9","3.4",336
+"threatmatch://process","0.7","0.9","1.1",337
+"threatmatch://process_hash","0.7","0.9","1.1",338
+"threatmatch://registry_path","0.7","0.8","1.1",338
+"threatmatch://registry_value_name","0.7","0.9","1.1",338
+"threatmatch://registry_value_text","0.7","0.9","1.1",337
+"threatmatch://service","0.7","0.8","1.1",337
+"threatmatch://src","1.5","1.8","4.4",336
+"threatmatch://url","1.2","1.3","1.4",337
+"threatmatch://user","1.4","1.7","2.2",338

@@ -1,0 +1,64 @@
+---
+
+- name: create host CSR signing key for all Splunk Web
+  openssl_privatekey:
+    path: "{{ base.awx_tmp_dir }}{{ hostvars[item].host_suffix }}_web_key.pem"
+    passphrase: "{{ splunk.ssl.sslPassword }}"
+    cipher: auto
+  with_items:
+    - "{{ groups['all'] }}"
+  when: "item not in groups['universal_forwarder'] and item not in groups['universal_forwarder_windows']"
+    
+- name: create host CSR signing key for all Splunk App
+  openssl_privatekey:
+    path: "{{ base.awx_tmp_dir }}{{ hostvars[item].host_suffix }}_app_key.pem"
+    passphrase: "{{ splunk.ssl.sslPassword }}"
+    cipher: auto
+  with_items:
+    - "{{ groups['all'] }}"
+  when: "item not in groups['universal_forwarder'] and item not in groups['universal_forwarder_windows']"
+
+- name: create host CSR signing key for forwarder App
+  openssl_privatekey:
+    path: "{{ base.awx_tmp_dir }}forwarder_app_key.pem"
+    passphrase: "{{ splunk.ssl.sslPassword }}"
+    cipher: auto
+
+- name: create the CSR for all splunk Web
+  openssl_csr:
+    path: "{{ base.awx_tmp_dir }}{{ hostvars[item].host_suffix }}_web.csr"
+    privatekey_path: "{{ base.awx_tmp_dir }}{{ hostvars[item].host_suffix }}_web_key.pem"
+    common_name: "{{ hostvars[item].host_suffix }}"
+    subject_alt_name: "DNS:{{ hostvars[item].host_suffix }}.{{ base.fqdn }}"
+    privatekey_passphrase: "{{ splunk.ssl.sslPassword }}"
+    extended_key_usage:
+      - clientAuth
+      - serverAuth
+  with_items:
+    - "{{ groups['all'] }}"
+  when: "item not in groups['universal_forwarder'] and item not in groups['universal_forwarder_windows']"
+
+- name: create the CSR for all splunk App
+  openssl_csr:
+    path: "{{ base.awx_tmp_dir }}{{ hostvars[item].host_suffix }}_app.csr"
+    privatekey_path: "{{ base.awx_tmp_dir }}{{ hostvars[item].host_suffix }}_app_key.pem"
+    common_name: "{{ hostvars[item].host_suffix }}"
+    subject_alt_name: "DNS:{{ hostvars[item].host_suffix }}.{{ base.fqdn }}"
+    privatekey_passphrase: "{{ splunk.ssl.sslPassword }}"
+    extended_key_usage:
+      - clientAuth
+      - serverAuth
+  with_items:
+    - "{{ groups['all'] }}"
+  when: "item not in groups['universal_forwarder'] and item not in groups['universal_forwarder_windows']"
+
+- name: create the CSR for forwarder App
+  openssl_csr:
+    path: "{{ base.awx_tmp_dir }}forwarder_app.csr"
+    privatekey_path: "{{ base.awx_tmp_dir }}forwarder_app_key.pem"
+    common_name: "forwarder"
+    privatekey_passphrase: "{{ splunk.ssl.sslPassword }}"
+    extended_key_usage:
+      - clientAuth
+      - serverAuth
+

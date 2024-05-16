@@ -1,0 +1,30 @@
+<dashboard theme="dark" version="1.1">
+  <label>Splunk Installation Overview</label>
+  <row>
+    <panel>
+      <title>Splunk Versions</title>
+      <table>
+        <search>
+          <query>| rest splunk_server=* /services/server/info 
+| eval cpu_core_count = if(isnotnull(numberOfVirtualCores), numberOfVirtualCores, numberOfCores) 
+| eval physical_memory_GB = round(physicalMemoryMB / 1024, 0) 
+| fields splunk_server server_roles version cpu_core_count physical_memory_GB os_name 
+| eval severity_level = case(cpu_core_count &lt;= 4 OR physical_memory_GB &lt;= 4, 2, cpu_core_count &lt; 12 OR physical_memory_GB &lt; 12, 1, cpu_core_count &gt;= 12 AND physical_memory_GB &gt;= 12, 0, true(), -1) 
+| rename splunk_server AS instance cpu_core_count AS "cpu_core_count (current / recommended)" physical_memory_GB AS "physical_memory_GB (current / recommended)" 
+| fieldformat cpu_core_count (current / recommended) = 'cpu_core_count (current / recommended)'." / 16" 
+| fieldformat physical_memory_GB (current / recommended) = 'physical_memory_GB (current / recommended)'." / 12"</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+</dashboard>

@@ -1,0 +1,131 @@
+<dashboard version="1.1" theme="dark">
+  <label>ES Datamodel Info</label>
+  <row>
+    <panel>
+      <title>Datamodel Acceleration</title>
+      <chart>
+        <search>
+          <query>| rest splunk_server=* /services/datamodel/model | fields acceleration displayName | rex field=acceleration "^\{\"enabled\":(?&lt;accel_status&gt;[^\,]+)\," 
+| stats count by accel_status</query>
+          <earliest>-30m@m</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisX.abbreviation">none</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.abbreviation">none</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.axisY2.abbreviation">none</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart">pie</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.layout.splitSeries.allowIndependentYRanges">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Datamodel Accelerations (True)</title>
+      <table>
+        <search>
+          <query>| rest splunk_server=* /services/datamodel/model | fields acceleration displayName | rex field=acceleration "^\{\"enabled\":(?&lt;accel_status&gt;[^\,]+)\," 
+| table displayName accel_status
+| where accel_status="true"</query>
+          <earliest>-30m@m</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Datamodel Details</title>
+      <table>
+        <search>
+          <query>| rest splunk_server=local /services/data/models 
+| rename eai:acl.app AS app, title AS datamodel, acceleration.cron_schedule as cron
+| where app!="search" 
+| table datamodel app acceleration cron
+| join datamodel type=outer 
+    [| rest splunk_server=local /services/datamodel/model/ 
+    | table description title 
+    | rex field=description "\`(?&lt;cim_macro&gt;cim_[^\`]+)\`" 
+    | table cim_macro title 
+    | join cim_macro 
+        [| rest splunk_server=local /services/data/macros 
+        | where match(title,"cim") 
+        | table title definition 
+        | rename title AS cim_macro, definition AS cim_definition] 
+    | rename title AS datamodel] 
+| join type=outer datamodel 
+    [| rest /services/admin/summarization by_tstats="t" splunk_server=local 
+    | eval datamodel=replace('summary.id',(("DM_" . 'eai:acl.app') . "_"),"") 
+    | table datamodel, "summary.is_inprogress", "summary.size", "summary.latest_time", "summary.complete", "summary.time_range", "summary.earliest_time", "summary.last_sid" 
+    | rename "summary.id" as summary_id, "summary.time_range" as retention, "summary.earliest_time" as earliest, "summary.latest_time" as latest, "eai:digest" as digest 
+    | rename "summary.*" as "*", "eai:acl.*" as "*", "eai:digest" as digest 
+    | eval datamodel=if(datamodel="Endpoint.Filesystem","Endpoint",datamodel)] 
+| join type=outer last_sid 
+    [| rest /services/search/jobs reportsearch="summarize*" splunk_server=local 
+    | rename sid as last_sid 
+    | fields + last_sid, runDuration] 
+| eval size_mb=round((size / 1048576),1), "retention(days)"=if((retention == 0),"unlimited",round((retention / 86400),1)), complete_perc=round((complete * 100),1), "runDuration(s)"=round(runDuration,1) 
+| sort 100 + datamodel 
+| eval a=case(latest&gt;0,latest) 
+| eval lag_mins=round((now()-a)/60,1) 
+| table datamodel cron search_use app "retention(days)" earliest latest is_inprogress complete_perc lag_mins size_mb "runDuration(s)" last_error acceleration  cim_*
+| eval acceleration_issue=case(acceleration=1 AND complete_perc&lt;95.0,"Acceleration is enabled but not complete.") 
+| eval acceleration_disabled=case(search_use&gt;0 AND acceleration=0,"Model is used but Acceleration is disabled.") 
+| eval acceleration_size=case(search_use&gt;0 AND size_mb&lt;10,"Model is used but Acceleration size is small.") 
+| eval acceleration_lag=case(search_use&gt;0 AND lag_mins&gt;900,"Model is used by Acceleration/Data ingestion may be lagging.") 
+| eval cim_macro_issue=case(search_use&gt;0 AND cim_definition="()","Model is used but CIM Macros have not been defined.") 
+| eval dm_error=case(last_error!="","Datamodel error recorded.") 
+| eval issues_list=mvappend(acceleration_issue,acceleration_disabled,acceleration_lag,acceleration_size,cim_macro_issue,dm_error) 
+| eval issues_list=if(isnull(issues_list),"None",issues_list) 
+| where NOT (datamodel="Splunk_Audit" OR datamodel="Splunk_CIM_Validation") 
+| convert ctime(earliest) ctime(latest)
+| table datamodel issues_list app cron cim_macro cim_definition acceleration "retention(days)" earliest latest is_inprogress complete_perc lag_mins size_mb "runDurations(s)" last_error 
+| rename complete_perc AS "complete(%)" size_mb AS "size(MB)"</query>
+          <earliest>-30m@m</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+</dashboard>

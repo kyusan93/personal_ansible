@@ -1,0 +1,13 @@
+---
+
+- name: Disable webui
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/web.conf"
+    section: "settings"
+    option: "startwebserver"
+    value: "0"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+

@@ -1,0 +1,7 @@
+---
+
+# Install Nxlog on Windows
+- name: Install Nxlog on Windows
+  hosts: all
+  roles:
+    - { role: install_nxlog_windows, tags: install_nxlog_windows }

@@ -1,0 +1,9 @@
+---
+
+- name: Check cluster peer status for expansion indexer
+  shell: "{{ splunk.home }}/bin/splunk list cluster-config -auth {{ splunk.admin.username }}:{{ splunk.admin.password }} | grep mode:disabled"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  register: cm_clustering_enabled
+  failed_when: "cm_clustering_enabled.rc > 1"
+  changed_when: "cm_clustering_enabled.rc == 0"

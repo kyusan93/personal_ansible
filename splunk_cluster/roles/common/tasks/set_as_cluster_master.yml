@@ -1,0 +1,7 @@
+---
+
+- name: Configure cluster master
+  command: "{{ splunk.home }}/bin/splunk edit cluster-config -mode master -multisite true -site site{{ host_site | default('1') }} -available_sites {{ available_sites | map('to_json') | join(',') | regex_replace('\"') }} -site_replication_factor {{ splunk.cluster.site_replication_factor }} -replication_factor {{ splunk.cluster.replication_factor }} -site_search_factor {{ splunk.cluster.site_search_factor }} -search_factor {{ splunk.cluster.search_factor }} -secret {{ splunk.pass4SymmKey }} -cluster_label {{ splunk.cluster.label }} -auth {{ splunk.admin.username }}:{{ splunk.admin.password }}"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+

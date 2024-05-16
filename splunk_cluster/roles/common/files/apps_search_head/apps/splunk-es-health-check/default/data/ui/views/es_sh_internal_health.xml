@@ -1,0 +1,94 @@
+<dashboard version="1.1" theme="dark">
+  <label>ES SH Internal Health</label>
+  <row>
+    <panel>
+      <title>Apps Installed - ES SH</title>
+      <table>
+        <search>
+          <query>| rest splunk_server=* /services/apps/local
+| search disabled=0 core=0 title!=100* title!=075*
+| stats values(label) values(version) values(description) values(splunk_server) dc(splunk_server) by title</query>
+          <earliest>-30m@m</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">true</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Index &amp; Sourcetype Coverage</title>
+      <table>
+        <search>
+          <query>| tstats count WHERE index=* BY index sourcetype 
+| sort - count 
+| eventstats sum(count) AS total by index 
+| stats sum(count) AS sum_count dc(sourcetype) AS sourcetype_count list(sourcetype) AS sourcetype list(count) AS count list(eval(round(((count/total)*100),2)."%")) AS percent_coverage by index 
+| sort - sum_count</query>
+          <earliest>-30m@m</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">true</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Data Balancing Across Indexers</title>
+      <table>
+        <search>
+          <query>| tstats count as "Total Events in Index" dc(host) as "Total Unique Hosts in Indexer" where index=* by index splunk_server
+| delta "Total Events in Index"</query>
+          <earliest>-30m@m</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">true</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Forwarders Balanced Across Indexers</title>
+      <table>
+        <search>
+          <query>index=_internal sourcetype=splunkd log_level=INFO TcpOutputProc Connected 
+| stats dc(idx) AS idx_count values(idx) by host 
+| eventstats mode(idx_count) AS mode_idx 
+| eval Status=if(mode_idx!=idx_count, "severe", "low") 
+| eval indexer_deviation=idx_count-mode_idx 
+| fields - mode* 
+| sort 0 Status
+| eval forwardersBalanced=if(idx_count&lt;9,"No","Yes")
+| sort forwardersBalanced</query>
+          <earliest>-60m@m</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">true</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+</dashboard>

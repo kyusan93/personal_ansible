@@ -1,0 +1,6 @@
+---
+
+- name: Install Splunk
+  import_tasks: install_splunk.yml
+
+

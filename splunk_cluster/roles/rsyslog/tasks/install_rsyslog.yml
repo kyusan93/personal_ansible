@@ -1,0 +1,27 @@
+---
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/check_splunk_installed.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/copy_splunk_package_file.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/install_splunk.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/check_splunkd_status.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/create_system_local_user_seed.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/disable_first_time_password_prompt.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/configure_splunk_boot_start.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/create_certificates.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/start_splunk.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/add_uf_to_deployment_server.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/delete_splunk_installer.yml"
+
+#- include_tasks: "{{ playbook_dir }}/roles/common/tasks/delete_system_local_user_seed.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/restart_splunk.yml"

@@ -1,0 +1,247 @@
+---
+
+- name: Check if cluster_master is localhost
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    node: "{% if item==ansible_host %}localhost:localhost{% else %}{{item}}{{append}}{% endif %}"
+  with_items:
+    - "{{ groups['cluster_master'] }}"
+  when: groups['cluster_master'] is defined and groups['cluster_master']|length
+  vars:
+    append: ":{{ splunk.ports.mgmt }}"
+
+- name: Create cluster_master dmc variable
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    dmc_variable_cluster_master: "{{ dmc_variable_cluster_master |d([]) + [ prepend ~ node ] | map('join') | list }}"
+  with_items: 
+    - "{{ groups['cluster_master'] }}"
+  vars:
+    prepend: "&member="
+  when: groups['cluster_master'] is defined and groups['cluster_master']|length
+
+- name: Create dmc_group_cluster_master body
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    dmc_group_cluster_master: "default=false&name=dmc_group_cluster_master{{ dmc_variable_cluster_master | map('to_json') | join('') | regex_replace('\"') }}"
+  when: dmc_variable_cluster_master is defined
+
+- name: Check if license_master is localhost
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    node: "{% if item==ansible_host %}localhost:localhost{% else %}{{item}}{{append}}{% endif %}"
+  with_items:
+    - "{{ groups['license_master'] }}"
+  when: groups['license_master'] is defined and groups['license_master']|length
+  vars:
+    append: ":{{ splunk.ports.mgmt }}"
+
+- name: Create license_master dmc variable
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    dmc_variable_license_master: "{{ dmc_variable_license_master |d([]) + [ prepend ~ node ] | map('join') | list }}"
+  with_items: 
+    - "{{ groups['license_master'] }}"
+  vars:
+    prepend: "&member="
+  when: groups['license_master'] is defined and groups['license_master']|length
+
+- name: Create dmc_group_license_master body
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    dmc_group_license_master: "default=false&name=dmc_group_license_master{{ dmc_variable_license_master | map('to_json') | join('') | regex_replace('\"') }}"
+  when: dmc_variable_license_master is defined
+
+- name: Check if deployment_server is localhost
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    node: "{% if item==ansible_host %}localhost:localhost{% else %}{{item}}{{append}}{% endif %}"
+  with_items:
+    - "{{ groups['deployment_server'] }}"
+  when: groups['deployment_server'] is defined and groups['deployment_server']|length
+  vars:
+    append: ":{{ splunk.ports.mgmt }}"
+
+- name: Create deployment_server dmc variable
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    dmc_variable_deployment_server: "{{ dmc_variable_deployment_server |d([]) + [ prepend ~ node ] | map('join') | list }}"
+  with_items: "{{ groups['deployment_server'] }}"
+  vars:
+    prepend: "&member="
+  when: groups['deployment_server'] is defined and groups['deployment_server']|length
+
+- name: Create dmc_group_deployment_server body
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    dmc_group_deployment_server: "default=false&name=dmc_group_deployment_server{{ dmc_variable_deployment_server | map('to_json') | join('') | regex_replace('\"') }}"
+  when: dmc_variable_deployment_server is defined
+
+- name: Create indexer dmc variable
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    dmc_variable_indexer: "{{ dmc_variable_indexer|d([]) + [ prepend ~ item ~ append ] | map('join') | list }}"
+  with_items: 
+    - "{{ groups['indexer'] }}"
+  vars:
+    prepend: "&member="
+    append: ":{{ splunk.ports.mgmt }}"
+  when: groups['indexer'] is defined and groups['indexer']|length
+
+- name: Create dmc_group_indexer body
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    dmc_group_indexer: "default=true&name=dmc_group_indexer{{ dmc_variable_indexer | map('to_json') | join('') | regex_replace('\"') }}"
+  when: dmc_variable_indexer is defined
+
+- name: Check if deployer is localhost
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    node: "{% if item==ansible_host %}localhost:localhost{% else %}{{item}}{{append}}{% endif %}"
+  with_items:
+    - "{{ groups['deployer'] }}"
+  when: groups['deployer'] is defined and groups['deployer']|length
+  vars:
+    append: ":{{ splunk.ports.mgmt }}"
+
+- name: Create deployer dmc variable
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    dmc_variable_deployer: "{{ dmc_group_deployer|d([]) + [ prepend ~ node ] | map('join') | list }}"
+  with_items: 
+    - "{{ groups['deployer'] }}"
+  vars:
+    prepend: "&member="
+    append: ":{{ splunk.ports.mgmt }}"
+  when: groups['deployer'] is defined and groups['deployer']|length
+
+- name: Create dmc_group_deployer body
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    dmc_group_deployer: "default=false&name=dmc_group_shc_deployer{{ dmc_variable_deployer | map('to_json') | join('') | regex_replace('\"') }}"
+  when: dmc_variable_deployer is defined
+
+- name: Create search_head dmc variable
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    dmc_variable_search_head: "{{ dmc_variable_search_head|d([]) + [ prepend ~ item ~ append ] | map('join') | list }}"
+  with_items: "{{ groups['search_head'] }}"
+  vars:
+    prepend: "&member="
+    append: ":{{ splunk.ports.mgmt }}"
+  when: groups['search_head'] is defined and groups['search_head']|length and cold_standby is not defined
+
+- name: Create dmc_group_search_head body
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    dmc_group_search_head: "default=false&name=dmc_group_search_head{{ dmc_variable_search_head | map('to_json') | join('') | regex_replace('\"') }}"
+  when: dmc_variable_search_head is defined
+
+- name: Create heavy_forwarder dmc variable
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    dmc_variable_heavy_forwarder: "{{ dmc_variable_heavy_forwarder|d([]) + [ prepend ~ item ~ append ] | map('join') | list }}"
+  with_items: 
+    - "{{ groups['heavy_forwarder'] }}"
+  vars:
+    prepend: "&member="
+    append: ":{{ splunk.ports.mgmt }}"
+  when: groups['heavy_forwarder'] is defined and groups['heavy_forwarder']|length
+  
+- name: Create dmc_customgroup_heavy_forwarder body
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    dmc_customgroup_heavy_forwarder: "default=false&name=dmc_customgroup_heavy_forwarder{{ dmc_variable_heavy_forwarder | map('to_json') | join('') | regex_replace('\"') }}"
+  when: dmc_variable_heavy_forwarder is defined
+
+- name: Create searchheadclustergroup for search head dmc variable
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    dmc_variable_searchheadcluster: "{{ dmc_variable_searchheadcluster|d([]) + [ prepend ~ newitem ] | map('join') | list }}"
+  with_items:
+    - "{{ groups['deployer'] }}"
+    - "{{ groups['search_head'] }}"
+  vars:
+    prepend: "&member="
+    append: ":{{ splunk.ports.mgmt }}"
+    newitem: "{% if(item in groups['monitoring_console']) %}localhost:localhost{% else %}{{ item }}{{ append }}{% endif %}"
+  when: groups['deployer']|length
+
+- name: Create dmc_searchheadclustergroup body
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    dmc_searchheadclustergroup_{{ splunk.shcluster.label }}: "default=false&name=dmc_searchheadclustergroup_{{ splunk.shcluster.label }}{{ dmc_variable_searchheadcluster | map('to_json') | join('') | regex_replace('\"') }}"
+  when: dmc_variable_searchheadcluster is defined
+
+- name: Check if cluster_master is localhost
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    node: "{% if item==ansible_host %}localhost:localhost{% else %}{{item}}{{append}}{% endif %}"
+  with_items:
+    - "{{ groups['cluster_master'] }}"
+  when: groups['cluster_master']|length
+  vars:
+    append: ":{{ splunk.ports.mgmt }}"
+
+- name: Create indexerclustergroup dmc variable
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    dmc_variable_indexercluster: "{{ dmc_variable_indexercluster|d([]) + [ prepend ~ item ~ append ] | map('join') | list }}"
+  with_items:
+    - "{{ groups['indexer'] }}"
+    - "{{ groups['search_head'] }}"
+  vars:
+    prepend: "&member="
+    append: ":{{ splunk.ports.mgmt }}"
+
+- name: Create dmc_indexerclustergroup body
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    dmc_indexerclustergroup_{{ splunk.cluster.label }}: "default=false&name=dmc_indexerclustergroup_{{ splunk.cluster.label }}{{ dmc_variable_indexercluster | map('to_json') | join('') | regex_replace('\"') }}&member={{ node }}"
+  when: dmc_variable_indexercluster is defined
+
+- name: Fetch distributed peers
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "https://{{ splunk.monitoring_console_ip }}:{{ splunk.ports.mgmt }}/services/search/distributed/peers?output_mode=json"
+    method: GET
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    validate_certs: false
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+    status_code: 200
+    timeout: 120
+    return_content: yes
+    use_proxy: no
+  register: distributed_info
+  until: distributed_info.status == 200
+
+- name: Create search strings
+  become: true
+  set_fact:
+    configured_peers: "{{ distributed_info['json']['entry'] | map(attribute='name') | list | join(',') }}"

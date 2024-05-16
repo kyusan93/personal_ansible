@@ -1,0 +1,18 @@
+---
+
+#- name: Check if monitoring console local directory exists
+#  become: true
+#  become_user: "{{ splunk.nix.user }}"
+#  stat:
+#    path: "{{ splunk.home }}/etc/apps/splunk_monitoring_console/local/app.conf"
+#  register: monitoringconsolelocaldir
+
+#- name: Check if monitoring console is enabled
+#  set_fact: monitoringconsolestatus="{{ lookup('ini', 'state section=install file={{ splunk.home }}/etc/apps/splunk_monitoring_console/local/app.conf') }}"
+#  when: monitoringconsolelocaldir.stat.exists
+
+- name: Turn off monitoring console
+  command: "{{ splunk.home }}/bin/splunk disable app splunk_monitoring_console -auth {{ splunk.admin.username }}:{{ splunk.admin.password }}"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+#  when: monitoringconsolestatus == "enabled"

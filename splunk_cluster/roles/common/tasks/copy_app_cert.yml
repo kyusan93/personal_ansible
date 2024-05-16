@@ -1,0 +1,12 @@
+---
+
+- name: Make a copy of ssl app cert as forwarder cert
+  become: true
+  copy:
+    src: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_app_cert.pem"
+    dest: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/forwarder_app_cert.pem"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: 0700
+    remote_src: yes
+    force: yes

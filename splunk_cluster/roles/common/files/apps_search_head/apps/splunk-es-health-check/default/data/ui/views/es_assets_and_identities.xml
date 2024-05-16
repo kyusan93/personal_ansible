@@ -1,0 +1,254 @@
+<dashboard theme="dark" version="1.1">
+  <label>Assets and Identities</label>
+  <description>Here we are looking at whether Assets and Identities are configured and if the numbers are whats expected for the size of the organisation</description>
+  <row>
+    <panel depends="$show_asset_html$">
+      <title>Asset Count</title>
+      <html>No Asset Data</html>
+    </panel>
+    <panel rejects="$show_asset_html$">
+      <title>Asset Count</title>
+      <single>
+        <search>
+          <query>| inputlookup asset_lookup_by_str
+| stats count
+| appendcols [| inputlookup org_summary.csv | table org_size]
+| table count</query>
+        </search>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+    <panel rejects="$show_asset_html$">
+      <title>Assets Observed (Host Count - 7 days)</title>
+      <single>
+        <search>
+          <query>| tstats summariesonly=true dc(host) AS count where index=*
+| appendcols [| inputlookup org_summary.csv | table org_size]
+| table count</query>
+          <earliest>-7d@d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+    <panel depends="$show_identity_html$">
+      <title>Identity Count</title>
+      <html>No Identity Data</html>
+    </panel>
+    <panel rejects="$show_identity_html$">
+      <title>Identity Count</title>
+      <single>
+        <search>
+          <query>| inputlookup identity_lookup_expanded
+| stats count
+| appendcols [| inputlookup org_summary.csv | table org_size]
+| table count</query>
+        </search>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+    <panel rejects="$show_identity_html$">
+      <title>Identities Observed (User Authentication - 7 days)</title>
+      <single>
+        <search>
+          <query>| tstats summariesonly=true dc(Authentication.user) AS count from datamodel=Authentication.Authentication
+| appendcols [| inputlookup org_summary.csv | table org_size]
+| table count</query>
+          <earliest>-7d@d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel rejects="$show_asset_html$">
+      <title>Asset Summary by Priority</title>
+      <chart>
+        <search>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_asset_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_asset_html"></unset>
+            </condition>
+          </progress>
+          <query>| inputlookup asset_lookup_by_str
+| eval priority=if(isnotnull(priority),priority,"none")
+| stats count by priority
+| eval temp=""
+| chart useother=true sum(count) AS total over temp by priority
+| rename temp AS count
+| eval total=sum(critical,high,medium,low,informational,none)
+| table count critical high medium low informational none</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.axisTitleX.text">Priority</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.fieldColors">{"critical": 0xD25B3B, "high": 0xFF8800, "medium": 0xF0BE1B, "low": 0x98BF3B, "informational": 0x5378AD}</option>
+        <option name="charting.legend.placement">left</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel rejects="$show_identity_html$">
+      <title>Identities Summary by Priority</title>
+      <chart>
+        <search>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_identity_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_identity_html"></unset>
+            </condition>
+          </progress>
+          <query>| inputlookup identity_lookup_expanded
+| eval priority=if(isnotnull(priority),priority,"none")
+| stats count by priority
+| eval temp=""
+| chart useother=true sum(count) AS total over temp by priority
+| rename temp AS count
+| eval total=sum(critical,high,medium,low,informational,none)     
+| table count critical high medium low informational none
+</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.axisTitleX.text">Priority</option>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.fieldColors">{"critical": 0xD25B3B, "high": 0xFF8800, "medium": 0xF0BE1B, "low": 0x98BF3B, "informational": 0x5378AD}</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel rejects="$show_asset_html$">
+      <title>Asset Summary by Category</title>
+      <chart>
+        <search>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_asset_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_asset_html"></unset>
+            </condition>
+          </progress>
+          <query>| inputlookup asset_lookup_by_str
+| eval category=if(isnotnull(category),category,"none")
+| stats count by category</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.axisTitleX.text">Priority</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">left</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel rejects="$show_identity_html$">
+      <title>Identities Summary by Category</title>
+      <chart>
+        <search>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_identity_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_identity_html"></unset>
+            </condition>
+          </progress>
+          <query>| inputlookup identity_lookup_expanded
+| eval category=if(isnotnull(category),category,"none")
+| stats count by category</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.axisTitleX.text">Priority</option>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel rejects="$show_identity_html$">
+      <title>Identities Summary by Privileged Category</title>
+      <chart>
+        <search>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_identity_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_identity_html"></unset>
+            </condition>
+          </progress>
+          <query>| inputlookup identity_lookup_expanded
+| eval category=if(isnotnull(category),category,"none")
+| eventstats count AS total
+| where (match(category,"privileged") OR match(category,"admin") OR match(category,"service"))
+| eval privileged=case(match(category,"privileged"),"privileged"), admin=case(match(category,"admin"),"admin"), service=case(match(category,"service"),"service")
+| eval things=mvappend(privileged,admin,service)
+| streamstats count
+| stats max(total) AS total values(things) AS categories first(identity) AS user by count
+| stats count max(total) AS total by categories
+| table categories count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.axisTitleX.text">Priority</option>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_ai_list_html$">
+      <title>Asset and Identity Lookup Definitions</title>
+      <html>No assets and identities defined</html>
+    </panel>
+    <panel rejects="$show_ai_list_html$">
+      <title>Asset and Identity Lookup Definitions</title>
+      <table>
+        <search>
+          <query>| rest splunk_server=local count=0 /services/data/inputs/identity_manager 
+| lookup es_instrumentation_identity_managers input as title,target OUTPUT input as is_ootb 
+| rex field=url "lookup://(?&lt;outputlookup&gt;.*)" 
+| join type=left outputlookup 
+  [| rest splunk_server=local /services/data/transforms/lookups/
+  | table title filename type updated
+  | lookup lookup_populating_searches.csv outputlookup AS title OUTPUT outputlookup spl savedsearch next_scheduled_time
+  | lookup lookup_populating_searches.csv outputlookup AS filename OUTPUTNEW outputlookup spl savedsearch next_scheduled_time] 
+| where isnull(is_ootb)
+| table title category target next_scheduled_time spl
+| eval dynamic=case(spl="" OR isnull(spl),"Asset or Identity is static")
+| eval is_scheduled=case(isnull(next_scheduled_time) AND isnotnull(spl),"Dynamic but not Scheduled")
+| fields - check issue item
+| eval issues=mvappend(dynamic,is_scheduled)
+| eval issues=if(isnull(issues),"None",issues)
+| fields - _time dynamic is_scheduled issue</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_ai_list_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_ai_list_html"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+</dashboard>

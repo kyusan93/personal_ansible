@@ -1,0 +1,58 @@
+---
+
+- name: Establish DMC forwarder monitor API
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    dmc_forwarder_assets_url: "https://{{ splunk.monitoring_console_ip }}:{{ splunk.ports.mgmt }}/servicesNS/nobody/splunk_monitoring_console/saved/searches/DMC+Forwarder+-+Build+Asset+Table"
+
+- name: Retrieve forwarder assets query
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "{{ dmc_forwarder_assets_url }}?output_mode=json"
+    method: GET
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    validate_certs: false
+    status_code: 200,201
+    timeout: 10
+    use_proxy: no
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+  register: dmc_forwarder_build_assets
+
+- name: Configure forwarder assets search
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "{{ dmc_forwarder_assets_url }}"
+    method: POST
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    body:
+      search: "{{ dmc_forwarder_build_assets.json['entry'][0]['content']['search'] }}"
+      request.ui_dispatch_app: splunk_monitoring_console
+      alert.track: 0
+      disabled: 0
+    body_format: "form-urlencoded"
+    validate_certs: false
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+    status_code: 200,201
+    timeout: 10
+    use_proxy: no
+
+- name: Build forwarder assets
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "{{ dmc_forwarder_assets_url }}/dispatch"
+    method: POST
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    validate_certs: false
+    status_code: 200,201
+    use_proxy: no
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"

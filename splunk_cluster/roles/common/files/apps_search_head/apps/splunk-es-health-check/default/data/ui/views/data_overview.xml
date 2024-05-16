@@ -1,0 +1,240 @@
+<dashboard theme="dark" version="1.1">
+  <label>Data Overview</label>
+  <row>
+    <panel>
+      <single>
+        <search>
+          <query>|rest /services/data/indexes splunk_server=* | search totalEventCount!=0 | stats dc(title)</query>
+          <earliest>-15m</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">trend</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="link.visible">1</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x65a637","0x6db7c6","0xf7bc38","0xf58f39","0xd93f3c"]</option>
+        <option name="rangeValues">[500,550,600,650]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="underLabel">Active Indexes</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+      <single>
+        <search>
+          <query>|rest /services/data/indexes splunk_server=* | stats dc(title)</query>
+          <earliest>-15m</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">trend</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="link.visible">1</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x65a637","0x6db7c6","0xf7bc38","0xf58f39","0xd93f3c"]</option>
+        <option name="rangeValues">[500,550,600,650]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="underLabel">Total Configured Indexes</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Aggregation Errors</title>
+        <search>
+          <query>index=_internal sourcetype=splunkd source=*splunkd.log component=AggregatorMiningProcessor (log_level=WARN OR log_level=ERROR)
+            | rex field=message "Context: source::(?&lt;context_source&gt;[^\|]*?)\|host::(?&lt;context_host&gt;[^\|]*?)\|(?&lt;context_sourcetype&gt;[^\|]*?)\|"
+            | eval data_source = if(isnull(data_source) AND isnotnull(context_source), context_source, data_source)
+            | eval data_sourcetype = if(isnull(data_sourcetype) AND isnotnull(context_sourcetype), context_sourcetype, data_sourcetype)
+            | timechart count(eval(component=="AggregatorMiningProcessor")) AS "Aggregation Issues" span=1h partial=false</query>
+          <earliest>-2d@d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="colorBy">trend</option>
+        <option name="drilldown">none</option>
+        <option name="trendColorInterpretation">inverse</option>
+        <option name="trendDisplayMode">percent</option>
+        <option name="trendInterval">-1h</option>
+        <option name="useColors">1</option>
+        <option name="link.visible">1</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Line Breaking Errors</title>
+        <search>
+          <query>index=_internal sourcetype=splunkd source=*splunkd.log component=LineBreakingProcessor (log_level=WARN OR log_level=ERROR)
+            | rex field=message "Context: source::(?&lt;context_source&gt;[^\|]*?)\|host::(?&lt;context_host&gt;[^\|]*?)\|(?&lt;context_sourcetype&gt;[^\|]*?)\|"
+            | eval data_source = if(isnull(data_source) AND isnotnull(context_source), context_source, data_source)
+            | eval data_sourcetype = if(isnull(data_sourcetype) AND isnotnull(context_sourcetype), context_sourcetype, data_sourcetype)
+            | timechart count(eval(component=="LineBreakingProcessor")) AS "Line Breaking Issues" span=1h partial=false</query>
+          <earliest>-2d@d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="colorBy">trend</option>
+        <option name="drilldown">none</option>
+        <option name="trendColorInterpretation">inverse</option>
+        <option name="trendDisplayMode">percent</option>
+        <option name="trendInterval">-1h</option>
+        <option name="useColors">1</option>
+        <option name="link.visible">1</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Timestamp Parsing Errors</title>
+        <search>
+          <query>index=_internal sourcetype=splunkd source=*splunkd.log component=DateParserVerbose (log_level=WARN OR log_level=ERROR)
+            | rex field=message "Context: source::(?&lt;context_source&gt;[^\|]*?)\|host::(?&lt;context_host&gt;[^\|]*?)\|(?&lt;context_sourcetype&gt;[^\|]*?)\|"
+            | eval data_source = if(isnull(data_source) AND isnotnull(context_source), context_source, data_source)
+            | eval data_sourcetype = if(isnull(data_sourcetype) AND isnotnull(context_sourcetype), context_sourcetype, data_sourcetype)
+            | timechart count(eval(component=="DateParserVerbose")) AS "Timestamp Parsing Issues" span=1h partial=false</query>
+          <earliest>-2d@d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="colorBy">trend</option>
+        <option name="drilldown">none</option>
+        <option name="trendColorInterpretation">inverse</option>
+        <option name="trendDisplayMode">percent</option>
+        <option name="trendInterval">-1h</option>
+        <option name="useColors">1</option>
+        <option name="link.visible">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Data Distribution</title>
+      <chart>
+        <search>
+          <query>index=_internal  sourcetype=splunkd source=*license_usage.log type=Usage
+| eval mb=round(b/1024/1024,2)
+| chart usenull=false sum(mb) over splunk_server by idx</query>
+          <earliest>-7d@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisX.abbreviation">none</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.abbreviation">none</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.axisY2.abbreviation">none</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">zero</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.layout.splitSeries.allowIndependentYRanges">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Number of Hosts with Future Timestamps</title>
+      <single>
+        <search>
+          <query>| tstats count WHERE index=* earliest=+30min@m latest=+10y@y GROUPBY sourcetype source host 
+| stats dc(host)</query>
+          <earliest>-7d@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Hosts with Future Timestamps - Detail</title>
+      <table>
+        <search>
+          <query>| tstats count WHERE index=* earliest=+30min@m latest=+10y@y GROUPBY sourcetype source host 
+| join type=left sourcetype 
+    [| metadata type=sourcetypes index=* 
+    | convert ctime(*Time)] 
+| stats values(host) AS Hosts values(sourcetype) AS Sourcetype values(lastTime) AS "Furthest Out Event"</query>
+          <earliest>-7d@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Data Detail by Index</title>
+      <table>
+        <search>
+          <query>| tstats count dc(host) AS hosts WHERE earliest=-7d@d index=* BY index sourcetype | sort - count | eventstats sum(count) AS total by index | stats sum(count) AS sum_count dc(sourcetype) AS sourcetype_count list(sourcetype) AS sourcetype  list(count) AS count list(eval(round(((count/total)*100),2)."%")) AS percent_coverage list(hosts) AS unique_hosts by index | sort - sum_count | join index [| rest /servicesNS/-/-/data/indexes splunk_server=* | fields maxDataSize title frozenTimePeriodInSecs splunk_server | eval retention_days=frozenTimePeriodInSecs/60/60/24 | stats list(maxDataSize) list(splunk_server) list(retention_days) by title | rename list(*) AS * 
+    | eval retention_info=mvzip(splunk_server,mvzip(retention_days,maxDataSize)) 
+    | fields - maxDataSize splunk_server retention_days 
+    | rename title AS index retention_info AS "Retention Info (Indexer, Days of Retention, Maximum Data Size)"]
+| rename sum_count AS "Total Events in Index"  sourcetype_count AS "Total Number of Sourcetypes in Index" percent_coverage AS "Percent utilization of total events" unique_hosts AS "Unique Hosts sending data"</query>
+          <earliest>-7d@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+</dashboard>

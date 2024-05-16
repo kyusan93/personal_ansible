@@ -1,0 +1,191 @@
+---
+
+#- name: Export configuration
+#  paloaltonetworks.panos.panos_export:
+#   ip_address: "{{ item }}"
+#   username: "{{ fw.username }}"
+#   password: "{{ fw.password }}"
+#   category: 'configuration'
+#   filename: 'running-config.xml'  
+#  with_items:
+#   - "{{ groups['fw'] }}" 
+#  register: exportconfig_result
+
+
+  
+#- name: import config file to pan device
+#  paloaltonetworks.panos.panos_import:    
+#    ip_address: "{{ item }}"
+#    username: "{{ fw.username }}"
+#    password: "{{ fw.password }}"
+#    file: "{{ fw.config_path }}fw_{{ item }}.xml"
+#    category: "configuration"
+#  with_items:
+#   - "{{ groups['fw'] }}"
+#  register: importconfig_result
+
+
+
+#- name: load config file in pan device
+#  paloaltonetworks.panos.panos_loadcfg:
+#    ip_address: "{{ item }}"
+#    username: "{{ fw.username }}"
+#    password: "{{ fw.password }}"
+#    file: "{{ config_path | regex_search('/tmp/(.+)','\\1') | first }}"
+#  with_items:
+#   - "{{ groups['fw'] }}"
+#  register: loadconfig_result
+
+#- name: DEBUG
+#  debug:
+#   msg: "{{ loadconfig_result}}"
+
+
+
+#- name: commit changes
+#  paloaltonetworks.panos.panos_commit:
+#   ip_address: "{{ item }}"
+#   username: "{{ fw.username }}"
+#   password: "{{ fw.password }}"
+#  register: commit_result
+#  with_items:
+#   - "{{ groups['fw'] }}"
+
+#- name: DEBUG
+#  debug:
+#   msg: "{{ commit_result}}"
+
+
+
+#- name: show system info
+#  paloaltonetworks.panos.panos_op:
+#   ip_address: "{{ item }}"
+#   username: "{{ fw.username }}"
+#   password: "{{ fw.password }}" 
+#   cmd: "show system info"
+#  register: systeminfo_results
+#  with_items:
+#   - "{{ groups['fw'] }}"
+
+#- name: DEBUG
+#  debug:
+#   msg: "{{ systeminfo_results }}"
+
+#- name: show system info as XML command
+#  paloaltonetworks.panos.panos_op:
+#   ip_address: "{{ item }}"
+#   username: "{{ fw.username }}"
+#   password: "{{ fw.password }}" 
+#   cmd: '<show><system><info/></system></show>'
+#   cmd_is_xml: true
+#  with_items:
+#   - "{{ groups['fw'] }}"
+#  register: systeminfo_results 
+
+#- name: DEBUG
+#  debug:
+#   msg: "{{ systeminfo_results }}"
+
+
+
+
+#- name: Gather facts for device
+#  paloaltonetworks.panos.panos_facts:
+#   ip_address: "{{ item }}"
+#   username: "{{ fw.username }}"
+#   password: "{{ fw.password }}" 
+#  with_items:
+#   - "{{ groups['fw'] }}"   
+
+#- name: Display information
+#  ansible.builtin.debug:
+#    msg:
+#      - "Hostname: {{ ansible_facts['net_hostname'] }}"
+#      - "Serial: {{ ansible_facts['net_serial'] }}"
+#      - "Model: {{ ansible_facts['net_model'] }}"
+#      - "Version: {{ ansible_facts['net_version'] }}"
+#      - "Uptime: {{ ansible_facts['net_uptime'] }}"
+#      - "HA Enabled: {{ ansible_facts['net_ha_enabled'] }}"
+#      - "HA Type: {{ ansible_facts['net_ha_localmode'] }}"
+#      - "HA Status: {{ ansible_facts['net_ha_localstate'] }}"
+#      - "Multi-VSYS: {{ ansible_facts['net_multivsys'] }}"
+#      - "{{ ansible_facts['net_session_usage'] }} out of {{ ansible_facts['net_session_max'] }} sessions in use" 
+
+
+
+#- name: import software file to pan device
+#  paloaltonetworks.panos.panos_import:    
+#    ip_address: "{{ item }}"
+#    username: "{{ fw.username }}"
+#    password: "{{ fw.password }}"
+#    file: "{{ fw.software_path }}PanOS_vm-10.1.10-h2"
+#    category: "software"
+#  with_items:
+#   - "{{ groups['fw'] }}"
+#  register: importsoftware_result
+
+
+
+#- name: import content file to pan device
+#  paloaltonetworks.panos.panos_import:    
+#    ip_address: "{{ item }}"
+#    username: "{{ fw.username }}"
+#    password: "{{ fw.password }}"
+#    file: "{{ fw.content_path }}panupv2-all-apps-8752-8277"
+#    category: "content"
+#  with_items:
+#   - "{{ groups['fw'] }}"
+#  register: importcontent_result
+
+#- name: Install latest content
+#  paloaltonetworks.panos.panos_op:    
+#    ip_address: "{{ item }}"
+#    username: "{{ fw.username }}"
+#    password: "{{ fw.password }}"
+#    cmd: |
+#      <request><content><upgrade><install>
+#      <version>latest</version>
+#      </install></upgrade></content></request>
+#    cmd_is_xml: true  
+#  with_items:
+#   - "{{ groups['fw'] }}"
+#  register: install
+
+#- name: DEBUG
+#  debug:
+#   msg: "{{ install }}"
+
+#- name: Install latest content
+#  paloaltonetworks.panos.panos_op:    
+#    ip_address: "{{ item }}"
+#    username: "{{ fw.username }}"
+#    password: "{{ fw.password }}"
+#    cmd: |
+#      <request><content><upgrade><install>
+#      <latest>latest</latest>
+#      </install></upgrade></content></request>      
+#    cmd_is_xml: true  
+#  with_items:
+#   - "{{ groups['fw'] }}"
+#  register: install
+
+#- name: DEBUG
+#  debug:
+#   msg: "{{ install }}"
+
+  
+#- name: Check content install result
+#  paloaltonetworks.panos.panos_op:    
+#    ip_address: "{{ item }}"
+#    username: "{{ fw.username }}"
+#    password: "{{ fw.password }}"
+#    cmd: "show jobs id {{ (install.stdout | from_json).response.result.job }}"
+#  with_items:
+#   - "{{ groups['fw'] }}"
+#  register: install_job
+#  until: install_job is not failed and (install_job.stdout | from_json).response.result.job.status == "FIN"
+#  retries: 10
+#  delay: 60
+  
+ 
+

@@ -1,0 +1,4 @@
+---
+
+- name: Install rsyslog
+  import_tasks: install_rsyslog.yml

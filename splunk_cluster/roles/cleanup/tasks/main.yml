@@ -1,0 +1,4 @@
+---
+
+- name: Cleanup Configurations
+  import_tasks: cleanup.yml

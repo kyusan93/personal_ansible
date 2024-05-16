@@ -1,0 +1,278 @@
+<dashboard theme="dark" version="1.1">
+  <label>Infrastructure Overview</label>
+  <row>
+    <panel>
+      <html>
+        <h1>Infrastructure Information</h1>
+      </html>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Infrastructure Splunk Versions</title>
+      <single>
+        <search>
+          <query>| inputlookup core_infrastructure.csv
+| stats dc(version) AS versions
+| table versions</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0xdc4e41"]</option>
+        <option name="rangeValues">[1]</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Infrastructure Overview</title>
+      <table>
+        <search>
+          <query>| inputlookup core_infrastructure.csv
+| eval instance_type=if(isnotnull(mvfind(server_roles, "indexer")), "Indexer", "Search Head") 
+| table instance, instance_type, os_name, version</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Undersized Infrastructure</title>
+      <table>
+        <search>
+          <query>| inputlookup core_infrastructure.csv 
+| eval cpu_ratio = cpu_installed / cpu_minimum
+| eval mem_ratio = mem_GB_installed / mem_GB_minimum
+| eval cpu_info = cpu_installed."/".cpu_minimum
+| eval mem_info = mem_GB_installed."/".mem_GB_minimum
+| where cpu_ratio &lt; 1 OR mem_ratio &lt; 1
+| table instance cpu_info mem_info
+| rename instance AS "Splunk Server" cpu_info AS "CPU Info (installed/minimum)" mem_info AS "Memory Info (installed/minimum)"</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Infrastructure Hosts with THP Issues</title>
+      <single>
+        <search>
+          <query>| inputlookup core_os_configuration.csv
+| lookup core_infrastructure.csv instance AS host
+| search THP_Status != "low" version=*
+| stats dc(host) AS THP_Hosts</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Infrastructure Hosts with ulimit Issues</title>
+      <single>
+        <search>
+          <query>| inputlookup core_os_configuration.csv
+| lookup core_infrastructure.csv instance AS host
+| search U_Status != "low" version=*
+| stats dc(host) AS U_Hosts</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html>
+        <p>Transparent Huge Pages has been associated with degradation of Splunk Enterprise performance in some Linux kernel versions. See details in our <a href="https://docs.splunk.com/Documentation/Splunk/latest/ReleaseNotes/SplunkandTHP">docs</a>
+        </p>
+        <p>Ulimits apply constraints to the amount of system resources that a user or process can consume.  In order to achieve higher speeds, Splunk utilizes a great many file descriptors, memory, and other system resources.  See details in our <a href="https://docs.splunk.com/Documentation/Splunk/latest/Installation/Systemrequirements#Considerations_regarding_system-wide_resource_limits_on_.2Anix_systems">docs</a>
+        </p>
+      </html>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html>
+        <h1>Indexer Information</h1>
+      </html>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Number of Indexers</title>
+      <single>
+        <search>
+          <query>| inputlookup core_infrastructure.csv 
+| eval indexers=if(isnotnull(mvfind(server_roles, "indexer")), "true", "false") 
+| search indexers=true
+| stats dc(instance) AS "Number of Indexers"</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,30,70,100]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">0</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+    <panel>
+      <table>
+        <search>
+          <query>| inputlookup core_infrastructure.csv 
+| eval indexers=if(isnotnull(mvfind(server_roles, "indexer")), "true", "false") 
+| search indexers=true
+| stats values(instance) AS "Indexer Names"</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Indexer Splunk Versions</title>
+      <single>
+        <search>
+          <query>| inputlookup core_infrastructure.csv 
+| eval indexers=if(isnotnull(mvfind(server_roles, "indexer")), "true", "false") 
+| search indexers=true
+| stats values(version) AS "Indexer Splunk Version"</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,30,70,100]</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html>
+        <h1>App Information</h1>
+      </html>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Apps and Hosts with multiple versions</title>
+      <table>
+        <search>
+          <query>|inputlookup core_app_configuration.csv | eval versions=split(versions,",") | rename fullname AS "App Name" | eval num_versions = mvcount(versions) | where num_versions &gt; 1 
+|  fields "App Name", versions</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+</dashboard>

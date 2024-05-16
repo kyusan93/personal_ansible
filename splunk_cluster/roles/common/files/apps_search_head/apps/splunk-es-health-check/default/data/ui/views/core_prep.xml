@@ -1,0 +1,380 @@
+<form theme="dark" version="1.1">
+  <label>Health Check Start</label>
+  <description>NOTE: Please wait until all panels have completed loading data before you proceed</description>
+  <search>
+    <query>| makeresults
+| eval org_size=$org_size$
+| fields org_size
+| outputlookup org_summary.csv</query>
+  </search>
+  <fieldset submitButton="false" autoRun="false">
+    <input type="time" token="time" searchWhenChanged="true">
+      <label></label>
+      <default>
+        <earliest>-7d@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="org_size" searchWhenChanged="true">
+      <label>Organisation Size (No. employees)</label>
+      <default>10000</default>
+    </input>
+  </fieldset>
+  <row>
+    <panel depends="$infrastructure_html$">
+      <title>Splunk Infrastructure</title>
+      <html>Collecting Splunk Infrastructure Information - Loading</html>
+    </panel>
+    <panel rejects="$infrastructure_html$">
+      <title>Splunk Infrastructure</title>
+      <html>Collecting Splunk Infrastructure Information - Complete</html>
+    </panel>
+    <panel depends="$infrastructure_html_dummy$">
+      <title>Splunk Infrastructure</title>
+      <table>
+        <search>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="infrastructure_html">1</set>
+            </condition>
+            <condition>
+              <unset token="infrastructure_html"></unset>
+            </condition>
+          </progress>
+          <query>| rest splunk_server=* /services/server/info 
+| eval cpu_core_count = if(isnotnull(numberOfVirtualCores), numberOfVirtualCores, numberOfCores) 
+| eval physical_memory_GB = round(physicalMemoryMB / 1024, 0)
+| eval cpu_minimum = 12
+| eval mem_GB_minimum = 12
+| fields splunk_server server_roles version cpu_core_count cpu_minimum physical_memory_GB mem_GB_minimum os_name 
+| rename splunk_server AS instance cpu_core_count AS cpu_installed physical_memory_GB AS mem_GB_installed
+| outputlookup core_infrastructure.csv</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$indexer_html$">
+      <title>Splunk Indexer</title>
+      <html>Collecting Splunk Indexer Information - Loading</html>
+    </panel>
+    <panel rejects="$indexer_html$">
+      <title>Splunk Indexer</title>
+      <html>Collecting Splunk Indexer Information - Complete</html>
+    </panel>
+    <panel depends="$indexer_html_dummy$">
+      <title>Splunk Indexer</title>
+      <table>
+        <search>
+          <done>
+            <condition match="'job.resultCount'== 0">
+              <unset token="indexer_html"></unset>
+            </condition>
+          </done>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="indexer_html">1</set>
+            </condition>
+            <condition>
+              <unset token="indexer_html"></unset>
+            </condition>
+          </progress>
+          <query>| rest splunk_server=* /services/search/distributed/peers/ 
+| rex field=title "(?&lt;idx_ip&gt;[^\:]+)"
+| rename host AS idx 
+| table idx idx_ip
+| outputlookup core_idx_ip_addresses.csv</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$os_configuration_html$">
+      <title>Splunk OS Configuration Information</title>
+      <html>Collecting Splunk OS Configuration Information - Loading</html>
+    </panel>
+    <panel rejects="$os_configuration_html$">
+      <title>Splunk OS Configuration Information</title>
+      <html>Collecting Splunk OS Configuration Information - Complete</html>
+    </panel>
+    <panel depends="$os_configuration_html_dummy$">
+      <title>Splunk OS Configuration Information</title>
+      <table>
+        <search>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="os_configuration_html">1</set>
+            </condition>
+            <condition>
+              <unset token="os_configuration_html"></unset>
+            </condition>
+          </progress>
+          <query>(earliest=-30d@d index=_internal sourcetype=splunkd ("data file size" OR "data segment size" OR "hugepage" OR "hugetables" OR "open files" OR "user processes") ulimit) 
+| rex field=_raw "files:\\s+(?&lt;open_files&gt;\\d+)" 
+| rex field=_raw "processes:\\s+(?&lt;user_processes&gt;[^\\s]+)" 
+| rex field=_raw "data\\sfile\\ssize\\:\\s+(?&lt;data_file_size&gt;\\w+)" 
+| rex field=_raw "data\\ssegment\\ssize\\:\\s+(?&lt;data_segment_size&gt;\\w+)" 
+| stats latest(open_files) AS open_files latest(user_processes) AS user_processes latest(data_segment_size) AS data_segment_size latest(data_file_size) AS data_file_size latest(enabled) AS Enabled latest(defrag) AS Defrag by host 
+| eval U_Status=case(((((open_files &lt;= 8192) OR (user_processes &lt;= 8192)) OR (data_segment_size != "unlimited")) OR (data_file_size != "unlimited")),"severe",true(),"low"), THP_Status=if(((Enabled == "never") AND (Defrag == "never")),"low","severe") 
+| outputlookup core_os_configuration.csv</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$fwd_html$">
+      <title>Splunk Forwarders Information</title>
+      <html>Collecting Forwarders Information - Loading</html>
+    </panel>
+    <panel rejects="$fwd_html$">
+      <title>Forwarders Information</title>
+      <html>Collecting Forwarders Information - Complete</html>
+    </panel>
+    <panel depends="$fwd_html_dummy$">
+      <title>Forwarders Information</title>
+      <table>
+        <search>
+          <done>
+            <condition match="'job.resultCount'== 0">
+              <unset token="fwd_html"></unset>
+            </condition>
+          </done>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="fwd_html">1</set>
+            </condition>
+            <condition>
+              <unset token="fwd_html"></unset>
+            </condition>
+          </progress>
+          <query>(earliest=-7d@d group=tcpin_connections index=_internal latest=now source=*metrics.log*) 
+| eval forwarderType=if(match(fwdType,"full"),"HF/SH/Full Install","Universal Forwarder") 
+| stats values(os) values(arch) values(version) values(sourceIp) values(destPort) values(fwdType) values(ssl) values(forwarderType) by hostname 
+| rename "values(*)" as "*" 
+| outputlookup core_forwarders_info.csv</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$app_configuration_html$">
+      <title>Splunk App Configuration Information</title>
+      <html>Collecting Splunk App Configuration Information - Loading</html>
+    </panel>
+    <panel rejects="$app_configuration_html$">
+      <title>Splunk App Configuration Information</title>
+      <html>Collecting Splunk App Configuration Information - Complete</html>
+    </panel>
+    <panel depends="$app_configuration_html_dummy$">
+      <title>Splunk App Configuration Information</title>
+      <table>
+        <search>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="app_configuration_html">1</set>
+            </condition>
+            <condition>
+              <unset token="app_configuration_html"></unset>
+            </condition>
+          </progress>
+          <query>| rest splunk_server=* /services/apps/local 
+| search disabled=0 
+| stats values(label) values(version) values(description) by title, splunk_server
+| rename values(*) AS *
+| rename dc(*) AS *
+| rename title AS shortname label AS fullname 
+| outputlookup core_app_configuration.csv</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$component_html$">
+      <title>Correlation Search Component Costs</title>
+      <html>Collecting correlation search component cost metrics - Loading</html>
+    </panel>
+    <panel rejects="$component_html$">
+      <title>Correlation Search Component Costs</title>
+      <html>Collecting correlation search component cost metrics - Complete</html>
+    </panel>
+    <panel depends="$component_html_dummy$">
+      <title>Correlation Search Component Costs</title>
+      <table>
+        <search>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="component_html">1</set>
+            </condition>
+            <condition>
+              <unset token="component_html"></unset>
+            </condition>
+          </progress>
+          <query>index=_introspection sourcetype=search_telemetry provenance=scheduler 
+| spath path=search_commands{} output=search_command 
+| mvexpand search_command 
+| fields search_command savedsearch_name 
+| eval _raw=search_command 
+| extract 
+| eventstats avg(duration) AS avg_duration by name savedsearch_name 
+| eval a=name . ":" . round(avg_duration,4) 
+| stats values(a) AS component_costs by savedsearch_name 
+| rename savedsearch_name AS title 
+| outputlookup correlation_search_component_cost_summary.csv</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$runtime_html$">
+      <title>Correlation Search Runtime Statistics</title>
+      <html>Collecting correlation search runtime statistics - Loading</html>
+    </panel>
+    <panel rejects="$runtime_html$">
+      <title>Correlation Search Runtime Statistics</title>
+      <html>Collecting correlation search runtime statistics - Complete</html>
+    </panel>
+    <panel depends="$runtime_html_dummy$">
+      <title>Correlation Search Runtime Statistics</title>
+      <table>
+        <search>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="runtime_html">1</set>
+            </condition>
+            <condition>
+              <unset token="runtime_html"></unset>
+            </condition>
+          </progress>
+          <query>| tstats first(Search_Activity.search_alias) as title first(Search_Activity.total_run_time) as run_time from datamodel=Splunk_Audit.Search_Activity where * by Search_Activity.search_id 
+| stats min(run_time) AS min_runtime avg(run_time) AS avg_runtime max(run_time) AS max_runtime count AS execution_count by title 
+| eval min_runtime=round(min_runtime, 1), avg_runtime=round(avg_runtime, 1), max_runtime=round(max_runtime, 1)
+| outputlookup correlation_search_runtime_summary.csv</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$execution_html$">
+      <title>Correlation Search Execution Summary</title>
+      <html>Collecting correlation search execution summary - Loading</html>
+    </panel>
+    <panel rejects="$execution_html$">
+      <title>Correlation Search Execution Summary</title>
+      <html>Collecting correlation search execution summary - Complete</html>
+    </panel>
+    <panel depends="$execution_html_dummy$">
+      <title>Correlation Search Execution Summary</title>
+      <table>
+        <search>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="execution_html">1</set>
+            </condition>
+            <condition>
+              <unset token="execution_html"></unset>
+            </condition>
+          </progress>
+          <query>| tstats count from datamodel=Splunk_Audit.Scheduler_Activity by Scheduler_Activity.savedsearch_name Scheduler_Activity.status 
+| rename Scheduler_Activity.* AS * 
+| eval status_summary=status .":" . count 
+| eventstats sum(count) AS total by savedsearch_name 
+| eval skip_ratio=if(status="skipped" OR status="deferred",round((count/total)*100,1),null()) 
+| stats values(status_summary) AS search_execution_summary by savedsearch_name 
+| rename savedsearch_name AS title
+| outputlookup correlation_search_component_scheduler_summary.csv</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$performance_html$">
+      <title>Correlation Search Resource Performance</title>
+      <html>Collecting correlation search performance metrics - Loading</html>
+    </panel>
+    <panel rejects="$performance_html$">
+      <title>Correlation Search Resource Performance</title>
+      <html>Collecting correlation search performance metrics - Complete</html>
+    </panel>
+    <panel depends="$performance_html_dummy$">
+      <title>Correlation Search Resource Performance</title>
+      <table>
+        <search>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="performance_html">1</set>
+            </condition>
+            <condition>
+              <unset token="performance_html"></unset>
+            </condition>
+          </progress>
+          <query>index=_introspection sourcetype=splunk_resource_usage component=PerProcess "data.search_props.provenance"=scheduler 
+| rename data.search_props.label AS title data.normalized_pct_cpu AS pct_cpu data.pct_memory AS pct_memory 
+| stats avg(pct_cpu) AS avg_pct_cpu avg(pct_memory) AS avg_pct_memory by title 
+| eval avg_pct_cpu=round(avg_pct_cpu,4), avg_pct_memory=round(avg_pct_memory,4)
+| outputlookup correlation_search_perf_summary.csv</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$lookup_summary_html$">
+      <title>Lookup Summary</title>
+      <html>Collecting lookup summary data - Loading</html>
+    </panel>
+    <panel rejects="$lookup_summary_html$">
+      <title>Lookup Summary</title>
+      <html>Collecting lookup summary data - Complete</html>
+    </panel>
+    <panel depends="$lookup_summary_html_dummy$">
+      <title>Lookup Summary</title>
+      <table>
+        <search>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="lookup_summary_html">1</set>
+            </condition>
+            <condition>
+              <unset token="lookup_summary_html"></unset>
+            </condition>
+          </progress>
+          <query>| rest splunk_server=local count=0 /services/saved/searches search="search=*outputlookup*" 
+| rex max_match=5 field=search "\|\s*outputlookup(?&lt;outputlookup&gt;.*?)(?:\||$)" 
+| eval outputlookup=split(outputlookup, " "),outputlookup=trim(mvfilter(!(outputlookup LIKE "%=%") AND trim(outputlookup)!=""), "\""),savedsearch=title,spl=search 
+| table outputlookup savedsearch spl next_scheduled_time
+| outputlookup lookup_populating_searches.csv
+</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+</form>

@@ -1,0 +1,3 @@
+"Name","Location","Protocol","Destination Port","Tags"
+"service-1","Predefined","TCP","1111,2222",""
+"service-2","Predefined","TCP","54321",""

@@ -1,0 +1,21 @@
+---
+
+- name: Stop splunk
+  command: "{{ splunk.home }}/bin/splunk stop"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  ignore_errors: yes
+
+- name: Uninstall splunk
+  become: true
+  yum:
+    name: splunk*
+    state: absent
+  ignore_errors: yes
+
+- name: "Clean up {{ splunk.home }}"
+  become: true
+  file:
+    state: absent
+    path: "{{ splunk.home }}"
+  ignore_errors: yes

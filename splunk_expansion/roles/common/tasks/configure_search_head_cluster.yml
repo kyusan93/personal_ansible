@@ -1,0 +1,81 @@
+---
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/base_os_wait_for_splunk_instance.yml"
+  vars:
+    splunk_instance: "{{ splunk.shcluster.deployer_url }}"
+
+- name: init shcluster member
+  command: "{{ splunk.home }}/bin/splunk init shcluster-config -shcluster_label {{ splunk.shcluster.label }} -mgmt_uri https://{{ ansible_host }}:{{ splunk.ports.mgmt }} -replication_port {{ splunk.ports.shcluster_replication }} -replication_factor '{{ splunk.shcluster.replication_factor or (groups['search_head'] | length-1) }}' -secret '{{ splunk.pass4SymmKey }}' -conf_deploy_fetch_url https://{{ item }}:{{ splunk.ports.mgmt }} -auth {{ splunk.admin.username }}:{{splunk.admin.password}}"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  with_items:
+    - "{{ groups['deployer'] }}"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/restart_splunk.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/check_splunk_shclustering_enabled.yml"
+
+- debug: msg="{{ inventory_hostname }} and {{ splunk.search_head_captain_ip }} and {{ cm_shclustering_enabled.rc }}"
+
+- name: bootstrap search head cluster
+  command: "{{ splunk.home }}/bin/splunk bootstrap shcluster-captain -auth {{ splunk.admin.username }}:{{ splunk.admin.password }}"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  register: boostrap_captain_result
+  until: boostrap_captain_result.rc == 0 or "node seems to have already joined another cluster" in boostrap_captain_result.stderr
+  changed_when: boostrap_captain_result.rc == 0
+  failed_when: boostrap_captain_result.rc !=0 and "node seems to have already joined another cluster" not in boostrap_captain_result.stderr
+  when: 
+    - inventory_hostname == splunk.search_head_captain_ip
+    - cm_shclustering_enabled.rc == 0
+
+- name: wait for the search head cluster status to be available
+  command: "{{ splunk.home }}/bin/splunk show shcluster-status -auth {{ splunk.admin.username }}:{{ splunk.admin.password }}"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  check_mode: no
+  register: shcluster_ready
+  until: "shcluster_ready.stdout.find('service_ready_flag') != -1"
+  retries: 15
+  delay: 10
+  delegate_to: "{{ splunk.search_head_captain_ip }}"
+  when: 
+    - inventory_hostname != splunk.search_head_captain_ip
+
+- name: add node to search head cluster
+  command: "{{ splunk.home }}/bin/splunk add shcluster-member -current_member_uri https://{{ splunk.search_head_captain_ip }}:{{ splunk.ports.mgmt }} -auth {{ splunk.admin.username }}:{{ splunk.admin.password }}"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  retries: 5
+  delay: 30
+  register: add_node_result
+  until: add_node_result.rc == 0 or "is already part of cluster" in add_node_result.stderr
+  changed_when: add_node_result.rc == 0
+  failed_when: add_node_result.rc !=0 and "is already part of cluster" not in add_node_result.stderr
+  when: 
+    - inventory_hostname != splunk.search_head_captain_ip
+
+- name: find splunk servername
+  command: "{{ splunk.home }}/bin/splunk show servername -auth {{ splunk.admin.username }}:{{ splunk.admin.password }}"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  check_mode: no
+  changed_when: false
+  register: splunk_servername
+  when: 
+    - inventory_hostname != splunk.search_head_captain_ip
+
+- name: wait for the node to join the cluster
+  command: "{{ splunk.home }}/bin/splunk show shcluster-status -auth {{ splunk.admin.username }}:{{ splunk.admin.password }}"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  check_mode: no
+  register: shcluster_join
+  until: "shcluster_join.stdout.find('label :' + splunk_servername.stdout.split(':')[1]) != -1"
+  retries: 15
+  delay: 10
+  when: 
+    - inventory_hostname != splunk.search_head_captain_ip
+
+
+  

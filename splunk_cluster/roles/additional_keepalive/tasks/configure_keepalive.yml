@@ -1,0 +1,7 @@
+---
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/configure_keepalive.yml"
+  when:
+    - keepalived_role is defined
+
+

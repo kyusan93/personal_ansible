@@ -1,0 +1,21 @@
+---
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/configure_search_head_cluster.yml"
+  when:
+    - splunk.shcluster.deployer_url | length
+    - cold_standby is not defined
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/check_cluster_peer_status.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/set_as_cluster_peer.yml"
+  vars:
+    cluster_mode_type : "searchhead"
+    site_info : "{{ host_site }}"
+  when: cm_clustering_enabled.rc == 0
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/set_as_license_slave.yml"
+  when: 'ansible_host not in groups["license_master"]'
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/restart_splunk.yml"
+
+

@@ -1,0 +1,6 @@
+---
+
+- name: Turn off monitoring console
+  command: "{{ splunk.home }}/bin/splunk disable app splunk_monitoring_console -auth {{ splunk.admin.username }}:{{ splunk.admin.password }}"
+  become: true
+  become_user: "{{ splunk.nix.user }}"

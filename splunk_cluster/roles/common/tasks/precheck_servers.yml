@@ -1,0 +1,105 @@
+---
+    
+- name: set facts to collect hard disk space
+  set_fact:
+    devices: "{{ ansible_devices.keys()| select('match', '^sd(.*)$') | list }}"
+
+- name: "Check Indexer CPU"
+  become: true
+  assert:
+    that:
+      - ansible_processor_vcpus == {{base.indexer.cpu}}
+    fail_msg: "Number of CPU is not equals to {{ base.indexer.cpu }}"
+  ignore_errors: true  
+  when: "'indexer' in group_names"
+
+- name: "Check Indexer RAM"
+  become: true
+  assert:
+    that:
+      - ansible_memtotal_mb | int >= {{(base.indexer.ram*1024)-1024}}
+      - ansible_memtotal_mb | int <= {{(base.indexer.ram*1024)+1024}}
+    fail_msg: "Memory is {{ ansible_memtotal_mb }}MB not ({{base.indexer.ram*1024}})MB"
+  ignore_errors: true
+  when: "'indexer' in group_names"
+
+- name: "Check search head CPU"
+  become: true
+  assert:
+    that:
+      - ansible_processor_vcpus == {{base.search_head.cpu}}
+    fail_msg: "Number of CPU is not equals to {{ base.search_head.cpu }}"
+  ignore_errors: true  
+  when: "'search_head' in group_names"
+
+- name: "Check search head RAM"
+  become: true
+  assert:
+    that:
+      - ansible_memtotal_mb | int >= {{(base.search_head.ram*1024)-1024}}
+      - ansible_memtotal_mb | int <= {{(base.search_head.ram*1024)+1024}}
+    fail_msg: "Memory is {{ ansible_memtotal_mb }}MB not ({{base.search_head.ram*1024}})MB"
+  ignore_errors: true
+  when: "'search_head' in group_names"
+  
+- name: "Check heavy forwarder CPU"
+  become: true
+  assert:
+    that:
+      - ansible_processor_vcpus == {{base.heavy_forwarder.cpu}}
+    fail_msg: "Number of CPU is not equals to {{ base.heavy_forwarder.cpu }}"
+  ignore_errors: true  
+  when: "'heavy_forwarder' in group_names"
+
+- name: "Check heavy_forwarder RAM"
+  become: true
+  assert:
+    that:
+      - ansible_memtotal_mb | int >= {{(base.heavy_forwarder.ram*1024)-1024}}
+      - ansible_memtotal_mb | int <= {{(base.heavy_forwarder.ram*1024)+1024}}
+    fail_msg: "Memory is {{ ansible_memtotal_mb }}MB not ({{base.heavy_forwarder.ram*1024}})MB"
+  ignore_errors: true
+  when: "'heavy_forwarder' in group_names"
+  
+- name: "Check master_node CPU"
+  become: true
+  assert:
+    that:
+      - ansible_processor_vcpus == {{base.master_node.cpu}}
+    fail_msg: "Number of CPU is not equals to {{ base.master_node.cpu }}"
+  ignore_errors: true  
+  when: "'master_node' in group_names"
+
+- name: "Check master_node RAM"
+  become: true
+  assert:
+    that:
+      - ansible_memtotal_mb | int >= {{(base.master_node.ram*1024)-1024}}
+      - ansible_memtotal_mb | int <= {{(base.master_node.ram*1024)+1024}}
+    fail_msg: "Memory is {{ ansible_memtotal_mb }}MB not ({{base.master_node.ram*1024}})MB"
+  ignore_errors: true
+  when: "'master_node' in group_names"
+  
+- name: "Check monitoring_console CPU"
+  become: true
+  assert:
+    that:
+      - ansible_processor_vcpus == {{base.monitoring_console.cpu}}
+    fail_msg: "Number of CPU is not equals to {{ base.monitoring_console.cpu }}"
+  ignore_errors: true  
+  when: "'monitoring_console' in group_names"
+
+- name: "Check monitoring_console RAM"
+  become: true
+  assert:
+    that:
+      - ansible_memtotal_mb | int >= {{(base.monitoring_console.ram*1024)-1024}}
+      - ansible_memtotal_mb | int <= {{(base.monitoring_console.ram*1024)+1024}}
+    fail_msg: "Memory is {{ ansible_memtotal_mb }}MB not ({{base.monitoring_console.ram*1024}})MB"
+  ignore_errors: true
+  when: "'monitoring_console' in group_names"
+
+- name: "Print out hard disk space for devices starting with sd* "
+  debug:
+    msg: "{{ ansible_devices[item].size }}"
+  loop: "{{ devices }}"

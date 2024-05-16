@@ -1,0 +1,16 @@
+---
+
+- name: Check for Splunk package file exists
+  stat:
+    path: "{{ base.awx_tmp_dir }}{{ splunk.package_file }}"
+  register: splunk_package_file_exist
+  
+- name: Copy Splunk installation rpm
+#  get_url:
+#    url: "{{ splunk.fetch_url }}{{ splunk.package_file }}"
+  copy:
+    src: "{{ playbook_dir }}/roles/common/files/installer/{{ splunk.package_file }}"
+    dest: "/tmp/{{ splunk.package_file }}"
+#    owner: "{{ splunk.nix.user }}"
+#    group: "{{ splunk.nix.group }}"
+  when: not splunk_exist.stat.exists and not splunk_package_file_exist.stat.exists

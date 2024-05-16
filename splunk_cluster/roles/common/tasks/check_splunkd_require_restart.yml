@@ -1,0 +1,19 @@
+---
+- name: Check for required restarts
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "https://{{ ansible_host }}:{{ splunk.ports.mgmt}}/services/messages/restart_required?output_mode=json"
+    method: GET
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    validate_certs: false
+    status_code: 200,404
+    timeout: 10
+    use_proxy: no
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+  register: splunkd_restart_required
+  changed_when: splunkd_restart_required.status == 200
+  notify:
+    - restart_splunk

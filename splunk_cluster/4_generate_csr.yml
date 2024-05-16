@@ -1,0 +1,14 @@
+---
+
+# Generate Certificate Signing Requests for Certificates
+- name: Generate self signed certificates
+  hosts: 127.0.0.1
+  connection: local
+  roles:
+    - { role: generate_csr, tags: generate_csr }
+
+# Find and copy CSR from ansible tower to local machine
+- name: Copy CSR from ansible tower to local machine
+  hosts: "{{ servers | default('monitoring_console') }}"
+  roles:
+    - { role: copy_csr, tags: copy_csr }

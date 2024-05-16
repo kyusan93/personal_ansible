@@ -1,0 +1,25 @@
+---
+all:
+  children:
+    nodes:
+      hosts:
+        JG_PRI-VM-SPH01:
+        JG_PRI-VM-SPI01:
+        JG_PRI-VM-SPI02:
+        JG_PRI-VM-SPF01:
+        JG_PRI-VM-SPM01:
+        JG_PRI-VM-SPM02:
+#        JG_MGMT11:
+#        JG_MGMT21:
+#        JG_SH11:
+#        JG_SH12:
+#        JG_SH21:
+#        JG_IDX11:
+#        JG_IDX12:
+#        JG_IDX21:
+#        JG_IDX22:
+#        JG_HF11:
+#        JG_HF12:
+#        JG_HF21:
+#        JG_HF22:
+#        JG_UF11:

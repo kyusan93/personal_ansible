@@ -1,0 +1,174 @@
+---
+# 1. Communication Security
+
+# 1.1 Ensure strong cipher suites and TLS encryption is in place for alert_actions.conf in the following servers: 
+## - Search Heads
+
+- name: "1.1 Run the below search string to verify that strong cipher suites and TLS encryption is in place for alert_actions.conf for Splunk Search Head"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  shell: "{{ splunk.home }}/bin/splunk cmd btool alert_actions list --debug | egrep 'sslVersions | cipherSuite' "
+  register: alertAction
+  failed_when: '"tls1.2" not in alertAction.stdout or "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384" not in alertAction.stdout'
+  ignore_errors: true
+  when:
+   - "'search_head' in group_names"
+  
+- name: "[Results] 1.1 Run the below search string to verify that strong cipher suites and TLS encryption is in place for alert_actions.conf for Splunk Search Head"
+  debug:
+    msg: "{{ alertAction.stdout.split('\n') }}"
+  ignore_errors: true
+  when:
+    - "'search_head' in group_names"
+  
+##########################################################################################################################################################################
+
+# 1.2 Ensure default cipher suites and TLS encryption is in place for inputs.conf in the following servers:
+## - Indexers
+## - Heavy Forwarders 
+
+- name: "1.2 Run the below search string to default cipher suites and TLS encryption is in place for inputs.conf for Splunk Indexers and HFs"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  shell: "{{ splunk.home }}/bin/splunk cmd btool inputs list --debug | egrep 'sslVersions | cipherSuite |ecdhCurves' "
+  register: inputsResult
+  failed_when: '"tls1.2" not in inputsResult.stdout or "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384" not in inputsResult.stdout or "prime256v1, secp384r1, secp521r1" not in inputsResult.stdout'
+  ignore_errors: true
+  when: "'indexer' in group_names or 'heavy_forwarder' in group_names"
+  
+- name: "[Results] 1.2 Run the below search string to default cipher suites and TLS encryption is in place for inputs.conf for Splunk Indexers and HFs"
+  debug:
+    msg: "{{ inputsResult.stdout.split('\n') }}"
+  ignore_errors: true
+  when: "'indexer' in group_names or 'heavy_forwarder' in group_names"
+############################################################################################################################################################################
+
+# 1.3 Ensure default cipher suites and TLS encryption is in place for outputs.conf conf in the following servers:
+## - Search Heads
+## - MasterNodes
+## - DMC/LM/SHD
+## - Heavy Forwarders (only applicable to LMI, CCTM-LCI and CCTM-SEM) 
+## -Universal Forwarders (only applicable to LMI, and CCTM-LCI)
+
+- name: "1.3 Run the below search string to default cipher suites and TLS encryption is in place for outputs.conf for Splunk SH, MN, DMC/LM/SDH, HF, UF"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  shell: "{{ splunk.home }}/bin/splunk cmd btool outputs list --debug | egrep 'sslVersions |cipherSuite|ecdhCurves' "
+  register: outputsResult
+  failed_when: '"tls1.2" not in outputsResult.stdout or "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384" not in outputsResult.stdout or "prime256v1, secp384r1, secp521r1" not in outputsResult.stdout'
+  ignore_errors: true
+  when: "'search_head' in group_names or 'cluster_master' in group_names or 'license_master' in group_names or 'heavy_forwarder' in group_names or 'universal_forwarder' in group_names"   
+  
+- name: "[Results] 1.3 Run the below search string to default cipher suites and TLS encryption is in place for outputs.conf for Splunk SH, MN, DMC/LM/SDH, HF, UF"
+  debug:
+    msg: "{{ outputsResult.stdout.split('\n') }}"
+  ignore_errors: true
+  when: "'search_head' in group_names or 'cluster_master' in group_names or 'license_master' in group_names or 'heavy_forwarder' in group_names or 'universal_forwarder' in group_names"  
+############################################################################################################################################################################
+
+# 1.4 Ensure default cipher suites and TLS encryption is in place for server.conf in the following servers:
+## - Search Heads
+## - Indexers
+## - MasterNodes
+## - DMC/LM/SHD
+## - Heavy Forwarders (only applicable to LMI, CCTM-LCI and CCTM-SEM) 
+
+- name: "1.4 Run the below search string to default cipher suites and TLS encryption is in place for server.conf for Splunk SH, IND, MN, DMC/LM/SDH, HF"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  shell: "{{ splunk.home }}/bin/splunk cmd btool server list --debug | egrep 'sslVersions |cipherSuite|ecdhCurves' "
+  register: serverResult
+  failed_when: '"tls1.2" not in serverResult.stdout or "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384" not in serverResult.stdout or "prime256v1, secp384r1, secp521r1" not in serverResult.stdout'
+  ignore_errors: true
+  when: "'search_head' in group_names or 'indexer' in group_names or 'cluster_master' in group_names or 'license_master' in group_names or 'heavy_forwarder' in group_names"
+  
+- name: "[Results] 1.4 Run the below search string to default cipher suites and TLS encryption is in place for server.conf for Splunk SH, IND, MN, DMC/LM/SDH, HF"
+  debug:
+    msg: "{{ serverResult.stdout.split('\n') }}"
+  ignore_errors: true
+  when: "'search_head' in group_names or 'indexer' in group_names or 'cluster_master' in group_names or 'license_master' in group_names or 'heavy_forwarder' in group_names"
+
+############################################################################################################################################################################
+
+# 1.5 Ensure default cipher suites and TLS encryption is in place for web.conf in the following servers:
+## - Search Heads
+## - MasterNodes
+## - DMC/LM/SHD
+## - Heavy Forwarders (only applicable to LMI, CCTM-LCI and CCTM-SEM) 
+
+- name: "1.5 Run the below search string to default cipher suites and TLS encryption is in place for web.conf for Splunk SH, MN, DMC/LM/SDH, HF"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  shell: "{{ splunk.home }}/bin/splunk cmd btool web list --debug | egrep 'sslVersions |cipherSuite|ecdhCurves' "
+  register: webResult
+  failed_when: '"tls1.2" not in webResult.stdout or "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384" not in webResult.stdout or "prime256v1, secp384r1, secp521r1" not in webResult.stdout'
+  ignore_errors: true
+  when: "'search_head' in group_names or 'cluster_master' in group_names or 'license_master' in group_names or 'heavy_forwarder' in group_names"
+  
+- name: "[Results] 1.5 Run the below search string to default cipher suites and TLS encryption is in place for web.conf for Splunk SH, MN, DMC/LM/SDH, HF"
+  debug:
+    msg: "{{ webResult.stdout.split('\n') }}"
+  ignore_errors: true
+  when: "'search_head' in group_names or 'cluster_master' in group_names or 'license_master' in group_names or 'heavy_forwarder' in group_names"
+
+############################################################################################################################################################################
+
+# 1.7 Ensure Splunk web is secured using  PKI certificates
+
+- name: "1.7 Run the below search string to ensure Splunk web is secured using PKI certificates"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  shell: "openssl x509 -noout -in {{ splunk.home }}/etc/auth/company/splsh01_web_cert.pem -issuer"
+  register: pkiResult
+  ignore_errors: true
+  when:
+   - "'search_head' in group_names"
+  
+- name: "[Results] 1.7 Run the below search string to ensure Splunk web is secured using PKI certificates"
+  debug:
+    msg: "{{ pkiResult.stdout }}"
+  ignore_errors: true
+  when:
+   - "'search_head' in group_names"
+  
+############################################################################################################################################################################
+
+# 1.8 Ensure Splunk forwarder to indexer communication is secured using PKI certificates
+
+- name: "1.8 Run the below search string to ensure Splunk forwarder to indexer communication is secured using PKI certificates"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  shell: "openssl s_client -connect {{ item }}:9997 | grep issuer="
+  register: forwardResult
+  ignore_errors: true
+  with_items:
+    - "{{ groups['indexer'] }}"  
+  when:
+    - "'heavy_forwarder' in group_names"
+
+  
+- name: "[Results] 1.8 Run the below search string to ensure Splunk forwarder to indexer communication is secured using PKI certificates"
+  debug:
+    msg: " Issuer: {{ forwardResult.results | map(attribute='stdout') | join('\n') }}"
+  ignore_errors: true
+  when:
+    - "'heavy_forwarder' in group_names"
+  
+############################################################################################################################################################################
+
+# 1.9 Ensure inter-Splunk communication is secured using PKI certificates
+
+- name: "1.9 Run the below search string to ensure inter-Splunk communication is secured using PKI certificates"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  shell: "openssl s_client -connect {{ item }}:8089 | grep issuer="
+  register: interResult
+  ignore_errors: true
+  with_items: 
+    - "{{ groups['cluster_master'] }}"
+  
+- name: "[Results] 1.9 Run the below search string to ensure inter-Splunk communication is secured using PKI certificates"
+  debug:
+    msg: "{{ interResult.results | map(attribute='stdout') | list }}"
+  ignore_errors: true
+  

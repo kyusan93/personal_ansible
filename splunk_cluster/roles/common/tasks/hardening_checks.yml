@@ -1,0 +1,15 @@
+---
+- name: "Ensure default cipher suites and TLS encryption is in place for inputs.conf in the idx and HF"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  tasks: 
+    - name: "Extract Result"
+      shell: "{{ splunk.home }}/bin/splunk btool inputs list --debug | egrep 'sslVersions |cipherSuite |ecdhCurves'"
+      register: inputs_result
+  
+    - name: "Check if cipher suite matches with hardening guide"
+      shell: "{{ splunk.home }}/bin/splunk btool inputs list --debug | egrep 'cipherSuite'"
+      register: inputs_cipher_result
+      failed_when: inputs_cipher_result.stdout.find ("cipherSuite=ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384") = -1
+- debug: msg="{{ inputs_result }}"
+- debug: msg="{{ inputs_cipher_result.stdout }}"

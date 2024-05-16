@@ -1,0 +1,61 @@
+---
+
+- name: Configure LDAP Parameters
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/authentication.conf"
+    section: "{{ item.0.strategyName }}"
+    option: "{{ lookup('dict', item.1).key }}"
+    value: "{{ lookup('dict', item.1).value }}"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+  with_subelements: 
+    - "{{ splunk.ldap }}"
+    - "parameters"
+  register: ldap_parameters_configured
+
+- name: Get all strategy names
+  set_fact:
+    get_strategyName: "{{ get_strategyName }} + [ '{{ item.strategyName }}' ]"
+  with_items: 
+    - "{{ splunk.ldap }}"
+  vars:
+    get_strategyName: []  
+
+- name: Configure LDAP role maps
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/authentication.conf"
+    section: "roleMap_{{ item.0.strategyName }}"
+    option: "{{ lookup('dict', item.1).key }}"
+    value: "{{ lookup('dict', item.1).value }}"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+  with_subelements: 
+    - "{{ splunk.ldap }}"
+    - "roleMap"
+  register: ldap_role_configured
+
+- name: Set auth settings
+  set_fact:
+    authSettings_value: {section: authentication, key: authSettings, value: "{{ get_strategyName | join(',') }}" }
+
+- name: Configure LDAP authentication
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/authentication.conf"
+    section: "{{ item.section }}"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+  with_items:
+    - "{{ authSettings_value }}"
+    - {section: "authentication", key: "authType", value: "LDAP"}
+  register: ldap_auth_configured
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/restart_splunk.yml"
+  when: ldap_parameters_configured is changed or ldap_role_configured is changed or ldap_auth_configured is changed

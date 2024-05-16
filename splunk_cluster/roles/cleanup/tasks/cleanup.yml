@@ -1,0 +1,3 @@
+---
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/cleanup_etc_hosts.yml"

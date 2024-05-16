@@ -1,0 +1,6 @@
+---
+
+- name: Set as license slave
+  command: "{{ splunk.home }}/bin/splunk edit licenser-localslave -master_uri https://{{ splunk.license_master_ip }}:{{ splunk.ports.mgmt }} -auth {{ splunk.admin.username }}:{{ splunk.admin.password }}"
+  become: true
+  become_user: "{{ splunk.nix.user }}"

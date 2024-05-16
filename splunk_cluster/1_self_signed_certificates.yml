@@ -1,0 +1,8 @@
+---
+
+# Create self signed certificates
+- name: Create self signed certificates
+  hosts: 127.0.0.1
+  connection: local
+  roles:
+    - { role: certificate_self_signed, tags: certificate_self_signed }

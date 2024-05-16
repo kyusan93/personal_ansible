@@ -1,0 +1,7 @@
+---
+
+# Configure base os
+- name: Setup base os config on all servers
+  hosts: all
+  roles:
+    - { role: base_os, tags: base_os }

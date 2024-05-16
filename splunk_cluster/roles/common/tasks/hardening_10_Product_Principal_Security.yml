@@ -1,0 +1,113 @@
+---
+
+# 10.1 - Check if Splunk as an unprivileged service account
+
+- name: "10.1 - Check that Splunk service is running under user splunk"
+  become: true
+  shell: "ps aux | grep splunk"
+  register: splunk_service
+
+- name: "[Results] 10.1 - Check that Splunk service is running under user splunk"  
+  debug:
+    msg:
+      - "{{ splunk_service.stdout }}"
+      
+- name: "10.1 - Check that splunk user does not belong in gid 0 and wheel group"
+  become: true
+  shell: "id splunk"
+  register: id_splunk
+
+- name: "[Results] 10.1 - Check that splunk user does not belong in gid 0 and wheel group"  
+  debug:
+    msg:
+      - "{{ id_splunk.stdout }}"
+      
+#########################################################################################################################################################################
+
+# 10.2 - Check if KVstore port is restricted
+
+- name: "10.2 - Print out IPtables config"
+  become: true
+  shell: "iptables --table nat --list | grep 8191"
+  register: sh_port
+  failed_when: sh_port.msg == "non-zero return code"
+  ignore_errors: true
+  when:     
+    - "'search_head' in group_names"
+
+- name: "[Results] 10.2 - Print out IPtables config"  
+  debug:
+    msg:
+      - "Failed Check! Rule for Port 8191 does not exists in IPtables."
+  failed_when: sh_port.msg == "non-zero return code"
+  ignore_errors: true
+  when:     
+    - "'search_head' in group_names"
+
+#########################################################################################################################################################################
+
+# 10.3 - Check if pass4SymmKey is configured for search head clustering
+
+- name: "10.3 - Print out Server Config in [shclustering] Stanza"
+  become: true
+  shell: "sed -e '/./{H;$!d;};x;/shclustering/!d' {{ splunk.home }}/etc/system/local/server.conf"
+  register: shclustering_config
+  when:     
+    - "'search_head' in group_names"
+
+- name: "[Results] 10.3 - Print out Server Config in [shclustering] Stanza"  
+  debug:
+    msg:
+      - "{{ shclustering_config.stdout_lines }}"
+  when:     
+    - "'search_head' in group_names"
+
+#########################################################################################################################################################################
+
+# 10.4 - Check if pass4SymmKey is configured for indexer clustering
+
+- name: "10.4 - Print out Server Config in [clustering] Stanza"
+  become: true
+  shell: "sed -e '/./{H;$!d;};x;/clustering/!d' {{ splunk.home }}/etc/system/local/server.conf"
+  register: idx_clustering_config
+  when:     
+    - "'indexer' in group_names"
+
+- name: "[Results] 10.4 - Print out Server Config in [clustering] Stanza"  
+  debug:
+    msg:
+      - "{{ idx_clustering_config.stdout_lines }}"
+  when:     
+    - "'indexer' in group_names"
+
+#########################################################################################################################################################################
+
+# 10.5 - Check if data integrity is turned on
+      
+- name: "10.5 - Print out Indexer Config in any Indexer Stanza in master node"
+  become: true
+  shell: "sed -e '/./{H;$!d;};x;/index/!d' {{ splunk.home }}/etc/master-apps/_cluster/local/indexes.conf"
+  register: mn_data_int_conf
+  when:     
+    - "'cluster_master' in group_names"
+    
+- name: "[Results] 10.5 - Print out Indexer Config in any Indexer Stanza in master node"    
+  debug:
+    msg:
+      - "{{ mn_data_int_conf.stdout_lines }}"
+  when:     
+    - "'cluster_master' in group_names"
+
+- name: "10.5  - Print out Indexer Config in any Indexer Stanza in indexers"
+  become: true
+  shell: "sed -e '/./{H;$!d;};x;/index/!d' {{ splunk.home }}/etc/slave-apps/_cluster/local/indexes.conf"
+  register: idx_data_int_conf
+  when:     
+    - "'indexer' in group_names"    
+
+- name: "[Results] 10.5  - Print out Indexer Config in any Indexer Stanza in indexers"    
+  debug:
+    msg:
+      - "{{ idx_data_int_conf.stdout_lines }}"
+  when:     
+    - "'indexer' in group_names"  

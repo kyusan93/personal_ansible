@@ -1,0 +1,9 @@
+---
+
+#Configure search head configuration
+- name: Setup search head
+  hosts: "{{ servers | default('expansion_search_head') }}"
+  order: sorted
+  max_fail_percentage: 0
+  roles:
+    - { role: search_head, tags: search_head }

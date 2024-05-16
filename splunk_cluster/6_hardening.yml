@@ -1,0 +1,6 @@
+---
+
+- name: Hardening checks on Splunk servers
+  hosts: all
+  roles:
+    - { role: hardening, tags: hardening }

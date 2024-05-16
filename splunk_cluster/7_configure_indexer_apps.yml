@@ -1,0 +1,6 @@
+
+# Configure indexer apps
+- name: Configure indexer apps
+  hosts: indexer,cluster_master
+  roles:
+    - { role: configure_indexer_apps, tags: configure_indexer_apps }

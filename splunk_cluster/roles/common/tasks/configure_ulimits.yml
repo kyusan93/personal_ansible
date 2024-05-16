@@ -1,0 +1,18 @@
+---
+
+- name: Set ulimits for splunk
+  copy:
+    dest: /etc/security/limits.d/splunk_ulimits.conf
+    content: |
+      {{splunk.nix.user}} hard core 0
+      {{splunk.nix.user}} hard maxlogins 10
+      {{splunk.nix.user}} soft nofile 128000
+      {{splunk.nix.user}} hard nofile 128000
+      {{splunk.nix.user}} soft nproc 20480
+      {{splunk.nix.user}} hard nproc 20480
+      {{splunk.nix.user}} soft nfile unlimited
+      {{splunk.nix.user}} hard nfile unlimited
+    owner: "{{ splunk.nix.svc_account }}"
+    group: "{{ splunk.nix.svc_account }}"
+    mode: 0644
+  become: true

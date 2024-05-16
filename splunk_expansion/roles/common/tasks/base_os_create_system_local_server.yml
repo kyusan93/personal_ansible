@@ -1,0 +1,87 @@
+---
+
+- name: Check server.conf exists
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  stat:
+    path: "{{ splunk.home }}/etc/system/local/server.conf"
+  register: system_local_server_exists_result
+
+#- name: Create array for all_splunk_hosts
+#  set_fact:
+#   all_splunk_hosts: ""
+
+#- name: Add Splunk hosts to the list
+#  set_fact:
+#   all_splunk_hosts: "{{ all_splunk_hosts }},{{ hostvars[item].host_suffix }}.{{ base.fqdn }}"
+#  with_items:
+#   - "{{ groups['all'] }}"
+
+- name: Retrieve current sslPassword
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  shell: "cat {{ system_local_server_exists_result.stat.path }} | grep sslPassword | head -1 | cut -d'=' -f2 | awk '$1=$1'"
+  failed_when: server_sslPassword.rc > 1
+  when: system_local_server_exists_result.stat.exists
+  register: server_sslPassword    
+
+- name: Retrieve current pass4SymmKey
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  shell: "cat {{ system_local_server_exists_result.stat.path }} | grep pass4SymmKey | head -1 | cut -d'=' -f2 | awk '$1=$1'"
+  failed_when: server_pass4SymmKey.rc > 1
+  when: system_local_server_exists_result.stat.exists
+  register: server_pass4SymmKey
+
+- name: Get decrypted sslPassword Splunk hash
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  command: "{{ splunk.home }}/bin/splunk show-decrypted --value '{{ server_sslPassword.stdout }}'"
+  register: current_sslPassword_unhash
+  when: system_local_server_exists_result.stat.exists and server_sslPassword.stdout != ''
+
+- name: Get decrypted pass4SymmKey Splunk hash
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  command: "{{ splunk.home }}/bin/splunk show-decrypted --value '{{ server_pass4SymmKey.stdout }}'"
+  register: current_pass4SymmKey_unhash
+  when: system_local_server_exists_result.stat.exists and server_pass4SymmKey.stdout != ''
+
+- name: Set sslPassword and pass4SymmKey
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    current_sslPassword: "{% if(system_local_server_exists_result.stat.exists and server_sslPassword.stdout != '') %}{{ current_sslPassword_unhash.stdout }}{% else %}'INVALID_SSLPASSWORD'{% endif %}"
+    current_pass4SymmKey: "{% if(system_local_server_exists_result.stat.exists and server_pass4SymmKey.stdout != '') %}{{ current_pass4SymmKey_unhash.stdout }}{% else %}'INVALID_PASS4SYMMKEY'{% endif %}"
+
+# By default, splunkd responds on SSL - only update 'enableSplunkdSSL' if purposely disabled 
+- name: Enable Splunkd SSL
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "{{ item.section}}"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  with_items:
+    - {section: "sslConfig", key: "sslVersions", value: "tls1.2"}
+#    - {section: "sslConfig", key: "sslVerifyServerCert", value: "true"}
+#    - {section: "sslConfig", key: "sslAltNameToCheck", value: "{{ all_splunk_hosts | regex_replace('^,', '') }}"}
+#    - {section: "sslConfig", key: "requireClientCert", value: "{{ splunk.ssl.requireClientCert }}"}
+    - {section: "sslConfig", key: "cipherSuite", value: "{{ splunk.ssl.cipherSuite }}"}
+    - {section: "sslConfig", key: "ecdhCurves", value: "{{ splunk.ssl.ecdhCurves }}"}
+    - {section: "sslConfig", key: "sslRootCAPath", value: "$SPLUNK_HOME/etc/auth/{{ base.company_name }}/{{ splunk.ssl.cacert_name }}.pem"}
+    - {section: "sslConfig", key: "serverCert", value: "$SPLUNK_HOME/etc/auth/{{ base.company_name }}/{{ host_suffix }}_app_cert.pem"}
+#    - {section: "sslConfig", key: "sslPassword", value: "{{ splunk.ssl.sslPassword }}"}
+    - {section: "sslConfig", key: "sslPassword", value: "{% if(current_sslPassword == splunk.ssl.sslPassword) %}{{ server_sslPassword.stdout }}{% else %}{{ splunk.ssl.sslPassword }}{% endif %}"}
+    - {section: "sslConfig", key: "enableSplunkdSSL", value: "true"}
+#    - {section: "httpServerListener:127.0.0.1:{{ splunk.ports.local_mgmt }}", key: "ssl", value: "false"}
+    - {section: "node_auth", key: "signatureVersion", value: "v2"}
+    - {section: "general", key: "legacyCiphers", value: "disabled"}
+#    - {section: "general", key: "pass4SymmKey", value: "{{ splunk.pass4SymmKey }}"}
+    - {section: "general", key: "pass4SymmKey", value: "{% if(current_pass4SymmKey == splunk.base_pass4SymmKey) %}{{ server_pass4SymmKey.stdout }}{% else %}{{ splunk.base_pass4SymmKey }}{% endif %}"}
+    - {section: "general", key: "serverName", value: "{{ host_suffix }}.{{ base.fqdn }}"}
+    - {section: "general", key: "site", value: "site{{ host_site | default('0') }}"}
+

@@ -1,0 +1,10 @@
+---
+
+#- name: Install rsyslog
+#  yum:
+#    name: "rsyslog"
+#    update_cache: yes
+#  ignore_errors: True
+
+- name: Configure rsyslog
+

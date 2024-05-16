@@ -1,0 +1,23 @@
+---
+- name: Check if directory exists, if not, create
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  file:
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/CSR/"
+    state: directory
+    mode: '0755'
+  when: "'monitoring_console' in group_names"
+
+- name: Copy all certificates and csr to monitoring console
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  copy:
+    src: "{{ item }}"
+    dest: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/CSR/"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    mode: 0700
+  with_fileglob:
+    - "{{ base.awx_tmp_dir }}*.pem"
+    - "{{ base.awx_tmp_dir }}*.csr"
+  when: "'monitoring_console' in group_names"

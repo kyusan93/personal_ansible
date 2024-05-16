@@ -1,0 +1,103 @@
+---
+- name: Generate SH_Cluster Subject Alternative Name
+  set_fact:
+    sanlist: "{{ sanlist }} + ['DNS:{{ hostvars[item].host_suffix }}.{{ base.fqdn}}']"
+  with_items: "{{ groups['search_head'] }}"
+  when: 
+    - "'search_head' in groups" 
+    - "{{ groups['search_head'] | length }} > 1"
+
+- name: create host CSR signing key for search head cluster
+  openssl_privatekey: 
+    path: "{{ base.awx_tmp_dir }}SH_cluster_web_key.pem"
+    passphrase: "{{ splunk.ssl.sslPassword }}"
+    cipher: auto
+  when: 
+    - "'search_head' in groups" 
+    - "{{ groups['search_head'] | length }} > 1"
+
+- name: create generic CSR for Splunk search head cluster
+  openssl_csr:
+    path: "{{ base.awx_tmp_dir }}SH_cluster_web.csr"
+    privatekey_path: "{{ base.awx_tmp_dir }}SH_cluster_web_key.pem"
+    common_name: "{{ splunk.cert.sem_cn }}"
+    organizational_unit_name: "{{splunk.cert.organizational_unit_name}}"
+    organization_name: "{{splunk.cert.organization_name}}"
+    locality_name: "{{splunk.cert.locality_name}}"
+    state_or_province_name: "{{splunk.cert.state_or_province_name}}"
+    country_name: "{{splunk.cert.country_name}}"
+    subject_alt_name: "{{item}}"
+    privatekey_passphrase: "{{ splunk.ssl.sslPassword }}"
+  with_items:
+    - "{{ sanlist | join(',') }}"
+  when: 
+    - "'search_head' in groups" 
+    - "{{ groups['search_head'] | length }} > 1"
+
+- name: create host CSR signing key for all Splunk Web
+  openssl_privatekey:
+    path: "{{ base.awx_tmp_dir }}{{ hostvars[item].host_suffix }}_web_key.pem"
+    passphrase: "{{ splunk.ssl.sslPassword }}"
+    cipher: auto
+  with_items:
+    - "{{ groups['all'] }}"
+    
+- name: create the CSR for all splunk Web
+  openssl_csr:
+    path: "{{ base.awx_tmp_dir }}{{ hostvars[item].host_suffix }}_web.csr"
+    privatekey_path: "{{ base.awx_tmp_dir }}{{ hostvars[item].host_suffix }}_web_key.pem"
+    common_name: "{{ hostvars[item].host_suffix }}.{{ base.fqdn }}"
+    organizational_unit_name: "{{splunk.cert.organizational_unit_name}}"
+    organization_name: "{{splunk.cert.organization_name}}"
+    locality_name: "{{splunk.cert.locality_name}}"
+    state_or_province_name: "{{splunk.cert.state_or_province_name}}"
+    country_name: "{{splunk.cert.country_name}}"
+    subject_alt_name: "DNS:{{ hostvars[item].host_suffix }}.{{ base.fqdn }}"
+    privatekey_passphrase: "{{ splunk.ssl.sslPassword }}"
+  with_items:
+    - "{{ groups['all'] }}"
+    
+- name: create host CSR signing key for all Splunk App
+  openssl_privatekey:
+    path: "{{ base.awx_tmp_dir }}{{ hostvars[item].host_suffix }}_app_key.pem"
+    passphrase: "{{ splunk.ssl.sslPassword }}"
+    cipher: auto
+  with_items:
+    - "{{ groups['all'] }}"
+
+- name: create the CSR for all splunk App
+  openssl_csr:
+    path: "{{ base.awx_tmp_dir }}{{ hostvars[item].host_suffix }}_app.csr"
+    privatekey_path: "{{ base.awx_tmp_dir }}{{ hostvars[item].host_suffix }}_app_key.pem"
+    common_name: "{{ hostvars[item].host_suffix }}"
+    organizational_unit_name: "{{splunk.cert.organizational_unit_name}}"
+    organization_name: "{{splunk.cert.organization_name}}"
+    locality_name: "{{splunk.cert.locality_name}}"
+    state_or_province_name: "{{splunk.cert.state_or_province_name}}"
+    country_name: "{{splunk.cert.country_name}}"
+    subject_alt_name: "DNS:{{ hostvars[item].host_suffix }}.{{ base.fqdn }}"
+    privatekey_passphrase: "{{ splunk.ssl.sslPassword }}"
+  with_items:
+    - "{{ groups['all'] }}"
+
+- name: create host CSR signing key for forwarder App
+  openssl_privatekey:
+    path: "{{ base.awx_tmp_dir }}forwarder_app_key.pem"
+    passphrase: "{{ splunk.ssl.sslPassword }}"
+    cipher: auto
+    
+- name: create the CSR for forwarder App
+  openssl_csr:
+    path: "{{ base.awx_tmp_dir }}forwarder_app.csr"
+    privatekey_path: "{{ base.awx_tmp_dir }}forwarder_app_key.pem"
+    common_name: "forwarder"
+    organizational_unit_name: "{{splunk.cert.organizational_unit_name}}"
+    organization_name: "{{splunk.cert.organization_name}}"
+    locality_name: "{{splunk.cert.locality_name}}"
+    state_or_province_name: "{{splunk.cert.state_or_province_name}}"
+    country_name: "{{splunk.cert.country_name}}"
+    subject_alt_name: "DNS:{{ hostvars[item].host_suffix }}.{{ base.fqdn }}"
+    privatekey_passphrase: "{{ splunk.ssl.sslPassword }}"
+  with_items:
+    - "{{ groups['all'] }}"
+

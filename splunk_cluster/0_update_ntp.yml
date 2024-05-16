@@ -1,0 +1,7 @@
+---
+
+- name: Restart chronyd
+  hosts: all
+  roles:
+    - { role: "update_ntp", tags: "update_ntp" }
+

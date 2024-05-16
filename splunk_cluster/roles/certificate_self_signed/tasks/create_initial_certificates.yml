@@ -1,0 +1,9 @@
+---
+
+#- include_tasks: "{{ playbook_dir }}/roles/common/tasks/delete_certificates.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/certificate_create_self_ca_cert.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/certificate_create_self_csr.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/certificate_sign_self_csr.yml"

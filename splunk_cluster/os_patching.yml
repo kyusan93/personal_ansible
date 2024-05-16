@@ -1,0 +1,549 @@
+---
+- name: Perform Health Check
+  hosts: "{{environment_name}}_*"
+  any_errors_fatal: false
+
+  tasks:
+  
+  - block:
+    - name: Intialise host variables
+      set_fact:
+        # Force yum update even if no updates availabe. For debugging purposes.
+        force_patching_bool: "{{force_patching | default(false)}}"
+        # Restart Splunk services and OS even if no kernel patches are availabe. For debugging purposes
+        force_restart_bool: "{{force_restart | default(false)}}"
+        splunk_stop_timeout_int: "{{splunk_stop_timeout | default(300) | int}}"
+        has_errors: false
+        host_error: false
+        abort_play: false
+        pre_patch_health_check: "NA"
+        has_pending_updates: false
+        stop_splunk_services: "NA"
+        yum_updates: "{{{}}}"
+        has_kernel_updates: false
+        reboot_server: "NA"
+        post_patch_health_check: "NA"
+        splunk_log_path: "/opt/splunk/var/log/splunk/splunkd.log"
+        needle: "initClustering (peer): Ready, proceeding with indexing"
+        indexer_ready_check_timeout: 1800
+        indexer_ready_check_delay: 5
+        splunk_start_up_timeout: 1800
+        splunk_start_up_delay: 5
+        timestamp_regex_text: "{{timestamp_regex | default('^(\\d{1,})-(\\d{1,})-(\\d{1,})\\s(\\d{1,}):(\\d{1,}):(\\d{1,})')}}"
+        datetime_format_text: "{{datetime_format | default('%m-%d-%Y %H:%M:%S')}}"
+
+    - name: Get timestamp from the system
+      shell: "date +%d%m%Y%H%M"
+      register: timestamp
+      run_once: true
+      become: false
+      delegate_to: localhost
+
+    - name: Output timestamp
+      ansible.builtin.debug:
+        msg: "timestamp: {{timestamp}}"
+      run_once: true
+      become: false
+      delegate_to: localhost
+
+    - name: Get current year
+      shell: "date +%Y"
+      register: current_year
+
+    - name: Set Security patch list file name
+      shell: |
+        echo $(date +%Y-%m-%d)-RHEL-before-patching_$(hostname -s)_splunk.txt
+      become: yes
+      register: pre_patch_file_name
+
+    - name: Export list of installed security patches for the year
+      shell: |
+        #!/bin/bash
+        find *-RHEL-before-patching_$(hostname -s)_SEM.txt -type f -mtime +120 -delete
+
+        echo "Capturing Before PIR"
+        date  > {{pre_patch_file_name.stdout}}
+        yum updateinfo list security installed | grep RHSA-2021 >> {{pre_patch_file_name.stdout}}
+        chmod o+r {{pre_patch_file_name.stdout}}
+      become: yes
+
+    - name: Fetch security patch list export
+      fetch:
+        src: "{{pre_patch_file_name.stdout}}"
+        dest: "/tmp/{{pre_patch_file_name.stdout}}"
+        flat: true
+        
+    - name: Get report server name
+      set_fact:
+        report_server: "{{groups[report_server_group][0]}}"
+      vars:
+        report_server_group: "{{environment_name}}_report_server"
+
+    - name: Fetch security patch list export to report server
+      copy:
+        src: "/tmp/{{pre_patch_file_name.stdout}}"
+        dest: "/tmp/{{pre_patch_file_name.stdout}}"
+        force: true
+      delegate_to: "{{report_server}}"
+      throttle: 1
+
+    - name: Read content of exported file
+      slurp:
+        src: "{{pre_patch_file_name.stdout}}"
+      register: pre_patch_file_content
+
+    - name: Check splunk status
+      shell:
+        cmd: /opt/splunk/bin/splunk status
+      register: splunk_status
+      become: yes
+      become_user: splunk
+      failed_when: splunk_status.stderr != ''
+
+    - name: Fail if splunk is not running
+      assert:
+        that:
+          - "{{'splunkd is running' in splunk_status.stdout}}"
+        fail_msg: "splunkd is not running"
+
+    - name: Get list of available updates
+      yum:
+        list: updates
+      register: yum_updates
+      become: yes
+
+    - name: Set has_pending_update flag
+      set_fact:
+        has_pending_updates: "{{(yum_updates.results | length()) > 0}}"
+
+    - debug:
+        var: has_pending_updates
+
+    - name: Flatten list of updates
+      set_fact:
+        updates_flat_list: "{{yum_updates.results | json_query('[].name')}}"
+
+    - name: Check for kernel updates
+      set_fact:
+        has_kernel_updates: "{{'kernel' in updates_flat_list}}"
+
+    - name: Set health check result as passed
+      set_fact:
+        pre_patch_health_check: "Passed"
+
+    rescue:
+
+    - name: Set error flag
+      set_fact:
+        has_error: true
+      delegate_to: "{{groups['all'][0]}}"
+      delegate_facts: true
+
+    - name: Update status with error message
+      set_fact:
+        pre_patch_health_check: "Failed: {{(ansible_failed_result.stderr is defined)|ternary(ansible_failed_result.stderr,ansible_failed_result.msg)}}"
+
+    always:
+
+    # This does not not show up in logs for some reason
+    - name: Clear host errors so next play will execute
+      meta: clear_host_errors
+
+# Patch Master Node
+- name: Patch Master Node
+  hosts: "{{environment_name}}_master"
+  serial: 1
+
+  tasks:
+
+  - name: Set has_error value
+    set_fact:
+      has_error: "{{(hostvars[groups['all'][0]]['has_error']| default(false))| ternary(true, false)}}"
+
+  - name: Set server type
+    set_fact:
+      splunk_server_type: "master"
+
+  - name: Patch server if there are any patches available
+    block:
+
+    - name: Set error flag
+      set_fact:
+        host_error: false
+
+    - name: Update all packages
+      yum:
+        name: "*"
+        state: latest
+      become: yes
+
+    - name: Restart server after kernel patch
+      include_role:
+        name: reboot_server
+      when: has_kernel_updates or force_restart_bool
+
+    rescue:
+
+    - name: Set error flag
+      set_fact:
+        has_error: true
+      delegate_to: "{{groups['all'][0]}}"
+      delegate_facts: true
+
+    - name: Update status with error messagex
+      set_fact:
+        reboot_server: "Failed: {{(ansible_failed_result.stderr is defined)|ternary(ansible_failed_result.stderr,ansible_failed_result.msg)}}"
+
+    always:
+
+    # This does not not show up in logs for some reason
+    - name: Clear host errors so next play will execute
+      meta: clear_host_errors
+
+    # Current host has no error, other hosts have no error and (there are patches to apply or patching is forced)
+    when: not has_error and (has_pending_updates or force_patching_bool)
+
+
+
+# Patch Monitoring Console
+- name: Patch Monitoring Console
+  hosts: "{{environment_name}}_console"
+  serial: 1
+
+  tasks:
+
+  - name: Set has_error value
+    set_fact:
+      has_error: "{{(hostvars[groups['all'][0]]['has_error']| default(false))| ternary(true, false)}}"
+
+  - name: Set server type
+    set_fact:
+      splunk_server_type: "console"
+
+  - name: Patch server if there are any patches available
+    block:
+
+    - name: Update all packages
+      yum:
+        name: "*"
+        state: latest
+      become: yes
+
+    - name: Restart server after kernel patch
+      include_role:
+        name: reboot_server
+      when: has_kernel_updates or force_restart_bool
+
+    rescue:
+
+    - name: Set error flag
+      set_fact:
+        has_error: true
+      delegate_to: "{{groups['all'][0]}}"
+      delegate_facts: true
+
+
+    - name: Update status with error messagex
+      set_fact:
+        reboot_server: "Failed: {{(ansible_failed_result.stderr is defined)|ternary(ansible_failed_result.stderr,ansible_failed_result.msg)}}"
+
+    always:
+
+    # This does not not show up in logs for some reason
+    - name: Clear host errors so next play will execute
+      meta: clear_host_errors
+
+    # Current host has no error, other hosts have no error and (there are patches to apply or patching is forced)
+    when: not has_error and (has_pending_updates or force_patching_bool)
+
+
+
+
+# Patch Search Head
+- name: Patch Search Head
+  hosts: "{{environment_name}}_search_head"
+  serial: 1
+
+  tasks:
+
+  - name: Set has_error value
+    set_fact:
+      has_error: "{{(hostvars[groups['all'][0]]['has_error']| default(false))| ternary(true, false)}}"
+
+  - name: Set server type
+    set_fact:
+      splunk_server_type: "search_head"
+
+  - name: Patch server if there are any patches available
+    block:
+
+    - name: Update all packages
+      yum:
+        name: "*"
+        state: latest
+      become: yes
+
+    - name: Restart server after kernel patch
+      include_role:
+        name: reboot_server
+      when: has_kernel_updates or force_restart_bool
+
+    rescue:
+
+    - name: Set error flag
+      set_fact:
+        has_error: true
+      delegate_to: "{{groups['all'][0]}}"
+      delegate_facts: true
+
+    - name: Update status with error messagex
+      set_fact:
+        reboot_server: "Failed: {{(ansible_failed_result.stderr is defined)|ternary(ansible_failed_result.stderr,ansible_failed_result.msg)}}"
+
+    always:
+
+    # This does not not show up in logs for some reason
+    - name: Clear host errors so next play will execute
+      meta: clear_host_errors
+
+    # Current host has no error, other hosts have no error and (there are patches to apply or patching is forced)
+    when: not has_error and (has_pending_updates or force_patching_bool)
+
+
+# Patch Heavy Forwarder
+- name: Patch Indexers
+  hosts: "{{environment_name}}_heavy_forwarder"
+  serial: 1
+
+  tasks:
+
+  - name: Set has_error value
+    set_fact:
+      has_error: "{{(hostvars[groups['all'][0]]['has_error']| default(false))| ternary(true, false)}}"
+
+  - name: Set server type
+    set_fact:
+      splunk_server_type: "heavy_forwarder"
+
+  - name: Patch server if there are any patches available
+    block:
+
+    - name: Update all packages
+      yum:
+        name: "*"
+        state: latest
+      become: yes
+
+    - name: Restart server after kernel patch
+      include_role:
+        name: reboot_server
+      when: has_kernel_updates or force_restart_bool
+
+    rescue:
+
+    - name: Set error flag
+      set_fact:
+        has_error: true
+      delegate_to: "{{groups['all'][0]}}"
+      delegate_facts: true
+
+    - name: Update status with error messagex
+      set_fact:
+        reboot_server: "Failed: {{(ansible_failed_result.stderr is defined)|ternary(ansible_failed_result.stderr,ansible_failed_result.msg)}}"
+
+    always:
+
+    # This does not not show up in logs for some reason
+    - name: Clear host errors so next play will execute
+      meta: clear_host_errors
+
+    # Current host has no error, other hosts have no error and (there are patches to apply or patching is forced)
+    when: not has_error and (has_pending_updates or force_patching_bool)
+
+# Patch Indexers
+- name: Patch Indexers
+  hosts: "{{environment_name}}_indexer"
+  serial: 1
+
+  tasks:
+
+  - name: Set has_error value
+    set_fact:
+      has_error: "{{(hostvars[groups['all'][0]]['has_error']| default(false))| ternary(true, false)}}"
+
+  - name: Set server type
+    set_fact:
+      splunk_server_type: "indexer"
+
+  - name: Patch server if there are any patches available
+    block:
+
+    - name: Update all packages
+      yum:
+        name: "*"
+        state: latest
+      become: yes
+
+    - name: Restart server after kernel patch
+      include_role:
+        name: reboot_server
+      when: has_kernel_updates or force_restart_bool
+
+    rescue:
+
+    - name: Set error flag
+      set_fact:
+        has_error: true
+      delegate_to: "{{groups['all'][0]}}"
+      delegate_facts: true
+
+    - name: Update status with error messagex
+      set_fact:
+        reboot_server: "Failed: {{(ansible_failed_result.stderr is defined)|ternary(ansible_failed_result.stderr,ansible_failed_result.msg)}}"
+
+    always:
+
+    # This does not not show up in logs for some reason
+    - name: Clear host errors so next play will execute
+      meta: clear_host_errors
+
+    # Current host has no error, other hosts have no error and (there are patches to apply or patching is forced)
+    when: not has_error and (has_pending_updates or force_patching_bool)
+
+# Get post patch security patch list
+- name: Get post patch security patch list
+  hosts: "{{environment_name}}_*"
+
+  tasks:
+
+  - name: Set has_error value
+    set_fact:
+      has_error: "{{(hostvars[groups['all'][0]]['has_error']| default(false))| ternary(true, false)}}"
+  
+  - block:
+
+    - name: Get timestamp from the system
+      shell: "date +%d%m%Y%H%M"
+      register: timestamp
+      run_once: true
+      become: false
+      delegate_to: localhost
+
+    - name: Output timestamp
+      ansible.builtin.debug:
+        msg: "timestamp: {{timestamp}}"
+      run_once: true
+      become: false
+      delegate_to: localhost
+
+    - name: Get current year
+      shell: "date +%Y"
+      register: current_year
+
+    - name: Set Security patch list file name
+      shell: |
+        echo $(date +%Y-%m-%d)-RHEL-after-patching_$(hostname -s)_splunk.txt
+      become: yes
+      register: post_patch_file_name
+
+    - name: Export list of installed security patches for the year
+      shell: |
+        #!/bin/bash
+        find *-RHEL-after-patching_$(hostname -s)_SEM.txt -type f -mtime +120 -delete
+
+        echo "Capturing After PIR"
+        date  > {{post_patch_file_name.stdout}}
+        yum updateinfo list security installed | grep RHSA-2021 >> {{post_patch_file_name.stdout}}
+        chmod o+r {{post_patch_file_name.stdout}}
+      become: yes
+
+    - name: Read content of exported file
+      slurp:
+        src: "{{post_patch_file_name.stdout}}"
+      register: post_patch_file_content
+
+    - name: Fetch security patch list export
+      fetch:
+        src: "{{post_patch_file_name.stdout}}"
+        dest: "/tmp/{{post_patch_file_name.stdout}}"
+        flat: true
+
+    - name: Get report server name
+      set_fact:
+        report_server: "{{groups[report_server_group][0]}}"
+      vars:
+        report_server_group: "{{environment_name}}_report_server"
+
+    - name: Fetch security patch list export to report server
+      copy:
+        src: "/tmp/{{post_patch_file_name.stdout}}"
+        dest: "/tmp/{{post_patch_file_name.stdout}}"
+        force: true
+      delegate_to: "{{report_server}}"
+      throttle: 1
+
+    rescue:
+
+    - name: Set error flag
+      set_fact:
+        has_error: true
+      delegate_to: "{{groups['all'][0]}}"
+      delegate_facts: true
+    always:
+    # This not not show up in logs for some reason
+    - name: Clear host errors so next play will execute
+      meta: clear_host_errors
+
+# Compile report
+- name: Compile report
+  hosts: "{{environment_name}}_*"
+
+  tasks:
+
+  - name: Compile results for report
+    set_fact:
+      report: 
+        inventory_hostname: "{{inventory_hostname}}"
+        splunk_server_type: "{{splunk_server_type}}"
+        pre_patch_file_content: "{{pre_patch_file_content}}"
+        pre_patch_health_check: "{{pre_patch_health_check}}"
+        has_pending_updates: "{{has_pending_updates}}"
+        yum_updates: "{{yum_updates}}"
+        has_kernel_updates: "{{has_kernel_updates}}"
+        stop_splunk_services: "{{stop_splunk_services}}"
+        reboot_server: "{{reboot_server}}"
+        post_patch_health_check: "{{post_patch_health_check}}"
+        post_patch_file_content: "{{post_patch_file_content}}"
+
+  - name: Flatten hostvars
+    set_fact:
+      flat_vars: "{{hostvars|json_query(query)}}"
+    vars:
+      query: "*[].report"
+    run_once: true
+    become: false
+    delegate_to: "{{report_server}}"
+
+  - name: Create folder to hold curent report
+    file:
+      path: "/tmp/reports/{{timestamp.stdout}}/"
+      state: directory
+    run_once: true
+    become: false
+    delegate_to: "{{report_server}}"
+
+  - name: Write report to disk
+    ansible.builtin.template:
+      src: ./j2_templates/patching_report.j2
+      #dest: "/tmp/reports/{{timestamp.stdout}}/{{inventory_hostname}}_{{timestamp.stdout}}_Postgres_patching_report.csv"
+      dest: "/tmp/reports/{{timestamp.stdout}}/{{environment_name}}_{{timestamp.stdout}}_splunk_patching_report.csv"
+    run_once: true
+    become: false
+    delegate_to: "{{report_server}}"
+
+  - name: Output report path
+    ansible.builtin.debug:
+      msg: "report path: /tmp/reports/{{timestamp.stdout}}/{{environment_name}}_{{timestamp.stdout}}_splunk_patching_report.csv"
+    run_once: true
+    become: false
+    delegate_to: "{{report_server}}"

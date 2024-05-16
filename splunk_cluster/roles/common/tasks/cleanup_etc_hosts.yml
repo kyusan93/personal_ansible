@@ -1,0 +1,9 @@
+---
+
+- name: Replace /etc/hosts file with default /etc/hosts file
+  become: true
+  copy:
+    src: "{{ playbook_dir }}/roles/common/templates/hosts"
+    dest: "/etc/hosts"
+    follow: yes
+

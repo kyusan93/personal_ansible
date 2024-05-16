@@ -1,0 +1,7 @@
+---
+
+- name: Check for Splunk is installed
+  become: true
+  stat:
+    path: "{{ splunk.bin }}"
+  register: splunk_exist

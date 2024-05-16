@@ -1,0 +1,14 @@
+---
+
+- name: Add hf to deployment server
+  ini_file:
+      dest: "{{ splunk.home }}/etc/system/local/deploymentclient.conf"
+      section: "{{ item.section}}"
+      option: "{{ item.key }}"
+      value: "{{ item.value }}"
+      owner: "{{ splunk.nix.user }}"
+      group: "{{ splunk.nix.group }}"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  with_items:
+    - {section: "target-broker:deploymentServer", key: "targetUri", value: "{{ splunk.deployment_server_ip }}:{{ splunk.ports.mgmt }}"}

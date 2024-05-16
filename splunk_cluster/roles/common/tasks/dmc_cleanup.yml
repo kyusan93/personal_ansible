@@ -1,0 +1,126 @@
+---
+
+- name: DMC groups cleanup
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "https://{{ splunk.monitoring_console_ip }}:{{ splunk.ports.mgmt }}/services/search/distributed/groups/{{ item }}"
+    method: DELETE
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    body: "output_mode=json"
+    validate_certs: false
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+    status_code: 200,201,409,400,404
+    use_proxy: no
+  register: result
+  with_items:
+    - "dmc_group_cluster_master"
+    - "dmc_group_indexer"
+    - "dmc_group_deployment_server"
+    - "dmc_group_kv_store"
+    - "dmc_group_license_master"
+    - "dmc_group_search_head"
+    - "dmc_group_deployer"
+    - "dmc_customgroup_heavy_forwarder"
+    - "dmc_searchheadclustergroup_sh_cluster"
+    - "dmc_indexerclustergroup_idx_cluster"
+  until: result.status == 200 or result.status == 400 or result.status == 201 or result.status == 404 or result.status == 409
+  retries: 10
+  delay: 30
+
+- name: DMC assets csv cleanup
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "https://{{ splunk.monitoring_console_ip }}:{{ splunk.ports.mgmt }}/servicesNS/nobody/splunk_monitoring_console/data/lookup-table-files/assets.csv"
+    method: DELETE
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    body: "output_mode=json"
+    validate_certs: false
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+    status_code: 200,201,409,400,404
+    use_proxy: no
+  register: result
+  until: result.status == 200 or result.status == 400 or result.status == 201 or result.status == 404 or result.status == 409
+  retries: 10
+  delay: 30
+
+- name: DMC forwarder assets cleanup
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "https://{{ splunk.monitoring_console_ip }}:{{ splunk.ports.mgmt }}/servicesNS/nobody/splunk_monitoring_console/data/lookup-table-files/dmc_forwarder_assets.csv"
+    method: DELETE
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    body: "output_mode=json"
+    validate_certs: false
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+    status_code: 200,201,409,400,404
+    use_proxy: no
+  register: result
+  until: result.status == 200 or result.status == 400 or result.status == 201 or result.status == 404 or result.status == 409
+  retries: 10
+  delay: 30
+
+- name: DMC assets configuration cleanup
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "https://{{ splunk.monitoring_console_ip }}:{{ splunk.ports.mgmt }}/servicesNS/nobody/splunk_monitoring_console/configs/conf-splunk_monitoring_console_assets/%20localhost%3Alocalhost"
+    method: POST
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    body: "output_mode=json"
+    validate_certs: false
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+    status_code: 200,201,404,409
+    use_proxy: no
+  register: result
+  until: result.status == 200 or result.status == 201 or result.status == 404 or result.status == 409
+  retries: 10
+  delay: 30
+
+- name: DMC Settings cleanup
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "https://{{ splunk.monitoring_console_ip }}:{{ splunk.ports.mgmt }}/servicesNS/nobody/splunk_monitoring_console/configs/conf-splunk_monitoring_console_assets/settings"
+    method: POST
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    body: "output_mode=json&configuredPeers=&disabled=1&eai%3Aacl=&eai%3AappName=splunk_monitoring_console&eai%3AuserName=nobody&blackList="
+    validate_certs: false
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+    status_code: 200,201,409
+    use_proxy: no
+  register: result
+  until: result.status == 200 or result.status == 201 or result.status == 409
+  retries: 10
+  delay: 30
+
+- name: DMC cleanup
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "https://{{ splunk.monitoring_console_ip }}:{{ splunk.ports.mgmt }}/servicesNS/nobody/system/apps/local/splunk_monitoring_console"
+    method: POST
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    body: "author=Splunk&check_for_updates=1&configured=0&label=Monitoring+Console"
+    validate_certs: false
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+    status_code: 200,201,409
+    use_proxy: no
+  register: result
+  until: result.status == 200 or result.status == 201 or result.status == 409
+  retries: 10
+  delay: 30

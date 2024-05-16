@@ -1,0 +1,4 @@
+- name: Create Local Splunk User
+  hosts: all
+  roles:
+    - { role: create_local_splunk_user, tags: create_local_splunk_user }

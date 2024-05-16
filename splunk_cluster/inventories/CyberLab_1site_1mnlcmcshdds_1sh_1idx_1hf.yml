@@ -1,0 +1,64 @@
+---
+all:
+ children:
+  search_head:
+    hosts:
+      #site 1 searchhead
+      192.168.30.53:
+        host_suffix: "CLV030VLSPSCH01"
+        host_site: '1'
+
+  indexer:
+    hosts:
+      #site 1 indexer
+      192.168.30.56:
+        host_suffix: "CLV030VLSPIDX01"
+        host_site: '1'
+
+  license_master:
+    hosts:
+      192.168.30.51:
+        host_suffix: "CLV030VLSPMGT01"
+        host_site: '1'
+
+  monitoring_console:
+    hosts:
+      192.168.30.51:
+        host_suffix: "CLV030VLSPMGT01"
+        host_site: '1'
+
+  cluster_master:
+    hosts:
+      192.168.30.51:
+        host_suffix: "CLV030VLSPMGT01"
+        host_site: '1'
+        available_sites:
+          - 'site1'
+
+  deployment_server:
+    hosts:
+      192.168.30.51:
+        host_suffix: "CLV030VLSPMGT01"
+        host_site: '1'
+
+  deployer:
+    hosts:
+      192.168.30.51:
+        host_suffix: "CLV030VLSPMGT01"
+        host_site: '1'
+        
+  heavy_forwarder:
+    hosts:
+      192.168.30.61:
+        host_suffix: "CLV030VLSPHVF01"
+        host_site: '1'
+
+  universal_forwarder:
+    hosts:
+        
+  universal_forwarder_windows:
+    hosts:
+
+
+
+

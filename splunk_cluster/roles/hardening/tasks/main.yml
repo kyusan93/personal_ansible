@@ -1,0 +1,4 @@
+---
+
+- name: Hardening checks
+  import_tasks: hardening_checks.yml

@@ -1,0 +1,6 @@
+
+# Configure indexer indexes.conf
+- name: Configure indexer indexes
+  hosts: indexer,cluster_master
+  roles:
+    - { role: configure_indexer_indexes, tags: configure_indexer_indexes }

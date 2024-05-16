@@ -1,0 +1,116 @@
+---
+
+- name: Check outputs.conf exists
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  stat:
+    path: "{{ splunk.home }}/etc/system/local/outputs.conf"
+  register: outputs_exists_result
+
+- name: Retrieve current sslPassword
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  shell: "cat {{ outputs_exists_result.stat.path }} | grep sslPassword | cut -d'=' -f2 | awk '$1=$1'"
+  failed_when: outputs_sslPassword.rc > 1
+  when: outputs_exists_result.stat.exists
+  register: outputs_sslPassword    
+
+- name: Retrieve current pass4SymmKey
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  shell: "cat {{ outputs_exists_result.stat.path }} | grep pass4SymmKey | cut -d'=' -f2 | awk '$1=$1'"
+  failed_when: outputs_pass4SymmKey.rc > 1
+  when: outputs_exists_result.stat.exists
+  register: outputs_pass4SymmKey
+
+- name: Get decrypted sslPassword Splunk hash
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  command: "{{ splunk.home }}/bin/splunk show-decrypted --value '{{ outputs_sslPassword.stdout }}'"
+  register: current_sslPassword_unhash
+  when: outputs_exists_result.stat.exists and outputs_sslPassword.stdout != ''
+
+- name: Get decrypted pass4SymmKey Splunk hash
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  command: "{{ splunk.home }}/bin/splunk show-decrypted --value '{{ outputs_pass4SymmKey.stdout }}'"
+  register: current_pass4SymmKey_unhash
+  when: outputs_exists_result.stat.exists and outputs_pass4SymmKey.stdout != ''
+
+- name: Set sslPassword and pass4SymmKey
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    current_sslPassword: "{% if(outputs_exists_result.stat.exists and outputs_sslPassword.stdout != '') %}{{ current_sslPassword_unhash.stdout }}{% else %}'INVALID_SSLPASSWORD'{% endif %}"
+    current_pass4SymmKey: "{% if(outputs_exists_result.stat.exists and outputs_pass4SymmKey.stdout != '') %}{{ current_pass4SymmKey_unhash.stdout }}{% else %}'INVALID_PASS4SYMMKEY'{% endif %}"
+
+- name: Configure SSL outputs.conf
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/outputs.conf"
+    section: "{{ item.section }}"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+  with_items:
+    - {section: "indexer_discovery:cluster_master", key: "pass4SymmKey", value: "{% if(current_pass4SymmKey == splunk.pass4SymmKey) %}{{ outputs_pass4SymmKey.stdout }}{% else %}{{ splunk.pass4SymmKey }}{% endif %}"}
+    - {section: "indexer_discovery:cluster_master", key: "master_uri", value: "https://{{ splunk.cluster.master_url }}:{{ splunk.ports.mgmt }}"}
+    - {section: "tcpout:{{ base.company_name }}_indexers", key: "indexerDiscovery", value: "cluster_master"}
+    - {section: "tcpout:{{ base.company_name }}_indexers", key: "clientCert", value: "$SPLUNK_HOME/etc/auth/{{ base.company_name }}/{{ host_suffix }}_app_cert.pem"}
+    - {section: "tcpout:{{ base.company_name }}_indexers", key: "sslPassword", value: "{% if(current_sslPassword == splunk.ssl.sslPassword) %}{{ outputs_sslPassword.stdout }}{% else %}{{ splunk.ssl.sslPassword }}{% endif %}"}
+    - {section: "tcpout:{{ base.company_name }}_indexers", key: "useClientSSLCompression", value: "true"}
+    - {section: "tcpout:{{ base.company_name }}_indexers", key: "sslVersions", value: "tls1.2"}
+    - {section: "tcpout:{{ base.company_name }}_indexers", key: "cipherSuite", value: "{{ splunk.ssl.cipherSuite }}"}
+    - {section: "tcpout:{{ base.company_name }}_indexers", key: "ecdhCurves", value: "{{ splunk.ssl.ecdhCurves }}"}
+    - {section: "tcpout", key: "indexAndForward", value: "false"}
+    - {section: "tcpout", key: "forwardedindex.filter.disable", value: "true"}
+    - {section: "tcpout", key: "defaultGroup", value: "{{ base.company_name }}_indexers"}
+    - {section: "indexAndForward", key: "index", value: "false"}
+  register: tcpout_ssl_configured
+
+- name: Configure SSL outputs.conf - update to use indexer vip
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/outputs.conf"
+    section: "{{ item.section }}"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+  with_items:
+    - {section: "tcpout:{{ base.company_name }}_indexers", key: "server", value: "{{ splunk.indexer.vip }}:{{ splunk.ports.indexer_receiving }} "}
+  when: (splunk.indexer.vip is defined) and (splunk.indexer.vip|length > 0)
+
+- name: Configure SSL outputs.conf - remove indexerdiscovery
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/outputs.conf"
+    section: "{{ item.section }}"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    state: absent
+  with_items:
+    - {section: "indexer_discovery:cluster_master", key: "pass4SymmKey", value: "{{ splunk.pass4SymmKey }}"}
+  when: (splunk.indexer.vip is defined) and (splunk.indexer.vip|length > 0)
+
+- name: Configure SSL outputs.conf - remove indexerdiscovery
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/outputs.conf"
+    section: "{{ item.section }}"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    state: absent
+  with_items:
+    - {section: "tcpout:{{ base.company_name }}_indexers", key: "indexerDiscovery", value: "cluster_master"}
+  when: (splunk.indexer.vip is defined) and (splunk.indexer.vip|length > 0)
+
+
+

@@ -1,0 +1,23 @@
+---
+
+# - include_tasks: "{{ playbook_dir }}/roles/common/tasks/hardening_checks.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/hardening_1_Communication_Security.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/hardening_2_Account_Management.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/hardening_3_Password_Management.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/hardening_4_Authentication.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/hardening_5_Session_Management.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/hardening_6_Logging_and_Monitoring.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/hardening_7_Minimize_Attack_Surface.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/hardening_8_Login_Disclaimer.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/hardening_9_Patch_Management.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/hardening_10_Product_Principal_Security.yml"

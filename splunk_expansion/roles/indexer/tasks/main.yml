@@ -1,0 +1,4 @@
+---
+
+- name: Configure indexer
+  import_tasks: configure_indexer.yml

@@ -1,0 +1,367 @@
+<form theme="dark" version="1.1">
+  <label>Correlation Search Review</label>
+  <description>We are looking for evidence of whether correlation rules are firing, if risk based alerting (RBA) is in use, as well as a general profile of correlation searches.</description>
+  <search>
+    <query>| rest splunk_server=local /services/saved/searches 
+| rename action.correlationsearch.enabled AS correlation_enabled 
+| where (correlation_enabled=1 AND disabled=0 AND is_scheduled=1) 
+| eval base_search=if(match(search,"^\|"),trim(mvindex(split(search,"|"),1)),trim(mvindex(split(search,"|"),0))) 
+| eval base_search_tstats=case(match(base_search,"^`?tstats\`?\s"),"tstats") 
+| eval base_search_datamodel=case(match(base_search,"^from datamodel:"),"datamodel") 
+| rex field=base_search "datamodel(=|:)(?&lt;base_search_dm&gt;[^\s]+)" 
+| table title base_search_dm base_search 
+| eval datamodel=mvindex(split(base_search_dm,"."),0)
+| join type=left datamodel 
+    [| rest splunk_server=local /services/data/models 
+    | rename eai:acl.app AS app, title AS datamodel 
+    | where app!="search"
+    | table datamodel acceleration]
+| fields - datamodel base_search
+    </query>
+    <earliest>$time.earliest$</earliest>
+    <latest>$time.latest$</latest>
+  </search>
+  <search>
+    <query>| rest splunk_server=local /services/saved/searches 
+| rename action.correlationsearch.enabled AS correlation_enabled 
+| where (correlation_enabled=1 AND disabled=0 AND is_scheduled=1) 
+| eval base_search=if(match(search,"^\|"),trim(mvindex(split(search,"|"),1)),trim(mvindex(split(search,"|"),0))) 
+| rex field=base_search "^\`(?&lt;base_search_macro_name&gt;\S+)\`\s" 
+| join type=left base_search_macro_name 
+    [| rest splunk_server=local /services/data/macros 
+    | table title definition 
+    | rename title AS base_search_macro_name, definition AS base_search_macro_details] 
+| rex field=base_search "datamodel\s?(=|:)\s?\"?(?&lt;base_search_dm&gt;[^\s\"]+)\"? 
+| rex field=base_search_macro_details "datamodel\s?(=|:)\s?\"?(?&lt;base_search_dm_macro&gt;[^\s\"]+)\"? 
+| eval base_search_dm=coalesce(base_search_dm,base_search_dm_macro) 
+| table title base_search_dm base_search 
+| eval base_search_dm=mvindex(split(base_search_dm,"."),0) 
+| stats count by base_search_dm 
+| append 
+    [| rest splunk_server=local /services/data/models 
+    | rename eai:acl.app AS app, title AS base_search_dm 
+    | where app="Splunk_SA_CIM" AND acceleration=1 
+    | table base_search_dm]
+| stats sum(count) AS count by base_search_dm
+| fillnull count value=0
+    </query>
+    <earliest>$time.earliest$</earliest>
+    <latest>$time.latest$</latest>
+  </search>
+  <search id="correlation_search_base">
+    <query>| rest splunk_server=local /services/saved/searches 
+| rename action.correlationsearch.enabled AS correlation_enabled
+| eval status=case((correlation_enabled=1 AND disabled=0 AND is_scheduled=1),"Enabled",(correlation_enabled=1 AND disabled=0 AND is_scheduled=0),"Enabled. Not Scheduled",(correlation_enabled=1 AND disabled=1),"Disabled")</query>
+  </search>
+  <search id="correlation_search_review" base="correlation_search_base">
+    <query>| where status="Enabled"
+| eventstats count AS cron_schedule_group by cron_schedule 
+| eventstats count AS total_searches 
+| rename dispatch.* AS * 
+| eval search_split=split(search,"|")
+| eval base_search=if(match(search,"^\|"),trim(mvindex(search_split,1)),trim(mvindex(search_split,0))) 
+| eval base_search_tstats=case(match(base_search,"^`?tstats\`?\s"),"Base search uses tstats") 
+| eval base_search_datamodel=case(match(base_search,"^from datamodel:"),"Base search uses datamodel") 
+| eval base_search_lookup=case(match(base_search,"^(from\s)?inputlookup:?"),"Base search uses lookup") 
+| eval base_search_index=case(match(base_search,"index="),"Base search uses index") 
+| eval base_search_macro=case(match(base_search,"\`\S+\`"),"Base search uses macro") 
+| eval base_search_subsearch=case(match(base_search,"\["),"Base search includes subsearch") 
+| eval append_used=case(match(search,"\|\s?append"),"append used") 
+| eval join_used=case(match(search,"\|\s?join"),"join used") 
+| eval dedup_used=case(match(search,"\|\s?dedup"),"dedup used") 
+| eval transaction_used=case(match(search,"\|\s?transaction"),"transaction used") 
+| eval mltk_used=case(match(search,"\|\s?(apply|fit)"),"mltk used") 
+| eval realtime_search=case(match(earliest_time,"rt"),"realtime search") 
+| rex field=base_search "datamodel\s?(=|:)\s?\"?(?&lt;base_search_dm&gt;[^\s\"]+)\"?"
+| eval base_search_dm="Datamodel: " . base_search_dm 
+| eval timerange_seconds=round(relative_time(now(),latest_time)-relative_time(now(),earliest_time),0) 
+| eval search_attributes=mvappend(realtime_search, base_search_tstats, base_search_dm, base_search_datamodel, base_search_lookup, base_search_index, base_search_macro, base_search_subsearch, append_used, join_used, dedup_used, transaction_used, mltk_used) 
+| eval cron_perc=round((cron_schedule_group/total_searches)*100,0) 
+| eval cron_issue=case(cron_perc&gt;20 AND total_searches&gt;10,"Potential scheduling issue.") 
+| lookup correlation_search_component_cost_summary.csv title
+| lookup correlation_search_runtime_summary.csv title
+| lookup correlation_search_component_scheduler_summary.csv title
+| lookup correlation_search_perf_summary.csv title
+| makemv search_execution_summary 
+| makemv component_costs
+| eval skip_ratio=if(status="skipped" OR status="deferred",round((count/total)*100,1),null())
+| eval skip_issue=case(skip_ratio&gt;5,"Skipping or Deferring more than 5% or searches.")
+| eval runtime_issue=case(timerange_seconds&lt;avg_runtime,"Average runtime exceeds timerange chosen",timerange_seconds&lt;max_runtime,"Runtime sometimes exceeds timerange chosen") 
+| eval expensive_commands=case(isnotnull(dedup_used) OR isnotnull(transaction_used),"Expensive commands used.") 
+| eval commands_with_limitations=case(isnotnull(append_used) OR isnotnull(join_used),"Commands with known limitations used.") 
+| eval is_realtime=case(isnotnull(realtime_search),"Realtime searches are resource hungry, evaluate requirement")
+| eval mem_issues=case(avg_pct_memory&gt;75,"Search consuming &gt;75% of memory",avg_pct_memory&gt;50,"Search consuming &gt;50% of memory",avg_pct_memory&gt;20,"Search consuming &gt;20% of memory.")
+| eval cpu_issues=case(avg_pct_cpu&gt;75,"Search consuming &gt;75% of cpu",avg_pct_cpu&gt;50,"Search consuming &gt;50% of cpu",avg_pct_cpu&gt;20,"Search consuming &gt;20% of cpu.")
+| eval issues=mvappend(runtime_issues,cron_issue,expensive_commands,commands_with_limitations,is_realtime,skip_issue,mem_issues,cpu_issues) 
+| eval issues=if(isnull(issues),"None",issues) 
+| $issues$
+| table title issues eai:acl.app search_execution_summary component_costs search_attributes timerange_seconds earliest_time latest_time *_runtime avg_pct_cpu avg_pct_memory execution_count cron_perc cron_schedule disabled is_scheduled is_realtime cron_issue runtime_issue mem_issues cpu_issues skip_issue expensive_commands commands_with_limitations next_scheduled_time action.correlationsearch* base_search search</query>
+  </search>
+  <fieldset submitButton="false" autoRun="false">
+    <input type="time" token="time" searchWhenChanged="true">
+      <label></label>
+      <default>
+        <earliest>-30d</earliest>
+        <latest>now</latest>
+      </default>
+      <change>
+        <unset token="drilldown"></unset>
+      </change>
+    </input>
+    <input type="radio" token="issues" searchWhenChanged="true">
+      <label>Show Issues Only</label>
+      <choice value="issues!=&quot;None&quot;">Yes</choice>
+      <choice value="isnotnull(issues)">No</choice>
+      <prefix>where </prefix>
+      <default>issues!="None"</default>
+      <initialValue>issues!="None"</initialValue>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Correlation Rule Status</title>
+      <single>
+        <search base="correlation_search_base">
+          <query>| stats count count(eval(case(status="Enabled",status))) AS enabled_count by status
+| stats sum(count) AS count by status</query>
+        </search>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="height">200</option>
+        <option name="rangeColors">["0x53a051","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trellis.enabled">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="useColors">0</option>
+      </single>
+    </panel>
+    <panel rejects="$show_base_search_sum_html$">
+      <title>Correlation Rule Base Search Summary</title>
+      <single>
+        <search>
+          <query>| rest splunk_server=local /services/saved/searches 
+| rename action.correlationsearch.enabled AS correlation_enabled 
+| where (correlation_enabled=1 AND disabled=0 AND is_scheduled=1) 
+| eval base_search=if(match(search,"^\|"),trim(mvindex(split(search,"|"),1)),trim(mvindex(split(search,"|"),0))) 
+| eval base_search_tstats=case(match(base_search,"^\s?tstats\s"),"tstats") 
+| eval base_search_datamodel=case(match(base_search,"^from datamodel:"),"datamodel") 
+| eval base_search_lookup=case(match(base_search,"^(from\s)?inputlookup:?"),"lookup") 
+| eval base_search_index=case(match(base_search,"index\s?="),"index") 
+| eval base_search_macro=case(match(base_search,"^\`\S+\`\s"),"macro") 
+| rex field=base_search "^\`(?&lt;base_search_macro_name&gt;\S+)\`\s" 
+| join type=left base_search_macro_name 
+    [| rest splunk_server=local /services/data/macros 
+    | table title definition 
+    | rename title AS base_search_macro_name, definition AS base_search_macro_details] 
+| eval base_search_sourcetype=case((isnotnull(base_search_macro) AND match(base_search_macro_details,"sourcetype\s?=") AND NOT match(base_search_macro_details,"index\s?=") OR (match(base_search,"sourcetype\s?=") AND NOT match(base_search,"index\s?="))),"sourcetype") 
+| rex field=base_search "datamodel\s?(=|:)\s?\"?(?&lt;base_search_dm&gt;[^\s\"]+)\"?" 
+| eval base_search_data=mvappend(base_search_tstats,base_search_datamodel,base_search_lookup,base_search_index,base_search_sourcetype,base_search_macro) 
+| table title base_search_data base_search_dm base_search 
+| eval datamodel=mvindex(split(base_search_dm,"."),0)
+| join type=left datamodel 
+    [| rest splunk_server=local /services/data/models 
+    | rename eai:acl.app AS app, title AS datamodel 
+    | where app!="search"
+    | table datamodel acceleration]
+| fields - datamodel
+| stats count by base_search_data</query>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_base_search_sum_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_base_search_sum_html"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="height">200</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="trellis.enabled">1</option>
+        <option name="trellis.size">medium</option>
+      </single>
+    </panel>
+    <panel depends="$show_actions_html$">
+      <title>Correlation Rule Actions Used</title>
+      <html>No enabled correlation rule actions identified</html>
+    </panel>
+    <panel rejects="$show_actions_html$">
+      <title>Correlation Rule Actions Used</title>
+      <single>
+        <search base="correlation_search_base">
+          <query>| where status="Enabled" | eval actions=trim(split(actions,",")) | stats count by actions</query>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_actions_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_actions_html"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="height">200</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="trellis.enabled">1</option>
+        <option name="trellis.size">medium</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel rejects="$show_base_search_dm_html$">
+      <title>Correlation Rule Base DM Usage</title>
+      <single>
+        <search>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_base_search_dm_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_base_search_dm_html"></unset>
+            </condition>
+          </progress>
+          <query>| rest splunk_server=local /services/saved/searches 
+| rename action.correlationsearch.enabled AS correlation_enabled 
+| where (correlation_enabled=1 AND disabled=0 AND is_scheduled=1) 
+| eval base_search=if(match(search,"^\|"),trim(mvindex(split(search,"|"),1)),trim(mvindex(split(search,"|"),0))) 
+| rex field=base_search "^\`(?&lt;base_search_macro_name&gt;\S+)\`\s" 
+| join type=left base_search_macro_name 
+    [| rest splunk_server=local /services/data/macros 
+    | table title definition 
+    | rename title AS base_search_macro_name, definition AS base_search_macro_details] 
+| rex field=base_search "datamodel\s?(=|:)\s?\"?(?&lt;base_search_dm&gt;[^\s\"]+)\"?"
+| rex field=base_search_macro_details "datamodel\s?(=|:)\s?(?&lt;base_search_dm_macro&gt;[^\s]+)" 
+| eval base_search_dm=coalesce(base_search_dm,base_search_dm_macro) 
+| table title base_search_dm base_search 
+| eval base_search_dm=mvindex(split(base_search_dm,"."),0) 
+| stats count by base_search_dm 
+| append 
+    [| rest splunk_server=local /services/data/models 
+    | rename eai:acl.app AS app, title AS base_search_dm 
+    | where app="Splunk_SA_CIM" AND acceleration=1 
+    | table base_search_dm]
+| stats sum(count) AS count by base_search_dm
+| fillnull count value=0
+| stats max(count) AS count by base_search_dm</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="height">450</option>
+        <option name="rangeColors">["0xdc4e41","0xf8be34","0x006d9c","0x53a051"]</option>
+        <option name="rangeValues">[0,2,10]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trellis.splitBy">base_search_dm</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    <panel depends="$show_risk_attributions_html$">
+      <title>Risk Attribution Summary</title>
+      <html>There doesn't appear to be an Risk Attributions in the risk index.  Risk Based Alerting may not be in use.</html>
+    </panel>
+    <panel rejects="$show_risk_attributions_html$">
+      <title>Risk Attribution Summary</title>
+      <single>
+        <search id="risk_attrib">
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_risk_attributions_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_risk_attributions_html"></unset>
+            </condition>
+          </progress>
+          <query>index=risk
+| stats count AS Total dc(risk_object) AS "Unique Risk Objects" c(risk_object_type) AS "Risk Object Count" dc(annotations) AS "Unique Annotations Used" values(annotations._frameworks) AS "Risk Frameworks Used" c(risk_message) AS "Risk Message Count" avg(risk_score) AS "Average Risk Score" dc(threat_object) AS "Unique Threat Objects" c(threat_object_type) AS "Threat Object Count"
+| fillnull "Risk Frameworks Used" value="None"</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0xdc4e41","0xf8be34","0x006d9c","0x53a051"]</option>
+        <option name="rangeValues">[0,5,20]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">1</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_timeline_html$">
+      <title>Notable and Risk Index Timeline</title>
+      <html>No notable or risk events.  There might be something major wrong. Try extending the search time.</html>
+    </panel>
+    <panel rejects="$show_timeline_html$">
+      <title>Notable and Risk Index Timeline</title>
+      <chart>
+        <search>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_timeline_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_timeline_html"></unset>
+            </condition>
+          </progress>
+          <query>| tstats count where index=risk OR index=notable by _time span=h index
+| timechart sum(count) by index</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="charting.axisY.scale">log</option>
+        <option name="charting.chart">line</option>
+        <option name="height">200</option>
+        <option name="charting.chart.nullValueMode">zero</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">1</option>
+        <option name="charting.layout.splitSeries.allowIndependentYRanges">1</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_correlation_html$">
+      <title>Enabled Correlation Search Details</title>
+      <html>No enabled correlation searches identified</html>
+    </panel>
+    <panel rejects="$show_correlation_html$">
+      <title>Enabled Correlation Search Details</title>
+      <table>
+        <search base="correlation_search_review">
+          <query>| table title issues eai:acl.app search_execution_summary component_costs search_attributes</query>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_correlation_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_correlation_html"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="drilldown">cell</option>
+        <drilldown>
+          <set token="drilldown">$row.title$</set>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$drilldown$">
+      <title>Search Detail for $drilldown$</title>
+      <table>
+        <search base="correlation_search_review">
+          <query>| where title="$drilldown$"
+          | table title issues eai:acl.app search_execution_summary component_costs search_attributes timerange_seconds earliest_time latest_time *_runtime avg_pct_cpu avg_pct_memory execution_count cron_perc cron_schedule disabled is_scheduled next_scheduled_time action.correlationsearch* base_search search
+          | transpose column_name="Item"
+          | rename "row 1" AS "Configuration"</query>
+        </search>
+        <option name="count">30</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+</form>

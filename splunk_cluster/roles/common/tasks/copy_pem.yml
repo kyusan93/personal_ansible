@@ -1,0 +1,24 @@
+---
+- name: Check if pem directory exists
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  stat:
+    path: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/CSR/p7b"
+  register: pem_exists
+  when: "'monitoring_console' in group_names"
+
+- name: Find pem files in directory
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  find:
+    paths: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/CSR/p7b"
+    patterns: '*.pem'
+  register: pem
+
+- name: Copy all pem to ansible tower
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  fetch:
+    src: "{{item.path}}"
+    dest: "{{base.awx_tmp_dir}}"
+  with_items: "{{ pem.files }}"

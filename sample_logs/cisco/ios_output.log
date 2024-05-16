@@ -1,0 +1,109 @@
+Apr  4 02:15:38 sto-c-001-rtr-1 59862: Apr  4 02:15:38.694 CET: %LINEPROTO-5-UPDOWN: Line protocol on Interface vlan 1113, changed state to down
+Apr  4 02:07:23 cph-c-001-rtr-1 32057: Apr  4 02:07:23.694 CET: %LINEPROTO-5-UPDOWN: Line protocol on Interface vlan 1113, changed state to up
+Apr  4 02:10:50 cph-c-001-rtr-1 3053: Apr  4 02:10:50.694 CET: %LINEPROTO-5-UPDOWN: Line protocol on Interface FastEthernet0/0, changed state to up
+Apr  4 02:15:34 hel-c-001-rtr-1 57818: Apr  4 02:15:34.694 CET: %LINEPROTO-5-UPDOWN: Line protocol on Interface GigabitEthernet1/0/6, changed state to down
+Apr  4 02:10:02 osl-e-310-swi-1 35138: Apr  4 02:10:02.694 CET: %LINK-3-UPDOWN: Interface FastEthernet0/1, changed state to up
+Apr  4 02:06:47 cph-e-951-swi-1 11887: Apr  4 02:06:47.694 CET: %LINK-3-UPDOWN: Interface Ethernet1/0/13, changed state to down
+Apr  4 02:10:19 osl-e-310-swi-2 20494: Apr  4 02:10:19.637 CET: %DUAL-5-NBRCHANGE: IP-EIGRP(0) 30: Neighbor 45.182.90.114 (Tunnel0) is up: new adjacency
+Apr  4 02:10:14 osl-e-310-swi-2 29974: Apr  4 02:10:14.905 CET: %SNMP-3-AUTHFAIL: Authentication failure for SNMP req from host 23.39.143.176
+Apr  4 02:06:47 osl-c-001-rtr-1 19774: Apr  4 02:06:47.876 CET: %ENVIRONMENT-2-FAN_FAULT: System Fault: FAN FAULT is detected.
+Apr  4 02:13:15 osl-e-310-swi-3 20048: Apr  4 02:13:15.379 CET: %HARDWARE-1-TCAM_ERROR: Found error in HFTM TCAM Space and not able to recover the error
+Apr  4 02:12:11 hel-c-001-rtr-1 5249: Apr  4 02:12:11.212 CET: %SFF8472-5-THRESHOLD_VIOLATION: Fa1/0/1: Rx power low warning; Operating value: -22.7 dBm, Threshold value: -19.0 dBm.
+Apr  4 02:13:41 osl-e-310-swi-3 17908: Apr  4 02:13:41.212 CET: %SFF8472-5-THRESHOLD_VIOLATION: Eth1/0/9: Rx power low warning; Operating value: -29.7 dBm, Threshold value: -29.0 dBm.
+Apr  4 02:14:15 osl-e-310-swi-2 45713: Apr  4 02:14:15.212 CET: %SFF8472-5-THRESHOLD_VIOLATION: Fa1/0/1: Rx power low warning; Operating value: -40.7 dBm, Threshold value: -39.0 dBm.
+Apr  4 02:09:30 osl-e-310-swi-1 16652: Apr  4 02:09:30.212 CET: %SFF8472-5-THRESHOLD_VIOLATION: Eth1/0/10: Temperature low alarm; Operating value: -101.6 C, Threshold value:  -10.0 C.
+Apr  4 02:08:04 cph-e-951-swi-1 34489: Apr  4 02:08:04.365 CET: %FAN-3-FAN_FAILED: Fan 4 had a rotation error reported.
+Apr  4 02:13:37 sto-c-001-rtr-1 16636: Apr  4 02:13:37.797 CET: %CDP-4-DUPLEX_MISMATCH: duplex mismatch discovered on Ethernet1/0/25 (not half duplex), with SEP001AD460E097 Port 1 (half duplex).
+Apr  4 02:14:25 cph-c-001-rtr-1 30512: Apr  4 02:14:25.353 CET: %ILPOWER-5-IEEE_DISCONNECT: Interface Gi0/7: PD removed
+Apr  4 02:15:28 sto-c-001-rtr-1 168: Apr  4 02:15:28.241 CET: %PIM-6-INVALID_RP_JOIN: VRF nat-public: Received (*, 224.0.1.40) Join from 238.30.105.206 for invalid RP 238.30.105.206
+Apr  4 02:14:56 cph-c-001-rtr-1 94541: Apr  4 02:14:56.895 CET: %SPANTREE-2-BLOCK_BPDUGUARD: Received BPDU on port GigabitEthernet1/0/9 with BPDU Guard enabled. Disabling port.
+Apr  4 02:08:49 osl-c-001-rtr-1 20580: Apr  4 02:08:49.895 CET: %SPANTREE-2-BLOCK_BPDUGUARD: Received BPDU on port FastEthernet0/0 with BPDU Guard enabled. Disabling port.
+Apr  4 02:13:03 osl-e-310-swi-2 28766: Apr  4 02:13:03.533 CET: %SEC-6-IPACCESSLOGP: list 110 denied tcp 121.107.125.211(38922) -> 0.0.0.0(22), 1 packet
+Apr  4 02:10:08 hel-c-001-rtr-1 66252: Apr  4 02:10:08.533 CET: %SEC-6-IPACCESSLOGP: list MGMT permitted tcp 177.119.217.13(9916) -> 0.0.0.0(23), 1 packet
+Apr  4 02:08:42 cph-c-001-rtr-1 86483: Apr  4 02:08:42.250 CET: %NTP-6-PEERREACH: Peer 95.103.192.138 is reachable
+Apr  4 02:14:49 hel-c-001-rtr-1 14052: Apr  4 02:14:49.132 CET: %CRYPTO-6-IKMP_NOT_ENCRYPTED: IKE packet from 74.61.132.254 was not encrypted and it should've been.
+Apr  4 02:11:24 sto-c-001-rtr-1 14259: Apr  4 02:11:24.475 CET: %SYS-2-MALLOCFAIL: Memory allocation of 32768 bytes failed from 0x8030F4A8, alignment 0
+Apr  4 02:15:07 osl-e-310-swi-2 69492: Apr  4 02:15:07.412 CET: %DSLSAR-1-DOWNGRADEDBW: PCR and SCR for VCD 1 (0/33) has been reduced to 1344k 1344k due to insufficient upstream bandwidth
+Apr  4 02:08:06 cph-e-951-swi-1 12276: Apr  4 02:08:06.076 CET: %SYS-5-CONFIG_I: Configured from console by mjordan on vty0 (64.176.243.197)
+Apr  4 02:12:04 hel-c-001-rtr-1 59096: Apr  4 02:12:04.887 CET: %PARSER-5-CFGLOG_LOGGEDCMD: User:mmouse  logged command:interface GigabitEthernet1/0/10
+Apr  4 02:12:05 osl-c-001-rtr-1 60998: Apr  4 02:12:05.625 CET: %PARSER-5-CFGLOG_LOGGEDCMD: User:fallback  logged command:switchport access vlan 14
+Apr  4 02:11:48 osl-e-310-swi-1 36038: Apr  4 02:11:48.295 CET: %FAN-3-FAN_OK: Fan 4 had earlier reported a rotation error. It is ok now
+Apr  4 02:12:36 osl-e-310-swi-3 65203: Apr  4 02:12:36.812 CET: %SW_MATM-4-MACFLAP_NOTIF: Host 449b.0152.f79a in vlan 1113 is flapping between port Gi0/7 and port Gi0/7
+Apr  4 02:07:44 osl-e-310-swi-3 58263: Apr  4 02:07:44.812 CET: %SW_MATM-4-MACFLAP_NOTIF: Host 9990.0aba.caab in vlan 1112 is flapping between port Gi4/0/2 and port Gi4/0/2
+Apr  4 02:10:48 osl-e-310-swi-1 86028: Apr  4 02:10:48.899 CET: %MAB-5-FAIL: Authentication failed for client (d267.e554.2b97) on Interface Gi4/0/2 AuditSessionID AC18DC1500006053075984A0
+Apr  4 02:10:40 hel-c-001-rtr-1 73321: Apr  4 02:10:40.899 CET: %AUTHMGR-5-START: Starting 'dot1x' for client (0083.643b.0810) on Interface Eth1/0/9 AuditSessionID 00000000000000C182FB5E4A
+Apr  4 02:08:42 cph-e-951-swi-1 8209: Apr  4 02:08:42.899 CET: %AUTHMGR-5-SUCCESS: Authorization succeeded for client (92b1.1c88.0d3b) on Interface Gi1/2/1 AuditSessionID 00000000000003B0F581B1E9
+Apr  4 02:12:33 hel-c-001-rtr-1 14470: May 11 2023 11:34:55.114 CET: %SESSION_MGR-5-START: Switch 1 R0/0: sessmgrd: Starting 'mab' for client (b386.84c7.eeb9) on Interface GigabitEthernet1/0/7 AuditSessionID 63410D0A0000064D0A60BBAF
+Apr  4 02:14:07 osl-e-310-swi-2 56458: May 11 2023 10:34:55.114 CET: %SESSION_MGR-5-SUCCESS: Switch 1 R0/0: sessmgrd: Authorization succeeded for client (0021.b7cf.e412) on Interface Ethernet1/0/43 AuditSessionID 634E6A0A000013300A5E4AAE
+Apr  4 02:10:00 sto-c-001-rtr-1 82627: May 11 2023 09:34:55.114 CET: %SESSION_MGR-5-FAIL: Switch 1 R0/0: sessmgrd: Authorization failed or unapplied for client (b445.0617.c31d) on Interface GigabitEthernet1/0/7 AuditSessionID 63866C0A000000210A34C15B. Failure reason: Authc fail. Authc failure reason: Cred Fail.
+Apr  4 02:14:26 osl-e-310-swi-1 23693: May 10 2023 12:36:19.510 CET: %SESSION_MGR-5-MACMOVE: Switch 1 R0/0: sessmgrd: MAC address (c7b9.7a6d.ce83) moved from Interface GigabitEthernet1/0/4 to Interface GigabitEthernet1/0/4 AuditSessionID 63408C0A000006FF9897C394
+Apr  4 02:09:49 hel-c-001-rtr-1 34547: May 11 2023 11:34:55.114 CET: %SESSION_MGR-5-START: Switch 1 R0/0: sessmgrd: Starting 'mab' for client (b386.84c7.eeb9) on Interface Eth1/0/8 AuditSessionID 63410D0A0000064D0A60BBAF
+Apr  4 02:11:57 osl-e-310-swi-2 91911: May 11 2023 10:34:55.114 CET: %SESSION_MGR-5-SUCCESS: Switch 1 R0/0: sessmgrd: Authorization succeeded for client (0021.b7cf.e412) on Interface Gi4/0/3 AuditSessionID 634E6A0A000013300A5E4AAE
+Apr  4 02:15:08 hel-c-001-rtr-1 60996: May 11 2023 09:34:55.114 CET: %SESSION_MGR-5-FAIL: Switch 1 R0/0: sessmgrd: Authorization failed or unapplied for client (b445.0617.c31d) on Interface Gi1/2/1 AuditSessionID 63866C0A000000210A34C15B. Failure reason: Authc fail. Authc failure reason: Cred Fail.
+Apr  4 02:08:15 cph-c-001-rtr-1 7833: May 10 2023 12:36:19.510 CET: %SESSION_MGR-5-MACMOVE: Switch 1 R0/0: sessmgrd: MAC address (c7b9.7a6d.ce83) moved from Interface Gi4/0/2 to Interface Gi4/0/2 AuditSessionID 63408C0A000006FF9897C394
+Apr  4 02:06:58 hel-c-001-rtr-1 67102: Apr  4 02:06:58.737 CEST: %SEC_LOGIN-5-LOGIN_SUCCESS: Login Success [user: ppan] [Source: 6.161.61.142] [localport: 22] at 11:57:00 CEST Tue Aug 19 2014
+Apr  4 02:12:53 osl-c-001-rtr-1 97275: Apr  4 02:12:53.714 CEST: %LDP-5-NBRCHG: LDP Neighbor 163.9.207.236:0 (1) is UP
+Apr  4 02:14:42 osl-e-310-swi-2 77134: Apr  4 02:14:42.666 CEST: %PIM-5-NBRCHG: neighbor 218.197.146.75 UP on interface Ethernet1/0/40
+Apr  4 02:06:55 osl-e-310-swi-1 19520: Apr  4 02:06:55.221 CEST: %LDP-5-NBRCHG: LDP Neighbor 177.148.167.32:0 (1) is DOWN (Interface not operational)
+Apr  4 02:10:11 osl-c-001-rtr-1 47165: Apr  4 02:10:11.899 CET: %SEC-6-IPACCESSLOGP: list TEK-OUT denied udp 94.226.252.222(49545) -> 94.226.252.222(49545), 1 packet
+Apr  4 02:08:46 cph-c-001-rtr-1 48553: Apr  4 02:08:46.899 CET: %SEC-6-IPACCESSLOGP: list DenyRule denied tcp 233.56.130.89(59676) -> 233.56.130.89(59676), 1 packet
+Apr  4 02:13:20 osl-e-310-swi-1 37377: Apr  4 02:13:20.625 CET: %PARSER-5-CFGLOG_LOGGEDCMD: User:gclooney  logged command:no interface vlan 1111
+Apr  4 02:14:10 sto-c-001-rtr-1 8863: Apr  4 02:14:10.625 CET: %PARSER-5-CFGLOG_LOGGEDCMD: User:mjordan  logged command:no username admin
+Apr  4 02:15:02 osl-c-001-rtr-1 82412: Apr  4 02:15:02.625 CET: %PARSER-5-CFGLOG_LOGGEDCMD: User:mjordan  logged command:enable secret *****
+Apr  4 02:07:53 cph-e-951-swi-1 55731: Apr  4 02:07:53.625 CET: %PM-4-ERR_DISABLE: link-flap error detected on Gi4/0/6, putting Gi4/0/6 in err-disable state
+Apr  4 02:10:52 osl-e-310-swi-1 92357: Apr  4 02:10:52.125 CET: %SEC_LOGIN-4-LOGIN_FAILED: Login failed [user: bdylan] [Source: 250.172.193.231] [localport: 22] [Reason: Login Authentication Failed] at 11:53:02 CET Wed Feb 3 2016
+Apr  4 02:10:03 cph-e-951-swi-1 97569: Apr  4 02:10:03.125 CET: %SEC_LOGIN-4-LOGIN_FAILED: Login failed [user: admin] [Source: 19.138.188.31] [localport: 22] [Reason: Login Authentication Failed] at 11:53:02 CET Wed Feb 3 2016
+Apr  4 02:14:58 osl-e-310-swi-3 13369: Apr  4 02:14:58.125 CET: %ETHPORT-2-IF_DOWN_ERROR_DISABLED: Interface Ethernet1/0/48 is down (Error disabled. Reason: Too many link flaps)
+Apr  4 02:07:47 cph-e-951-swi-1 84371: Apr  4 02:07:47.125 CET: %ETHPORT-2-IF_DOWN_ERROR_DISABLED: Interface GigabitEthernet1/0/9 is down (Error disabled. Reason:DCX-No ACK in 100 PDUs)
+Apr  4 02:13:56 cph-e-951-swi-1 59867: Apr  4 02:13:56.125 CET: %ETHPORT-2-IF_DOWN_ERROR_DISABLED: Interface Ethernet1/0/40 is down (Error disabled. Reason:UDLD empty echo)
+Apr  4 02:15:25 osl-e-310-swi-1 94182: Apr  4 02:15:25.125 CET: %INTERFACE_VLAN-5-IF_DOWN_ERROR_DISABLED: Interface vlan 1114 is down. Reason 1
+Apr  4 02:11:29 cph-e-951-swi-1 40237: Apr  4 02:11:29.125 CET: %PORT-2-IF_DOWN_ERROR_DISABLED: %$VSAN 1%$ Interface fc1/6 is down (Error disabled)
+Apr  4 02:06:01 osl-e-310-swi-3 44319: Apr  4 02:06:01.125 CET: %PORT-2-IF_DOWN_ERROR_DISABLED: %$VSAN 1%$ Interface fc1/5 is down (Error disabled)
+Apr  4 02:13:39 sto-c-001-rtr-1 22254: Apr  4 02:13:39.125 CET: %VIM-5-IF_DOWN_ERROR_DISABLED: Interface Vethernet1 is down (Error disabled)
+Apr  4 02:09:35 cph-c-001-rtr-1 1510: Apr  4 02:09:35.248 CET: %STP-6-PORT_RANGE_STATE: new_state=forwarding interface=port-channel20 vlan=1562
+Apr  4 02:13:44 osl-c-001-rtr-1 5469: Apr  4 02:13:44.440 CET: %STP-6-PORT_RANGE_ROLE: new_role=designated interface=port-channel20 vlan=1562
+Apr  4 02:13:32 cph-c-001-rtr-1 98146: Apr  4 02:13:32.029 CET: %STP-6-PORT_RANGE_DELETED: Interface Ethernet1/0/21 removed from vlan=13-14,16,20,158,400,909,1320,2502,2812,2815,2858
+Apr  4 02:11:06 osl-c-001-rtr-1 55029: Apr  4 02:11:06.018 CET: %STP-6-PORT_RANGE_ADDED: Interface Ethernet1/0/31 added to vlan=13-14,16,20,158,400,909,1320,2502,2812,2815,2858 with cost 2000, priority 128, link-type P2p
+Apr  4 02:07:47 osl-e-310-swi-1 57106: Apr  4 02:07:47.739 CET: %STP-2-DISPUTE_DETECTED: Dispute detected on port port-channel20 on VLAN2832.
+Apr  4 02:13:32 osl-c-001-rtr-1 38079: Apr  4 02:13:32.738 CET: %STP-2-DISPUTE_CLEARED: Dispute resolved for port port-channel20 on VLAN2832
+Apr  4 02:10:13 hel-c-001-rtr-1 61080: Apr  4 02:10:13.266 CET: %FWM-2-STM_LOOP_DETECT: Loops detected in the network for mac 0050.567d.fb8d among ports Gi1/2/1 and Gi1/2/1 vlan 21 - Disabling dynamic learn notifications for 180 seconds
+Apr  4 02:09:06 osl-e-310-swi-1 6653: Apr  4 02:09:06.266 CET: %SPANTREE-5-EXTENDED_SYSID: Extended SysId enabled for type vlan
+Apr  4 02:08:34 osl-e-310-swi-2 79598: Apr  4 02:08:34.266 CET: %SPANTREE-SP-2-LOOPGUARD_BLOCK: Loop guard blocking port Port-channel6 on VLAN1485.
+Apr  4 02:10:38 osl-e-310-swi-1 35744: Apr  4 02:10:38.266 CET: %SPANTREE-SP-2-LOOPGUARD_UNBLOCK: Loop guard unblocking port Port-channel6 on VLAN1485.
+Apr  4 02:15:46 osl-e-310-swi-1 62039: Apr  4 02:15:46.266 CET: %SPANTREE-6-PORT_STATE: Port Eth1/0/8 instance 205 moving from forwarding to disabled (osl-e-310-swi-1)
+Apr  4 02:11:08 sto-c-001-rtr-1 40967: Apr  4 02:11:08.266 CET: %SPANTREE-7-PORTDEL_SUCCESS: Ethernet1/0/2 deleted from Vlan 205 (sto-c-001-rtr-1)
+Apr  4 02:06:09 osl-c-001-rtr-1 21755: Apr  4 02:06:09.266 CET: %C4K_EBM-4-HOSTFLAPPING: Host 86:AA:C0:79:AA:6A in vlan 1116 is flapping between port Eth1/0/12 and port Eth1/0/12
+Apr  4 02:12:23 cph-e-951-swi-1 46039: Apr  4 02:12:23.266 CET: %FWM-6-MAC_MOVE_NOTIFICATION: Host 0050.5693.0416 in vlan 1113 is flapping between port Gi4/0/6 and port Gi4/0/6
+Apr  4 02:10:23 sto-c-001-rtr-1 87730: Apr  4 02:10:23.266 CET: %L2FM-4-L2FM_MAC_MOVE: Mac 0050.5695.1ac8 in vlan 1115 has moved from Eth1/0/9 to Eth1/0/9
+Apr  4 02:07:59 osl-e-310-swi-2 14944: Apr  4 02:07:59.266 CET: %L2FM-4-L2FM_MAC_MOVE: Mac 000b.cdca.3931 has moved from Gi4/0/1 to Gi4/0/1
+Apr  4 02:12:50 osl-e-310-swi-3 25121: Apr  4 02:12:50.266 CET: %L2FM-2-L2FM_CONTINUOUS_MAC_MOVE: Mac Address 000b.1546.7851 in Vlan52 is moving continuously
+Apr  4 02:12:32 cph-c-001-rtr-1 27400: Apr  4 02:12:32.266 CET: %MAC_MOVE-SP-4-NOTIF: Host 000b.ab18.9416 in vlan 1116 is flapping between port Eth1/0/12 and port Eth1/0/12 by regular interval
+Apr  4 02:14:18 cph-c-001-rtr-1 84547: Apr  4 02:14:18.266 CET: %CDP-4-NATIVE_VLAN_MISMATCH: Native VLAN mismatch discovered on Ethernet1/0/21(4), with Ethernet1/0/21(1)
+Apr  4 02:10:42 osl-c-001-rtr-1 48940: Apr  4 02:10:42.266 CET: %CDP-4-NATIVE_VLAN_MISMATCH: Native VLAN mismatch discovered on GigabitEthernet1/0/9 (512), with osl-c-001-rtr-1 GigabitEthernet1/0/9 (1).
+Apr  4 02:13:42 osl-e-310-swi-1 43522: Apr  4 02:13:42.266 CET: %CDP-5-NEIGHBOR_ADDED: Device osl-e-310-swi-1(JAxxxxxxxJB) discovered of type N77-C7710 with port Ethernet1/0/20 on incoming port Ethernet1/0/20 with ip addr 91.86.166.79 and mgmt ip 91.86.166.79, 2a03:6f81:100:4::21,
+Apr  4 02:07:39 hel-c-001-rtr-1 24444: Apr  4 02:07:39.266 CET: %CDP-5-NEIGHBOR_ADDED: Device hel-c-001-rtr-1(QCIxxxxxxxXX) discovered of type VSA with port Gi4/0/1 on incoming port Ethernet1/0/34 with ip addr 0.72.8.95 and mgmt ip <no MGMT IP Addr Received>
+Apr  4 02:14:57 osl-e-310-swi-1 87090: Apr  4 02:14:57.266 CET: %CDP-5-NEIGHBOR_REMOVED: CDP Neighbor osl-e-310-swi-1(JAxxxxxxxJB) on port Ethernet1/0/34 has been removed
+Apr  4 02:08:09 osl-e-310-swi-3 4667: Apr  4 02:08:09.266 CET: %AUTHPRIV-3-SYSTEM_MSG: pam_aaa:Authentication failed from 53.127.94.112 - sshd[123456]
+Apr  4 02:09:28 osl-e-310-swi-2 51010: Apr  4 02:09:28.266 CET: %AUTHPRIV-3-SYSTEM_MSG: pam_aaa:Authentication failed for user UUUUUUU from 186.106.161.95 - dcos_sshd[23456]
+Apr  4 02:13:40 osl-e-310-swi-2 44238: Apr  4 02:13:40.266 CET: %SSH-5-SSH2_USERAUTH: User 'bdylan' authentication for SSH2 Session from 139.96.213.215 (tty = 1) using crypto cipher 'aes128-cbc', hmac 'hmac-sha1' Succeeded
+Apr  4 02:12:32 osl-e-310-swi-1 47922: Apr  4 02:12:32.266 CET: %SSH-5-SSH2_USERAUTH: User 'ppan' authentication for SSH2 Session from 90.27.73.194 (tty = 3) using crypto cipher 'aes128-cbc', hmac 'hmac-sha1' Failed
+Apr  4 02:06:42 osl-e-310-swi-1 26032: Apr  4 02:06:42.266 CET: %SSH-5-SSH2_USERAUTH: User '' authentication for SSH2 Session from 249.186.158.91 (tty = 0) using crypto cipher 'aes128-cbc', hmac 'hmac-sha1' Failed
+Apr  4 02:07:25 osl-e-310-swi-1 81815: Apr  4 02:07:25.266 CET: %SSH-5-SSH2_CLOSE: SSH2 Session from 130.43.225.31 (tty = 3) for user 'mjordan' using crypto cipher 'aes128-cbc', hmac 'hmac-sha1' closed
+Apr  4 02:07:28 osl-e-310-swi-3 79530: Apr  4 02:07:28.266 CET: %SSH-5-SSH2_SESSION: SSH2 Session request from 250.133.169.220 (tty = 4) using crypto cipher 'aes128-cbc', hmac 'hmac-sha1' Succeeded
+Apr  4 02:15:31 cph-c-001-rtr-1 84248: Apr  4 02:15:31.100 CET: %DHCP_SNOOPING-5-DHCP_SNOOPING_UNTRUSTED_PORT: DHCP_SNOOPING drop message on untrusted port, message type: DHCPOFFER, MAC sa: 0014.60f4.8184
+Apr  4 02:15:14 cph-e-951-swi-1 495: Apr  4 02:15:14.231 CET: %IP_SOURCE_GUARD-4-DENY_INVALID_PACKET: Detected and dropped illegal traffic on port Eth1/0/8 and vlan 1111, the non-cumulative packet dropped count is 36.
+Apr  4 02:11:30 osl-e-310-swi-2 72587: Apr  4 02:11:30.305 CET: %SW_DAI-4-DHCP_SNOOPING_DENY: 1 Invalid ARPs (Req) on Eth1/0/11, vlan 1116.([0001.0001.0001/96.97.202.96/0000.0000.0000/0.0.0.0/01:53:21 UTC Fri Jan 16 2019])
+Apr  4 02:15:38 cph-e-951-swi-1 47463: Apr  4 02:15:38.200 CET: %SW_DAI-4-PACKET_RATE_EXCEEDED: 16 packets received in 157 milliseconds on Gi1/0/13.
+Apr  4 02:06:52 osl-c-001-rtr-1 7159: Apr  4 02:06:52.201 CET: %PM-4-ERR_DISABLE: arp-inspection error detected on Gi1/0/13, putting Gi1/0/13 in err-disable state
+Apr  4 02:15:00 osl-e-310-swi-1 88513: Apr  4 02:15:00.112 CET: %LINEPROTO-5-UPDOWN: Line protocol on Interface GigabitEthernet1/0/13, changed state to down
+Apr  4 02:08:12 osl-e-310-swi-2 37443: Apr  4 02:08:12.200 CET: %LINK-3-UPDOWN: Interface GigabitEthernet1/0/13, changed state to down
+Apr  4 02:12:26 cph-e-951-swi-1 52678: Apr  4 02:12:26.200 CET: %PM-4-ERR_DISABLE: psecure-violation error detected on Fa4/4, putting Fa4/4 in err-disable state
+Apr  4 02:12:41 cph-e-951-swi-1 72251: Apr  4 02:12:41.200 CET: %PORT_SECURITY-2-PSECURE_VIOLATION: Security violation occurred, caused by MAC address 0023.339c.e1cf on port FastEthernet4/4
+Apr  4 02:13:20 hel-c-001-rtr-1 95983: Apr  4 02:13:20.200 CET: %PORT_SECURITY-2-PSECURE_VIOLATION_VLAN: Security violation occurred on port GigabitEthernet1/0/4 due to MAC address 0051.3bdc.fafe on VLAN 52
+Apr  4 02:13:09 hel-c-001-rtr-1 41077: Apr  4 02:13:09.200 CET: %SISF-4-IP_THEFT: IP Theft A=2001::DB8::1 V=100 I=Et0/0 M=0000.0000.0000 New=Et1/0
+Apr  4 02:13:17 osl-e-310-swi-2 46395: Apr  4 02:13:17.200 CET: %SISF-4-MAC_THEFT: MAC Theft A=2001::DB8::1 V=100 I=Et1/0 M=0000.0000.0000 New=Et1/0
+Apr  4 02:10:17 cph-e-951-swi-1 42020: Apr  4 02:10:17.200 CET: %SISF-4-MAC_AND_IP_THEFT: MAC_AND_IP Theft A=2001::DB8::1 V=100 I=Et0/0 M=0000.0000.0000 New=Et1/0
+Apr  4 02:14:17 osl-e-310-swi-1 77936: Apr  4 02:14:17.200 CET: %SISF-4-PAK_DROP: Message dropped A=2001::DB8::1 G=2001:2DB::2 V=2 I=Gi3/0/24 P=DHCPv6::REP Reason=Packet not authorized on port
+Apr  4 02:11:52 osl-e-310-swi-3 35172: Apr  4 02:11:52.200 CET: %SISF-4-PAK_DROP: Message dropped A=2001::DB8:2 G=- V=1 I=Gi3/2 P=NDP::RA Reason=Message unauthorized on port
+Apr  4 02:10:43 osl-e-310-swi-2 26862: Apr  4 02:10:43.625 CET: %PARSER-5-CFGLOG_LOGGEDCMD: User:hbaldwin  logged command:monitor session 1 source vlan 16 , 17 , 19
+Apr  4 02:10:44 osl-e-310-swi-3 9040: Apr  4 02:10:44.625 CET: %IP-4-DUPADDR: Duplicate address 192.168.211.1 on FastEthernet0/0, sourced by 0015.f987.941a

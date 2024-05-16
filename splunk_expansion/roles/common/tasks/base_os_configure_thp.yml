@@ -1,0 +1,33 @@
+---
+
+- name: Check if /etc/systemd/system/disable-thp.service exists
+  become: true
+  stat:
+    path: "/etc/systemd/system/disable-thp.service"
+  register: thp_exist
+
+- name: Install disable-thp service to systemd (CentOS/RHEL 7+)
+  become: true
+  ini_file:
+    dest: "/etc/systemd/system/disable-thp.service"
+    section: "{{ item.section }}"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+  notify:
+    - reload systemctl daemon
+  with_items:
+    - {section: "Unit", key: "Description", value: "Disable Transparent Huge Pages (THP)"}
+    - {section: "Service", key: "Type", value: "simple"}
+    - {section: "Service", key: "ExecStart", value: "/bin/sh -c 'echo 'never' > /sys/kernel/mm/transparent_hugepage/enabled && echo 'never' > /sys/kernel/mm/transparent_hugepage/defrag'"}
+    - {section: "Install", key: "WantedBy", value: "multi-user.target"}
+  when: thp_exist.stat.exists != True
+
+- name: Enable and start disable-THP service
+  become: true
+  service:
+    name: disable-thp
+    enabled: yes
+    state: started
+  when: thp_exist.stat.exists != True

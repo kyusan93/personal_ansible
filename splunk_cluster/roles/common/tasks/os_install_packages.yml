@@ -1,0 +1,8 @@
+---
+
+- name: install required packages using the yum module
+  become: true
+  yum:
+    name: "{{ base.packages }}"
+    update_cache: yes
+  ignore_errors: True

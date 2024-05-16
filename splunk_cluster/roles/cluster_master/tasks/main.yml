@@ -1,0 +1,4 @@
+---
+
+- name: Configure cluster master
+  import_tasks: configure_cluster_master.yml

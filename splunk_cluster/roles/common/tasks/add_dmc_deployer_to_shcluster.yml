@@ -1,0 +1,21 @@
+---
+
+- name: DMC Deployer setup cluster - POST
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "https://{{ splunk.monitoring_console_ip }}:{{ splunk.ports.mgmt }}/servicesNS/nobody/splunk_monitoring_console/configs/conf-splunk_monitoring_console_assets?output_mode=json"
+    method: POST
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    body: "searchHeadClusters[]={{ splunk.shcluster.label }}&name= {% if(ansible_host in groups['monitoring_console']) %}localhost:localhost{% else %}{{ ansible_host }}:{{ splunk.ports.mgmt }}{% endif %}"
+    validate_certs: false
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+    status_code: 200,201,409
+    use_proxy: no
+    body_format: "form-urlencoded"
+  register: result
+  until: result.status == 200 or result.status == 201 or result.status == 409
+  retries: 5
+  delay: 10

@@ -1,0 +1,38 @@
+---
+- name: GET OptInVersion
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "https://{{ ansible_host }}:{{ splunk.ports.mgmt }}/servicesNS/nobody/splunk_instrumentation/admin/telemetry/general?output_mode=json"
+    method: GET
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    validate_certs: false
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+    status_code: 200
+    timeout: 10
+    return_content: yes
+    use_proxy: no
+  register: telemetry
+
+- name: Disable Popups
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "https://{{ ansible_host }}:{{ splunk.ports.mgmt }}/{{ item.key }}"
+    method: POST
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    body: "{{ item.value }}"
+    validate_certs: false
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+    status_code: 200,201,409
+    use_proxy: no
+  loop:
+    - { key: "servicesNS/{{ splunk.admin.username }}/user-prefs/data/user-prefs/general", value: "hideInstrumentationOptInModal=1&notification_python_3_impact=false&showWhatsNew=0" }
+    - { key: "servicesNS/nobody/splunk_instrumentation/admin/telemetry/general", value: "showOptInModal=0&optInVersionAcknowledged={{ telemetry['json']['entry'][0]['content']['optInVersion'] }}" }
+    - { key: "servicesNS/{{ splunk.admin.username }}/search/data/ui/ui-tour/search-tour", value: "tourPage=search&viewed=1" }
+    - { key: "servicesNS/{{ splunk.admin.username }}/search/data/ui/ui-tour/dark-tour", value: "tourPage=search&viewed=1" }
+

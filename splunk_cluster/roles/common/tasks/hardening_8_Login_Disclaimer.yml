@@ -1,0 +1,44 @@
+---
+
+# 8.1 - Customisation of Logon Banner
+
+- name: "8.1 - Check that web.conf exists"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  stat:
+    path: "{{ splunk.home }}/etc/system/default/web.conf"
+  register: web_conf
+
+- name: "[Results] 8.1 - Check that web.conf exists"
+  fail:
+    msg: "web.conf not found!"
+  when: web_conf.stat.exists == False
+  ignore_errors: true
+
+#If configuration is changed, line does not exists in file. Failing audit test.
+#For indexers only
+
+- name: "8.1 - Check that login_content exists"
+  lineinfile:
+    path: "{{ splunk.home }}/etc/system/default/web.conf"
+    line: "login_content"
+    state: present
+  check_mode: yes
+  register: login_banner
+  when: 
+    - web_conf.stat.exists
+
+- name: "[Results] 8.1 - Check that login_content exists"
+  fail:
+    msg: "login_content does not exist"
+  when: 
+    - login_banner is changed
+    - web_conf.stat.exists
+  ignore_errors: true
+
+- name: "[Results] 8.1 - Check that login_content exists"
+  debug:
+    msg: "Passed! login_content exists"
+  when: 
+    - login_banner is not changed
+    - web_conf.stat.exists   

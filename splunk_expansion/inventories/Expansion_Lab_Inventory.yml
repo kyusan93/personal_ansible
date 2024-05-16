@@ -1,0 +1,65 @@
+---
+all:
+ children:
+
+  search_head:
+    hosts:
+      10.60.9.231:
+        host_suffix: "fabius-splk-sh1"
+        host_site: '1'
+        auth_type: 'ldap'
+
+  expansion_search_head:
+    hosts:
+        
+  indexer:
+    hosts:
+      #site 1 indexer
+      10.60.9.232:
+        host_suffix: "fabius-splk-idx1"
+        host_site: '1'
+        auth_type: 'ldap'
+      #site 2 indexer
+      10.60.9.233:
+        host_suffix: "fabius-splk-idx2"
+        host_site: '2'
+        auth_type: 'ldap'
+
+  expansion_indexer:
+    hosts:
+      10.60.9.237:
+        host_suffix: "fabius-splk-5"
+        host_site: '1'
+        auth_type: 'ldap'
+
+  license_master:
+    hosts:
+      10.60.9.234:
+        host_suffix: "fabius-splk-mgt1"
+        host_site: '1'
+        auth_type: 'ldap'
+
+  monitoring_console:
+    hosts:
+      10.60.9.234:
+        host_suffix: "fabius-splk-mgt1"
+        host_site: '1'
+        auth_type: 'ldap'
+
+  cluster_master:
+    hosts:
+      10.60.9.234:
+        host_suffix: "fabius-splk-mgt1"
+        host_site: '1'
+        auth_type: 'ldap'
+        available_sites:
+          - 'site1'
+          - 'site2'
+         
+  deployer:
+    hosts:
+      10.60.9.234:
+        host_suffix: "fabius-splk-mgt1"
+        host_site: '1'
+        auth_type: 'ldap'
+

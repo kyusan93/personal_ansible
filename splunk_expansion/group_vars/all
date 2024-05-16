@@ -1,0 +1,241 @@
+---
+
+##############################
+##  BASE
+##############################
+
+sanlist: []
+
+base:
+  company_name: 'lab'
+  fqdn: 'lab.company.com'
+
+  prod_inf: 'ens192'
+
+  packages:
+    - "net-tools"
+
+  # Ansible Tower Tmp Directory
+####!  awx_tmp_dir: '/opt/tmp/'
+  awx_tmp_dir: '/tmp/'
+
+##############################
+##  SPLUNK
+##############################
+
+splunk:
+  ports:
+    web: '8000'
+    nat_web: '443'
+    mgmt: '8089'
+    indexer_receiving: '9997'
+    cluster_replication: '9887'
+    shcluster_replication: '9886'
+    kv_store: '8191'
+
+  package_file: "{% if 'universal_forwarder' in group_names %}splunkforwarder-8.2.1-ddff1c41e5cf-linux-2.6-x86_64.rpm{% else %}splunk-9.0.4.1.rpm{% endif %}"
+  home: "{% if 'universal_forwarder' in group_names %}/opt/splunkforwarder{% else %}/opt/splunk{% endif %}"
+  bin: "{% if 'universal_forwarder' in group_names %}/opt/splunkforwarder/bin{% else %}/opt/splunk/bin{% endif %}"
+  pid: '/opt/splunk/var/run/splunkd.pid'
+  service_name: 'splunk'
+  systemd: 'true'
+
+  nix:
+    group: 'splunk'
+    user: 'splunk'
+    svc_account: 'root'
+
+  admin:
+    username: 'spladmin'
+    password: 'P@ssw0rd'
+  
+  # For base pass4SymmKey	
+  base_pass4SymmKey: 'changeme'
+  
+  # For pass4SymmKey for clustering etc
+  pass4SymmKey: 'Ng!sn3+Gc5@c'
+  
+  web:
+    session_timeout: '10'
+    inactivity_timeout: '5'
+    login_banner: 'Use of this System is restricted to authorised users only. User activity may be monitored and/or recorded. Anyone using this network expressly consents to such monitoring and/or recording. BE ADVISED: if possible criminal activity is detected, these records, along with certain personal information, may be provided to law enforcement officials.'
+  search_head_captain_ip: "{% if(groups['search_head'] is defined and groups['search_head']|length) %}{{ groups['search_head']|first }}{% endif%}"
+  license_master_ip: "{% if(groups['license_master'] is defined and groups['license_master']|length) %}{{ groups['license_master']|first }}{% endif%}"
+  monitoring_console_ip: "{% if(groups['monitoring_console'] is defined and groups['monitoring_console']|length) %}{{ groups['monitoring_console']|first }}{% endif%}"
+  deployment_server_ip: "{% if(groups['deployment_server'] is defined and groups['deployment_server']|length) %}{{ groups['deployment_server']|first }}{% endif%}"
+  cluster_master_ip: "{% if(groups['cluster_master'] is defined and groups['cluster_master']|length) %}{{ groups['cluster_master']|first }}{% endif%}"
+
+  cert:
+    # OU 
+    organizational_unit_name: 'lab'
+    # O 
+    organization_name: 'company'
+    # L
+    locality_name: 'SG'
+    # ST
+    state_or_province_name: 'SG'
+    # C
+    country_name: 'SG'
+    cert_URL: '127.0.0.1/'
+    sem_cn: 'sem.company.com'
+
+  indexer:
+    vip: ''
+####!    vip: ''
+
+##############################
+##   SSL
+##############################
+  ssl:
+    cacert_name: 'CA'
+    requireClientCert: 'true'
+    sslPassword: 'Ng!sn3+Gc5@c'
+    cipherSuite: 'ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-SHA384'
+    ecdhCurves: 'prime256v1, secp384r1, secp521r1'
+
+##############################
+##   CLUSTERING - DO NOT EDIT
+##############################
+
+  cluster:
+    label: "{{ base.company_name }}_idx_cluster"
+#    master_url: "{% if(groups['cluster_master'] is defined and groups['cluster_master']|length) %}{{ hostvars[groups['cluster_master']|first].host_suffix }}.{{ base.fqdn }}{% endif %}"
+    master_url: "{% if(groups['cluster_master'] is defined and groups['cluster_master']|length) %}{{ groups['cluster_master']|first }}{% endif %}"
+    replication_factor: "{% if(groups['cluster_master'] is defined and 'cluster_master' in group_names) %}{% if(groups['indexer']|length) > 2 %}3{% elif(groups['indexer']|length) == 2 %}2{% else %}1{% endif %}{% endif %}"
+    search_factor: "{% if(groups['cluster_master'] is defined and 'cluster_master' in group_names) %}{% if(groups['indexer']|length) > 2 %}3{% elif(groups['indexer']|length) == 2 %}2{% else %}1{% endif %}{% endif %}"
+    site_replication_factor: "{% if(groups['cluster_master'] is defined and 'cluster_master' in group_names) %}{% if(groups['indexer']|length) > 2 %}origin:2,total:3{% elif(groups['indexer']|length) == 2 %}origin:1,total:2{% else %}origin:1,total:1{% endif %}{% endif %}"
+    site_search_factor: "{% if(groups['cluster_master'] is defined and 'cluster_master' in group_names) %}{% if(groups['indexer']|length) > 2 %}origin:2,total:3{% elif(groups['indexer']|length) == 2 %}origin:1,total:2{% else %}origin:1,total:1{% endif %}{% endif %}"
+#    site_replication_factor: "{% if(groups['cluster_master'] is defined and 'cluster_master' in group_names) %}origin:1{% if(groups['indexer']|length) > 2 %},total:3{% elif(groups['indexer']|length) == 2 %},total:2{% else %},total:1{% endif %}{% endif %}"
+#    site_search_factor: "{% if(groups['cluster_master'] is defined and 'cluster_master' in group_names) %}origin:1{% if(groups['indexer']|length) > 2 %},total:3{% elif(groups['indexer']|length) == 2 %},total:2{% else %},total:1{% endif %}{% endif %}"
+
+##############################
+##   SHCLUSTERING - DO NOT EDIT
+##############################
+
+  shcluster:
+    label: "{{ base.company_name }}_sh_cluster"
+#    deployer_url: "{% if(groups['deployer'] is defined and groups['deployer']|length) %}{{ hostvars[groups['deployer']|first].host_suffix }}.{{ base.fqdn }}{% endif %}"  
+    deployer_url: "{% if(groups['deployer'] is defined and groups['deployer']|length) %}{{ groups['deployer']|first }}{% endif %}"    
+#    replication_factor: "{% if(groups['search_head'] is defined and groups['search_head']|length > 2) %}2{% endif %}"  
+    replication_factor: "{% if(groups['search_head'] is defined and groups['search_head']|length > 2) %}2{% else %}1{% endif %}"
+
+##############################
+##   KEEPALIVE
+##############################
+  keepalived:
+    shared_iface: 'ens192'
+    router_id: '50'
+    priority: '100'
+    backup_priority: '99'
+    auth_pass: 'P@ssw0rd'
+    shared_ip: '10.60.16.248'
+    check_process: 'splunkd'
+
+##############################
+##   HEC
+##############################
+  hec:
+    configure_on: 'cluster_master' #Values: aio, indexer, cluster_master, heavy forwarder, deployment_server
+    disabled: 0
+    default_index: 'main'
+    allowed_indexes: '*'
+    dedicatedIoThreads: 10
+    maxSockets: 16160
+    maxThreads: 16160
+    maxEventSize: '100MB'
+    queueSize: '5GB'
+    ssl: 'enabled'
+    sslPassword: 'Ng!sn3+Gc5@c'    
+  
+##############################
+##   LDAP
+##############################
+  ldap: 
+    - strategyName: 'ldap1' 
+      parameters:
+        - SSLEnabled: '0'
+        - host: '10.60.9.195'
+        - port: '389'
+        - bindDN: 'cn=kimbak.test,cn=users,dc=secprj,dc=org'
+        - bindDNpassword: 'P@ssw0rdP@ssw0rd'
+        - emailAttribute: 'mail'
+        - groupBaseDN: 'cn=users,dc=secprj,dc=org'
+        - groupMappingAttribute: 'dn'
+        - groupMemberAttribute: 'member'
+        - groupNameAttribute: 'cn'
+        - userBaseDN: 'cn=users,dc=secprj,dc=org'
+        - userNameAttribute: 'samaccountname'
+        - realNameAttribute: 'cn'
+      roleMap:
+        - admin: 'secops22'
+    - strategyName: 'ldap2' 
+      parameters:
+        - SSLEnabled: '0'
+        - host: '10.60.9.196'
+        - port: '389'
+        - bindDN: 'cn=kimbak.test,cn=users,dc=secprj,dc=org'
+        - bindDNpassword: 'P@ssw0rdP@ssw0rd'
+        - emailAttribute: 'mail'
+        - groupBaseDN: 'cn=users,dc=secprj,dc=org'
+        - groupMappingAttribute: 'dn'
+        - groupMemberAttribute: 'member'
+        - groupNameAttribute: 'cn'
+        - userBaseDN: 'cn=users,dc=secprj,dc=org'
+        - userNameAttribute: 'samaccountname'
+        - realNameAttribute: 'cn'
+      roleMap:
+        - admin: 'secops22'
+
+##############################
+##   SAML
+##############################
+  saml:
+    - entityId: 'saml' 
+      parameters:
+        fqdn: 'https://{{ base.fqdn }}'
+        idpSLOUrl: 'https://loginfs.hellocompany.com/adfs/ls/?wa=wsignout1.0'
+        idpSSOUrl: 'https://loginfs.hellocompany.com/adfs/ls/'
+        inboundSignatureAlgorithm: 'RSA-SHA1;RSA-SHA256'
+        issuerId: 'http://loginfs.hellocompany.com/adfs/services/trust'
+        redirectPort: '443'
+        replicateCertificates: 'true'
+        signAuthnRequest: 'false'
+        signatureAlgorithm: 'RSA-SHA1'
+        signedAssertion: 'true'
+        sloBinding: 'HTTP-POST'
+        ssoBinding: 'HTTP-POST'
+        realName: 'http://schemas.microsoft.com/ws/2008/06/identity/claims/name'
+        role: 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
+      roleMap:
+        - admin: 'secops22'
+
+##############################
+##   UF_Windows Configuration
+##############################
+
+windows:
+  deployment_server: 192.168.56.24
+  receiving_indexer: 192.168.56.21
+  packagedir: 'E:\splunkforwarder-8.2.1.msi'
+  installdir: 'E:\SplunkUniversalForwarder'
+  package_file: 'splunkforwarder-8.2.1.msi'
+  WINEVENTLOG_APP_ENABLE: 1
+  WINEVENTLOG_SEC_ENABLE: 1
+  WINEVENTLOG_SYS_ENABLE: 1
+  WINEVENTLOG_FWD_ENABLE: 0
+  WINEVENTLOG_SET_ENABLE: 0
+  WINEVENTLOG_SET_ENABLE: 0
+  LAUNCHSPLUNK: 1
+
+##############################
+##   Audit
+##############################
+
+audit:
+  LMI_IP: '192.168.56.51'
+
+##############################
+##   Vault
+##############################
+
+#secret_password: "{{ vault_password }}"

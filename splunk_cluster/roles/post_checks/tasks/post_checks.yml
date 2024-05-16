@@ -1,0 +1,5 @@
+---
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/post_check_splunk_ports.yml"
+
+

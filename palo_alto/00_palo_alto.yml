@@ -1,0 +1,24 @@
+---
+#- name: Signature Updates
+#  gather_facts: no
+#  hosts: localhost
+#  roles:
+#    - { role: signature_updates, tags: signature_updates }
+#  collections:
+#    - paloaltonetworks.panos 
+
+
+- name: Create Network Objects and Groups
+  gather_facts: no
+  hosts: localhost
+  connection: local
+  roles:
+    - { role: network_obj_grp }
+  collections:
+    - paloaltonetworks.panos
+  vars:
+    device:
+      ip_address: '{{ ip_address }}'
+      username: '{{ username | default(omit) }}'
+      password: '{{ password | default(omit) }}'
+      api_key: '{{ api_key | default(omit) }}'

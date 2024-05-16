@@ -1,0 +1,5 @@
+- name: CIS Audit
+  hosts: all
+  gather_facts: yes
+  roles:
+    - { role: rhel_9_cis_audit }

@@ -1,0 +1,50 @@
+---
+      
+# 6.1 - Log Success and Fail Login
+
+- name: "6.1 - Run the below search string to verify that login activity is logged"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  shell: "{{ splunk.home }}/bin/splunk search index=\"_audit\" action=log* action=\"login attempt\" -auth {{ splunk.admin.username }}:{{ splunk.admin.password }}"
+  register: login_attempt
+  ignore_errors: true
+
+#Enable if want to output to command line  
+# - debug:
+    # msg: "{{ login_attempt }}"
+
+- name: "6.1 - Copy output to a local file"
+  copy:
+    content: "{{ login_attempt }}"
+    dest: "/tmp/6.1_Log_Success_and_Fail_Login.txt"
+  delegate_to: localhost
+  
+- name: "[Results] 6.1 - Copy output to a local file"  
+  debug:
+    msg:
+      - "Result generated into /tmp/6.1_Log_Success_and_Fail_Login.txt"
+
+#########################################################################################################################################################################
+
+# 6.2 - Pipe logs to LMI
+      
+- name: "6.2 - Check that *.* @@ <IP Address> is present in rsyslog.conf"
+  lineinfile:
+    path: "/etc/rsyslog.conf"
+    line: "*.* @@ {{ audit.LMI_IP }}"
+    state: present
+  check_mode: yes
+  register: rsyslog_conf
+
+- name: "[Results] 6.2 - Check that *.* @@ <IP Address> is present in rsyslog.conf"  
+  fail:
+    msg: "*.* @@ {{ audit.LMI_IP }}  not found!"
+  when: 
+    - rsyslog_conf is changed
+  ignore_errors: true
+
+- name: "[Results] 6.2 - Check that *.* @@ <IP Address> is present in rsyslog.conf"  
+  debug:
+    msg: "Passed! *.* @@ {{ audit.LMI_IP }}"
+  when: 
+    - rsyslog_conf is not changed

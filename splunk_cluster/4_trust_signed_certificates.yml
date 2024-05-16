@@ -1,0 +1,8 @@
+---
+
+# Upload new certificates
+- name: Upload new certificates
+  hosts: all
+  gather_facts: false
+  roles:
+    - { role: certificate_trust_signed, tags: certificate_trust_signed }

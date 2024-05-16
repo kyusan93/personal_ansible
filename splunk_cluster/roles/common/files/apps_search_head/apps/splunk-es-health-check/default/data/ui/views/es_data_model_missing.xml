@@ -1,0 +1,911 @@
+<form theme="dark" version="1.1">
+  <label>CIM Data Models - Potentially excluded Sourcetypes</label>
+  <fieldset submitButton="true">
+    <input type="time" token="time" searchWhenChanged="true">
+      <label></label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+  <row>
+    <panel depends="$show_alerts_panel$">
+      <title>Alerts</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_alerts_panel$">
+      <title>Alerts</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Alerts_indexes`) tag=alert) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_alerts_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_alerts_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_app_panel$">
+      <title>Application State</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_app_panel$">
+      <title>Application State</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Application_State_indexes`) (tag=listening tag=port) OR (tag=process tag=report) OR (tag=service tag=report)) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_app_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_app_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_auth_panel$">
+      <title>Authentication</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_auth_panel$">
+      <title>Authentication</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Authentication_indexes`) tag=authentication NOT (action=success user=*$)) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_auth_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_auth_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_cert_panel$">
+      <title>Certificates</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_cert_panel$">
+      <title>Certificates</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Certificates_indexes`) tag=certificate) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_cert_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_cert_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_change_panel$">
+      <title>Change</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_change_panel$">
+      <title>Change</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Change_indexes`) tag=change NOT (object_category=file OR object_category=directory OR object_category=registry)) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_change_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_change_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_changea_panel$">
+      <title>Change Analysis</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_changea_panel$">
+      <title>Change Analysis</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Change_Analysis_indexes`) tag=change) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_changea_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_changea_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_compute_panel$">
+      <title>Compute Inventory</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_compute_panel$">
+      <title>Compute Inventory</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Compute_Inventory_indexes`) tag=inventory (tag=cpu OR tag=memory OR tag=network OR tag=storage OR (tag=system tag=version) OR tag=user OR tag=virtual)) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_compute_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_compute_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_data_panel$">
+      <title>Data Access</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_data_panel$">
+      <title>Data Access</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Data_Access_indexes`) tag=data tag=access) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_data_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_data_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_db_panel$">
+      <title>Database</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_db_panel$">
+      <title>Database</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Databases_indexes`) tag=database) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_db_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_db_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_dlp_panel$">
+      <title>DLP</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_dlp_panel$">
+      <title>DLP</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_DLP_indexes`) tag=dlp tag=incident) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_dlp_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_dlp_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_email_panel$">
+      <title>Email</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_email_panel$">
+      <title>Email</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Email_indexes`) tag=email) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_email_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_email_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_ep_port_panel$">
+      <title>Endpoint - Listening Ports</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_ep_port_panel$">
+      <title>Endpoint - Listening Ports</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Endpoint_indexes`) tag=listening tag=port ) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_ep_port_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_ep_port_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_ep_proc_panel$">
+      <title>Endpoint - Process</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_ep_proc_panel$">
+      <title>Endpoint - Process</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Endpoint_indexes`) tag=process tag=report ) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_ep_proc_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_ep_proc_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_ep_svc_panel$">
+      <title>Endpoint - Services</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_ep_svc_panel$">
+      <title>Endpoint - Services</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Endpoint_indexes`) tag=service tag=report) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_ep_svc_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_ep_svc_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_ep_fs_panel$">
+      <title>Endpoint - Filesystem</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_ep_fs_panel$">
+      <title>Endpoint - Filesystem</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Endpoint_indexes`) tag=endpoint tag=filesystem) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_ep_fs_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_ep_fs_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_ep_reg_panel$">
+      <title>Endpoint Registry</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_ep_reg_panel$">
+      <title>Endpoint Registry</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Endpoint_indexes`) tag=endpoint tag=registry) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_ep_reg_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_ep_reg_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_sig_panel$">
+      <title>Event Signatures</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_sig_panel$">
+      <title>Event Signatures</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Event_Signatures_indexes`) tag=track_event_signatures (signature=* OR signature_id=*)) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_sig_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_sig_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_im_panel$">
+      <title>Interprocess Messaging</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_im_panel$">
+      <title>Interprocess Messaging</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Interprocess_Messaging_indexes`) tag=messaging) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_im_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_im_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_ids_panel$">
+      <title>Intrusion Detection</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_ids_panel$">
+      <title>Intrusion Detection</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Intrusion_Detection_indexes`) tag=ids tag=attack) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_ids_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_ids_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_jvm_panel$">
+      <title>JVM</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_jvm_panel$">
+      <title>JVM</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_JVM_indexes`) tag=jvm) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_jvm_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_jvm_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_mal_panel$">
+      <title>Malware</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_mal_panel$">
+      <title>Malware</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Malware_indexes`) tag=malware tag=attack) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_mal_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_mal_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_nr_panel$">
+      <title>Network Resolution</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_nr_panel$">
+      <title>Network Resolution</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Network_Resolution_indexes`) tag=network tag=resolution tag=dns) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_nr_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_nr_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_net_s_panel$">
+      <title>Network Sessions</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_net_s_panel$">
+      <title>Network Sessions</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Network_Sessions_indexes`) tag=network tag=session) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_net_s_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_net_s_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_net_t_panel$">
+      <title>Network Traffic</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_net_t_panel$">
+      <title>Network Traffic</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Network_Traffic_indexes`) tag=network tag=communicate) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_net_t_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_net_t_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_perf_panel$">
+      <title>Performance</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_perf_panel$">
+      <title>Performance</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Performance_indexes`) tag=performance (tag=cpu OR tag=facilities OR tag=memory OR tag=storage OR tag=network OR (tag=os ((tag=time tag=synchronize) OR tag=uptime)))) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_perf_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_perf_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_tm_panel$">
+      <title>Ticket Management</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_tm_panel$">
+      <title>Ticket Management</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Ticket_Management_indexes`) tag=ticketing) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_tm_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_tm_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_upd_panel$">
+      <title>Updates</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_upd_panel$">
+      <title>Updates</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Updates_indexes`) tag=update tag=status) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_upd_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_upd_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_vuln_panel$">
+      <title>Vulnerabiltiies</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_vuln_panel$">
+      <title>Vulnerabiltiies</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Vulnerabilities_indexes`) tag=vulnerability tag=report) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_vuln_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_vuln_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_web_panel$">
+      <title>Web</title>
+      <html>No issues identified</html>
+    </panel>
+    <panel rejects="$show_web_panel$">
+      <title>Web</title>
+      <table>
+        <search>
+          <query>(index=* NOT (`cim_Web_indexes`) tag=web) | eventstats values(tag) AS tags by _raw | nomv tags | stats count by sourcetype index tags</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_web_panel">1</set>
+            </condition>
+            <condition>
+              <unset token="show_web_panel"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+</form>

@@ -1,0 +1,442 @@
+<form theme="dark" version="1.1">
+  <label>Data Model Compliance</label>
+  <description>We are looking at data that populates the CIM data models, specifically looking for fields that are important to each data model.</description>
+  <fieldset submitButton="false" autoRun="false">
+    <input type="time" token="time" searchWhenChanged="true">
+      <label></label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+  <row>
+    <panel depends="$show_auth_html$">
+      <title>Authentiation</title>
+      <html>No Authentication Data Found</html>
+    </panel>
+    <panel rejects="$show_auth_html$">
+      <title>Authentication</title>
+      <table>
+        <search id="auth">
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_auth_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_auth_html"></unset>
+            </condition>
+          </progress>
+          <query>| tstats first(Authentication.app) AS app_sample values(Authentication.action) AS action count(Authentication.action) AS action_count first(Authentication.user) AS user_sample count(Authentication.user) AS user_total first(Authentication.src) AS src_sample_val dc(Authentication.src) AS src_unique_vals count(Authentication.src) AS src_total first(Authentication.dest) AS dest_sample_val count(Authentication.dest) AS dest_total dc(Authentication.dest) AS dest_unique_vals count AS total_events from datamodel=Authentication.Authentication by sourcetype
+| eval action_perc=round((action_count/total_events)*100,0)
+| eval src_perc=round((src_total/total_events)*100,0)
+| eval dest_perc=round((dest_total/total_events)*100,0)
+| eval user_perc=round((user_total/total_events)*100,0)
+| eval action_issue=case(action_perc&lt;95,"action field inconsistency.")
+| eval src_issue=case(src_perc&lt;95,"src field inconsistency.")
+| eval dest_issue=case(dest_perc&lt;95,"dest field inconsistency.")
+| eval user_issue=case(user_perc&lt;95,"user field inconsistency.")
+| eval data_issues=mvappend(action_issue,src_issue,dest_issue,user_issue)
+| eval data_issues=if(isnull(data_issues),"None",data_issues)
+| table sourcetype data_issues app_sample action* user* src* dest* total_events</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_change_html$">
+      <title>Change</title>
+      <html>No Change Data Found</html>
+    </panel>
+    <panel rejects="$show_change_html$">
+      <title>Change</title>
+      <table>
+        <search id="change">
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_change_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_change_html"></unset>
+            </condition>
+          </progress>
+          <query>| tstats values(All_Changes.action) AS action count(All_Changes.action) AS action_count values(All_Changes.change_type) AS change_type first(All_Changes.command) AS command_sample first(All_Changes.object) AS object_sample count(All_Changes.object) AS object_total dc(All_Changes.object) AS object_unique_vals first(All_Changes.object_path) AS object_path_sample first(All_Changes.user) AS user_sample count(All_Changes.user) AS user_total first(All_Changes.src) AS src_sample_val dc(All_Changes.src) AS src_unique_vals first(All_Changes.dest) AS dest_sample_val dc(All_Changes.dest) AS dest_unique_vals count AS total_count from datamodel=Change.All_Changes by sourcetype
+| eval action_perc=round((action_count/total_events)*100,0)
+| eval src_perc=round((src_total/total_events)*100,0)
+| eval dest_perc=round((dest_total/total_events)*100,0)
+| eval object_perc=round((object_total/total_events)*100,0)
+| eval user_perc=round((user_total/total_events)*100,0)
+| eval action_issue=case(action_perc&lt;95,"action field inconsistency.")
+| eval src_issue=case(src_perc&lt;95,"src field inconsistency.")
+| eval dest_issue=case(dest_perc&lt;95,"dest field inconsistency.")
+| eval user_issue=case(user_perc&lt;95,"user field inconsistency.")
+| eval object_issue=case(object_perc&lt;95,"object field inconsistency.")
+| eval data_issues=mvappend(action_issue,src_issue,dest_issue,user_issue,object_issue)
+| eval data_issues=if(isnull(data_issues),"None",data_issues)
+| table sourcetype data_issues object* action* user* src* dest* total_events</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_email_html$">
+      <title>Email</title>
+      <html>No Email Data Found</html>
+    </panel>
+    <panel rejects="$show_email_html$">
+      <title>Email</title>
+      <table>
+        <search id="email">
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_email_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_email_html"></unset>
+            </condition>
+          </progress>
+          <query>| tstats values(All_Email.action) AS action count(All_Email.action) AS action_count first(All_Email.internal_message_id) AS internal_message_id_sample_val first(All_Email.message_id) AS message_id_sample_val count(All_Email.message_id) AS msg_id_total first(All_Email.protocol) AS protocol_sample_val first(All_Email.user) AS user_sample_val count(All_Email.user) AS user_total first(All_Email.src) AS src_sample_val dc(All_Email.src) AS src_unique_vals count(All_Email.src) AS src_total count(All_Email.recipient) AS recipient_total first(All_Email.recipient) AS recipient_sample_val count(All_Email.subject) AS subject_total first(All_Email.subject) AS subject_sample_val count AS total_events from datamodel=Email.All_Email by sourcetype
+| eval action_perc=round((action_count/total_events)*100,0)
+| eval src_perc=round((src_total/total_events)*100,0)
+| eval recipient_perc=round((recipient_total/total_events)*100,0)
+| eval msg_id_perc=round((msg_id_total/total_events)*100,0)
+| eval subject_perc=round((subject_total/total_events)*100,0)
+| eval user_perc=round((user_total/total_events)*100,0)
+| eval action_issue=case(action_perc&lt;95,"action field inconsistency.")
+| eval src_issue=case(src_perc&lt;95,"src field inconsistency.")
+| eval recipient_issue=case(recipient_perc&lt;95,"recipient field inconsistency.")
+| eval user_issue=case(user_perc&lt;95,"user field inconsistency.")
+| eval msg_id_issue=case(msg_id_perc&lt;95,"message id field inconsistency.")
+| eval subject_issue=case(subject_perc&lt;95,"subject field inconsistency.")
+| eval data_issues=mvappend(action_issue,src_issue,recipient_issue,user_issue,msg_id_issue,subject_issue)
+| eval data_issues=if(isnull(data_issues),"None",data_issues)
+| table sourcetype data_issues app_sample  action* user* src* recipient* msg_id* total_events</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_ids_html$">
+      <title>Intrusion Detection</title>
+      <html>No Intrusion Detection Data Found</html>
+    </panel>
+    <panel rejects="$show_ids_html$">
+      <title>Intrusion Detection</title>
+      <table>
+        <search id="ids">
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_ids_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_ids_html"></unset>
+            </condition>
+          </progress>
+          <query>| tstats count AS total_events count(IDS_Attacks.action) AS action_count values(IDS_Attacks.action) AS action first(IDS_Attacks.category) AS category_sample_val count(IDS_Attacks.ids_type) AS ids_type_total values(IDS_Attacks.ids_type) AS ids_type_vals values(IDS_Attacks.severity) AS severity_sample_val count(IDS_Attacks.severity) AS severity_total first(IDS_Attacks.user) AS user_sample_val count(IDS_Attacks.user) AS user_total dc(IDS_Attacks.user) AS user_unique_vals first(IDS_Attacks.src) AS src_sample_val dc(IDS_Attacks.src) AS src_unique_vals count(IDS_Attacks.src) AS src_total first(IDS_Attacks.dest) AS dest_sample_val count(IDS_Attacks.dest) AS dest_total dc(IDS_Attacks.dest) AS dest_unique_vals count(IDS_Attacks.signature) AS signature_total first(IDS_Attacks.signature) AS signature_sample_val from datamodel=Intrusion_Detection.IDS_Attacks by sourcetype
+| eval action_perc=round((action_count/total_events)*100,0)
+| eval src_perc=round((src_total/total_events)*100,0)
+| eval ids_type_perc=round((ids_type_total/total_events)*100,0)
+| eval dest_perc=round((dest_total/total_events)*100,0)
+| eval signature_perc=round((signature_total/total_events)*100,0)
+| eval user_perc=round((user_total/total_events)*100,0)
+| eval severity_perc=round((severity_total/total_events)*100,0)
+| eval action_issue=case(action_perc&lt;95,"action field inconsistency.")
+| eval src_issue=case(src_perc&lt;95,"src field inconsistency.")
+| eval ids_type_issue=case(ids_type_perc&lt;95,"ids_type field inconsistency.")
+| eval user_issue=case(user_perc&lt;95,"user field inconsistency.")
+| eval dest_issue=case(dest_perc&lt;95,"dest field inconsistency.")
+| eval signature_issue=case(signature_perc&lt;95,"signature field inconsistency.")
+| eval severity_issue=case(severity_perc&lt;95,"severity field inconsistency.")
+| eval data_issues=mvappend(action_issue,src_issue,dest_issue,user_issue,ids_type_issue,signature_issue,severity_issue)
+| eval data_issues=if(isnull(data_issues),"None",data_issues)
+| table sourcetype data_issues  action* user* src* dest* ids* signature* severity* total_events</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_malware_html$">
+      <title>Malware</title>
+      <html>No Malware Data Found</html>
+    </panel>
+    <panel rejects="$show_malware_html$">
+      <title>Malware</title>
+      <table>
+        <search id="malware">
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_malware_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_malware_html"></unset>
+            </condition>
+          </progress>
+          <query>| tstats count values(Malware_Attacks.action) AS action count(Malware_Attacks.action) AS action_count first(Malware_Attacks.category) AS category_sample_val count(Malware_Attacks.category) AS category_total first(Malware_Attacks.file_name) AS file_name_vals count(Malware_Attacks.file_name) AS file_total first(Malware_Attacks.file_path) AS file_path_vals values(Malware_Attacks.severity) AS severity_sample_val count(Malware_Attacks.severity) AS severity_total count(Malware_Attacks.user) AS user_total first(Malware_Attacks.user) AS user_sample_val dc(Malware_Attacks.user) AS user_unique_vals count(Malware_Attacks.dest) AS dest_total first(Malware_Attacks.dest) AS dest_sample_val dc(Malware_Attacks.dest) AS dest_unique_vals first(Malware_Attacks.signature) AS signature_sample_val count(Malware_Attacks.signature) AS signature_total count AS total_events from datamodel=Malware.Malware_Attacks by sourcetype
+| eval action_perc=round((action_count/total_events)*100,0)
+| eval src_perc=round((src_total/total_events)*100,0)
+| eval category_perc=round((category_total/total_events)*100,0)
+| eval dest_perc=round((dest_total/total_events)*100,0)
+| eval signature_perc=round((signature_total/total_events)*100,0)
+| eval file_perc=round((file_total/total_events)*100,0)
+| eval user_perc=round((user_total/total_events)*100,0)
+| eval severity_perc=round((severity_total/total_events)*100,0)
+| eval action_issue=case(action_perc&lt;95,"action field inconsistency.")
+| eval src_issue=case(src_perc&lt;95,"src field inconsistency.")
+| eval category_issue=case(category_perc&lt;95,"category field inconsistency.")
+| eval user_issue=case(user_perc&lt;95,"user field inconsistency.")
+| eval dest_issue=case(dest_perc&lt;95,"dest field inconsistency.")
+| eval signature_issue=case(signature_perc&lt;95,"signature field inconsistency.")
+| eval severity_issue=case(severity_perc&lt;95,"severity field inconsistency.")
+| eval file_issue=case(file_perc&lt;95,"file name field inconsistency.")
+| eval data_issues=mvappend(action_issue,src_issue,dest_issue,user_issue,category_issue,signature_issue,severity_issue,file_issue)
+| eval data_issues=if(isnull(data_issues),"None",data_issues)
+| table sourcetype data_issues action* user* src* dest* file* categrory* signature* severity* total_events</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_network_resolution_html$">
+      <title>Network Resolution</title>
+      <html>No Network Resolution Data Found</html>
+    </panel>
+    <panel rejects="$show_network_resolution_html$">
+      <title>Network Resolution</title>
+      <table>
+        <search id="network_resolution">
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_network_resolution_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_network_resolution_html"></unset>
+            </condition>
+          </progress>
+          <query>| tstats count AS total_events first(DNS.answer) AS answer_sample_val count(DNS.answer) AS answer_total first(DNS.message_type) AS message_type_sample_val count(DNS.message_type) AS type_total first(DNS.query) AS query_sample_val count(DNS_query) AS query_total dc(DNS.query) AS query_unique_vals values(DNS.record_type) AS record_type_vals count(DNS.record_type) AS record_type_total values(DNS.reply_code) AS reply_code_vals count(DNS_dest) AS dest_total first(DNS.dest) AS dest_sample_val dc(DNS.dest) AS dest_unique_vals from datamodel=Network_Resolution.DNS by sourcetype
+| eval answer_perc=round((answer_total/total_events)*100,0)
+| eval type_perc=round((type_total/total_events)*100,0)
+| eval query_perc=round((query_total/total_events)*100,0)
+| eval dest_perc=round((dest_total/total_events)*100,0)
+| eval record_type_perc=round((record_type_total/total_events)*100,0)
+| eval action_issue=case(action_perc&lt;95,"action field inconsistency.")
+| eval type_issue=case(type_perc&lt;95,"message type field inconsistency.")
+| eval dest_issue=case(dest_perc&lt;95,"dest field inconsistency.")
+| eval query_issue=case(query_perc&lt;95,"query field inconsistency.")
+| eval record_type_issue=case(record_type_perc&lt;95,"record type field inconsistency.")
+| eval data_issues=mvappend(query_issue,record_type_issue,answer_issue,dest_issue,type_issue)
+| eval data_issues=if(isnull(data_issues),"None",data_issues)
+| table sourcetype data_issues answer* query* dest* record_type* reply_* total_events</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_network_session_html$">
+      <title>Network Session</title>
+      <html>No Network Session Data Found</html>
+    </panel>
+    <panel rejects="$show_network_session_html$">
+      <title>Network Sessions</title>
+      <table>
+        <search id="network_session">
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_network_session_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_network_session_html"></unset>
+            </condition>
+          </progress>
+          <query>| tstats count AS total_events values(All_Sessions.action) AS actions count(All_Sessions.action) AS action_count count(All_Sessions.dest_dns) AS dest_dns_total first(All_Sessions.dest_dns) AS dest_dns_sample_vals dc(All_Sessions.dest_dns) AS dest_dns_unique_vals count(All_Sessions.dest_ip) AS dest_ip_total first(All_Sessions.dest_ip) AS dest_ip_sample_val dc(All_Sessions.dest_ip) AS dest_ip_unique_vals count(All_Sessions.dest_mac) AS dest_mac_total first(All_Sessions.dest_mac) AS dest_mac_sample_val dc(All_Sessions.dest_mac) AS dest_mac_unique_vals count(All_Sessions.user) AS user_total first(All_Sessions.user) AS user_sample_val from datamodel=Network_Sessions.All_Sessions by sourcetype
+| eval action_perc=round((action_count/total_events)*100,0)
+| eval dest_dns_perc=round((dest_dns_total/total_events)*100,0)
+| eval dest_ip_perc=round((dest_ip_total/total_events)*100,0)
+| eval dest_mac_perc=round((dest_mac_total/total_events)*100,0)
+| eval user_perc=round((user_total/total_events)*100,0)
+| eval action_issue=case(action_perc&lt;95,"action field inconsistency.")
+| eval dest_dns_issue=case(dest_dns_perc&lt;95,"dest dns type field inconsistency.")
+| eval dest_ip_issue=case(dest_ip_perc&lt;95,"dest id field inconsistency.")
+| eval dest_mac_issue=case(dest_mac_perc&lt;95,"dest mac type field inconsistency.")
+| eval user_issue=case(user_perc&lt;95,"user field inconsistency.")
+| eval data_issues=mvappend(action_issue,dest_dns_issue,dest_ip_issue,dest_mac_issue,user_issue)
+| eval data_issues=if(isnull(data_issues),"None",data_issues)
+| table sourcetype data_issues action* dest* user*</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_network_traffic_html$">
+      <title>Network Traffic</title>
+      <html>No Network Traffic Data Found</html>
+    </panel>
+    <panel rejects="$show_network_traffic_html$">
+      <title>Network Traffic</title>
+      <table>
+        <search id="network_traffic">
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_network_traffic_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_network_traffic_html"></unset>
+            </condition>
+          </progress>
+          <query>| tstats count AS total_events values(All_Traffic.action) AS actions count(All_Traffic.action) AS action_count first(All_Traffic.bytes) AS bytes_sample_val first(All_Traffic.bytes_in) AS bytes_in_sample_val first(All_Traffic.bytes_out) AS bytes_out_sample_val count(All_Traffic.src) AS src_total first(All_Traffic.src) AS src_sample_val dc(All_Traffic.src) AS src_unique_vals count(All_Traffic.dest) AS dest_total first(All_Traffic.dest) AS dest_sample_val dc(All_Traffic.dest) AS dest_unique_vals count(All_Traffic.dest_port) AS dest_port_count first(All_Traffic.dest_port) AS dest_port_sample_val dc(All_Traffic.dest_port) AS dest_port_unique_vals first(All_Traffic.user) AS user_sample_val from datamodel=Network_Traffic.All_Traffic by sourcetype
+| eval action_perc=round((action_count/total_events)*100,0)
+| eval src_perc=round((src_total/total_events)*100,0)
+| eval dest_perc=round((dest_total/total_events)*100,0)
+| eval dest_port_perc=round((dest_port_total/total_events)*100,0)
+| eval action_issue=case(action_perc&lt;95,"action field inconsistency.")
+| eval src_issue=case(src_perc&lt;95,"src type field inconsistency.")
+| eval dest_issue=case(dest_perc&lt;95,"dest field inconsistency.")
+| eval dest_port_issue=case(dest_port_perc&lt;95,"dest port field inconsistency.")
+| eval data_issues=mvappend(action_issue,src_issue,dest_issue,dest_port_issue)
+| eval data_issues=if(isnull(data_issues),"None",data_issues)
+| table sourcetype data_issues action* src* dest*</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_update_html$">
+      <title>Updates</title>
+      <html>No Update Data Found</html>
+    </panel>
+    <panel rejects="$show_update_html$">
+      <title>Updates</title>
+      <table>
+        <search id="updates">
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_update_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_update_html"></unset>
+            </condition>
+          </progress>
+          <query>| tstats count AS total_events first(Updates.file_name) AS file_name_sample_val count(Updates.file_name) AS file_total first(Updates.dest) AS dest_sample_val count(Updates.dest) AS dest_total dc(Updates.dest) AS dest_unique_vals values(Updates.severity) AS severity_unique_vals count(Updates.status) AS status_total values(Updates.status) AS status_unique_vals count(Updates.signature) AS signature_total first(Updates.signature) AS signature_sample_val dc(Updates.signature) AS signature_unique_vals from datamodel=Updates.Updates by sourcetype
+| eval status_perc=round((status_total/total_events)*100,0)
+| eval signature_perc=round((signature_total/total_events)*100,0)
+| eval dest_perc=round((dest_total/total_events)*100,0)
+| eval file_perc=round((file_total/total_events)*100,0)
+| eval status_issue=case(status_perc&lt;95,"status field inconsistency.")
+| eval signature_issue=case(signature_total&lt;95,"signature type field inconsistency.")
+| eval dest_issue=case(dest_perc&lt;95,"dest field inconsistency.")
+| eval file_issue=case(file_perc&lt;95,"file field inconsistency.")
+| eval data_issues=mvappend(status_issue,signature_issue,dest_issue,file_issue)
+| eval data_issues=if(isnull(data_issues),"None",data_issues)
+| table sourcetype data_issues status* signature* dest* file*</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_vuln_html$">
+      <title>Vulnerabilities</title>
+      <html>No Vulnerability Data Found</html>
+    </panel>
+    <panel rejects="$show_vuln_html$">
+      <title>Vulnerabilities</title>
+      <table>
+        <search id="vuln">
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_vuln_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_vuln_html"></unset>
+            </condition>
+          </progress>
+          <query>| tstats count AS total_events first(Vulnerabilities.category) AS category_unique_vals first(Vulnerabilities.cve) AS cve_sample_val dc(Vulnerabilities.cve) AS cve_unique_vals first(Vulnerabilities.dest) AS dest_sample_val dc(Vulnerabilities.dest) AS dest_unique_vals count(Vulnerabilities.severity) AS severity_total values(Vulnerabilities.severity) AS severity_unique_vals values(Vulnerabilities.status) AS status_unique_vals first(Vulnerabilities.signature) AS signature_sample_val dc(Vulnerabilities.signature) AS signature_unique_vals from datamodel=Vulnerabilities.Vulnerabilities by sourcetype
+| eval severity_perc=round((severity_total/total_events)*100,0)
+| eval signature_perc=round((signature_total/total_events)*100,0)
+| eval dest_perc=round((dest_total/total_events)*100,0)
+| eval severity_issue=case(severity_perc&lt;95,"severity field inconsistency.")
+| eval signature_issue=case(signature_total&lt;95,"signature field inconsistency.")
+| eval dest_issue=case(dest_perc&lt;95,"dest field inconsistency.")
+| eval data_issues=mvappend(severity_issue,signature_issue,dest_issue)
+| eval data_issues=if(isnull(data_issues),"None",data_issues)
+| table sourcetype data_issues severity* category* cve* signature* dest* file*</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_web_html$">
+      <title>Web</title>
+      <html>No Web Data Found</html>
+    </panel>
+    <panel rejects="$show_web_html$">
+      <title>Web</title>
+      <table>
+        <search id="web">
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_web_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_web_html"></unset>
+            </condition>
+          </progress>
+          <query>| tstats count AS total_events values(Web.action) AS actions count(Web.action) AS action_count first(Web.bytes) AS bytes_sample_val first(Web.bytes_in) AS bytes_in_sample_val first(Web.bytes_out) AS bytes_out_sample_val count(Web.dest) AS dest_total first(Web.dest) AS dest_sample_val dc(Web.dest) AS dest_unique_vals first(Web.dest_port) AS dest_port_sample_val dc(Web.dest_port) AS dest_port_unique_vals count(Web.user) AS user_total first(Web.user) AS user_sample_val values(Web.status) AS status_sample_val first(Web.http_referrer) AS http_referrer_sample_val dc(Web.http_referrer) AS http_referrer_unique_vals first(Web.http_user_agent) AS http_user_agent_sample_val dc(Web.http_user_agent) AS http_user_agent_unique_vals count(Web.url) AS url_total first(Web.url) AS url_sample_val dc(Web.url) AS url_unique_vals first(Web.uri_path) AS uri_path_sample_val dc(Web.uri_path) AS uri_path_unique_vals first(Web.uri_query) AS uri_query_sample_val dc(Web.uri_query) AS uri_query_unique_vals from datamodel=Web.Web by sourcetype
+| eval action_perc=round((action_count/total_events)*100,0)
+| eval user_perc=round((user_total/total_events)*100,0)
+| eval dest_perc=round((dest_total/total_events)*100,0)
+| eval url_perc=round((url_total/total_events)*100,0)
+| eval action_issue=case(action_perc&lt;95,"action field inconsistency.")
+| eval user_issue=case(user_perc&lt;95,"user field inconsistency.")
+| eval dest_issue=case(dest_perc&lt;95,"dest field inconsistency.")
+| eval url_issue=case(url_perc&lt;95,"url field inconsistency.")
+| eval data_issues=mvappend(action_issue,user_issue,dest_issue,url_issue)
+| eval data_issues=if(isnull(data_issues),"None",data_issues)
+| table sourcetype data_issues action* dest* user* url*</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+</form>

@@ -1,0 +1,221 @@
+---
+
+- name: POST Requests
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "https://{{ splunk.monitoring_console_ip }}:{{ splunk.ports.mgmt }}/services/search/distributed/groups"
+    method: POST
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    body: "{{ item }}"
+    validate_certs: false
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+    status_code: 201,409,400
+    use_proxy: no
+  register: distributed_groups
+  with_items:
+    - "{{ dmc_group_cluster_master | default([]) }}"
+    - "{{ dmc_group_indexer | default([]) }}"
+    - "{{ dmc_group_deployment_server | default([]) }}"
+    - "{{ dmc_group_kv_store | default([]) }}"
+    - "{{ dmc_group_license_master | default([]) }}"
+    - "{{ dmc_group_search_head | default([]) }}"
+    - "{{ dmc_group_deployer | default([]) }}"
+    - "{{ dmc_customgroup_heavy_forwarder | default([]) }}"
+    - "{{ dmc_searchheadclustergroup | default([]) }}"
+    - "{{ dmc_indexerclustergroup | default([]) }}"
+  vars:
+    dmc_searchheadclustergroup: "{{ lookup('vars','dmc_searchheadclustergroup_'+splunk.shcluster.label, default='') }}"
+    dmc_indexerclustergroup: "{{ lookup('vars','dmc_indexerclustergroup_'+splunk.cluster.label, default='') }}"
+  when: item.create | default(True) | bool
+  until: distributed_groups.status == 400 or distributed_groups.status == 201 or distributed_groups.status == 409
+  retries: 10
+  delay: 30
+
+- name: Edit DMC Group Requests
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "https://{{ splunk.monitoring_console_ip }}:{{ splunk.ports.mgmt }}/services/search/distributed/groups"
+    method: POST
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    body: "{{ item }}"
+    validate_certs: false
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+    status_code: 201,409,400
+    use_proxy: no
+  with_items:
+    - "{{ dmc_group_cluster_master | default([]) }}"
+    - "{{ dmc_group_indexer | default([]) }}"
+    - "{{ dmc_group_deployment_server | default([]) }}"
+    - "{{ dmc_group_kv_store | default([]) }}"
+    - "{{ dmc_group_license_master | default([]) }}"
+    - "{{ dmc_group_search_head | default([]) }}"
+    - "{{ dmc_group_deployer | default([]) }}"
+    - "{{ dmc_customgroup_heavy_forwarder | default([]) }}"
+    - "{{ dmc_searchheadclustergroup | default([]) }}"
+    - "{{ dmc_indexerclustergroup | default([]) }}"
+  vars:
+    dmc_searchheadclustergroup: "{{ lookup('vars','dmc_searchheadclustergroup_'+splunk.shcluster.label, default='') }}"
+    dmc_indexerclustergroup: "{{ lookup('vars','dmc_indexerclustergroup_'+splunk.cluster.label, default='') }}"
+  when: distributed_groups.results[0].status == 409 and (item.create | default(True) | bool)
+  register: result
+  until: result.status == 400 or result.status == 201 or result.status == 409
+  retries: 5
+  delay: 10
+
+- name: dmc_asset_build_full - GET
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "https://{{ splunk.monitoring_console_ip }}:{{ splunk.ports.mgmt }}/servicesNS/nobody/splunk_monitoring_console/saved/searches/DMC%20Asset%20-%20Build%20Full?output_mode=json"
+    method: GET
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+    validate_certs: false
+    status_code: 200
+    return_content: yes
+    use_proxy: no
+  register: dmc_asset_build_full
+  until: dmc_asset_build_full.status == 200 or dmc_asset_build_full.status == 201 or dmc_asset_build_full.status == 409
+  retries: 5
+  delay: 10
+
+- name: dmc_asset_build_full - POST
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "https://{{ splunk.monitoring_console_ip }}:{{ splunk.ports.mgmt }}/servicesNS/nobody/splunk_monitoring_console/saved/searches/DMC%20Asset%20-%20Build%20Full/dispatch"
+    method: POST
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    body:
+      trigger_actions: true
+      dispatch.auto_cancel: "{{ dmc_asset_build_full.json['entry'][0]['content']['dispatch.auto_cancel'] }}"
+      dispatch.buckets: "{{ dmc_asset_build_full.json['entry'][0]['content']['dispatch.buckets'] }}"
+      dispatch.enablePreview: true
+    body_format: "form-urlencoded"
+    validate_certs: false
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+    status_code: 200,201,409
+    use_proxy: no
+  register: result
+  until: result.status == 200 or result.status == 201 or result.status == 409
+  retries: 5
+  delay: 10
+
+- name: UI - GET
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "https://{{ splunk.monitoring_console_ip }}:{{ splunk.ports.mgmt }}/servicesNS/nobody/splunk_monitoring_console/data/ui/nav/default.distributed?output_mode=json"
+    method: GET
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    validate_certs: false
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+    status_code: 200
+    return_content: yes
+    use_proxy: no
+  register: settings
+  until: settings.status == 200 or settings.status == 201 or settings.status == 409
+  retries: 5
+  delay: 10
+
+- name: UI - POST
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "https://{{ splunk.monitoring_console_ip }}:{{ splunk.ports.mgmt }}/servicesNS/nobody/splunk_monitoring_console/data/ui/nav/default"
+    method: POST
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    body:
+      eai:data: "{{ settings.json['entry'][0]['content']['eai:data'] }}"
+    body_format: "form-urlencoded"
+    validate_certs: false
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+    status_code: 200,201,409
+    use_proxy: no
+  register: result
+  until: result.status == 200 or result.status == 201 or result.status == 409
+  retries: 5
+  delay: 10
+
+- name: DMC Conf - Reset - POST
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "https://{{ splunk.monitoring_console_ip }}:{{ splunk.ports.mgmt }}/servicesNS/nobody/splunk_monitoring_console/configs/conf-splunk_monitoring_console_assets/settings"
+    method: POST
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    body:
+      configuredPeers: ""
+      disabled: "{{ settings.json['entry'][0]['content']['disabled'] }}"
+      eai:acl: "{{ settings.json['entry'][0]['content']['eai:acl'] }}"
+      eai:appName: "{{ settings.json['entry'][0]['content']['eai:appName'] }}"
+      eai:userName: "{{ settings.json['entry'][0]['content']['eai:userName'] }}"
+    body_format: "form-urlencoded"
+    validate_certs: false
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+    status_code: 200,201,409
+    use_proxy: no
+  register: result
+  until: result.status == 200 or result.status == 201 or result.status == 409
+  retries: 10
+  delay: 30
+
+- name: DMC Conf - POST
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "https://{{ splunk.monitoring_console_ip }}:{{ splunk.ports.mgmt }}/servicesNS/nobody/splunk_monitoring_console/configs/conf-splunk_monitoring_console_assets/settings"
+    method: POST
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    body:
+      configuredPeers: "{{ configured_peers }}"
+      disabled: "{{ settings.json['entry'][0]['content']['disabled'] }}"
+      eai:acl: "{{ settings.json['entry'][0]['content']['eai:acl'] }}"
+      eai:appName: "{{ settings.json['entry'][0]['content']['eai:appName'] }}"
+      eai:userName: "{{ settings.json['entry'][0]['content']['eai:userName'] }}"
+    body_format: "form-urlencoded"
+    validate_certs: false
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+    status_code: 200,201,409
+    use_proxy: no
+  register: result
+  until: result.status == 200 or result.status == 201 or result.status == 409
+  retries: 10
+  delay: 30
+
+- name: DMC Settings - POST
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "https://{{ splunk.monitoring_console_ip }}:{{ splunk.ports.mgmt }}/servicesNS/nobody/system/apps/local/splunk_monitoring_console"
+    method: POST
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    body: "author=Splunk&check_for_updates=1&configured=1&label=Monitoring+Console&version={{ settings.json['generator']['version'] }}&visible=1"
+    validate_certs: false
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+    status_code: 200,201,409
+    use_proxy: no
+  register: result
+  until: result.status == 200 or result.status == 201 or result.status == 409
+  retries: 10
+  delay: 30

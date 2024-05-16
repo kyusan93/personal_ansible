@@ -1,0 +1,6 @@
+---
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/install_splunk_license.yml"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/restart_splunk.yml"
+

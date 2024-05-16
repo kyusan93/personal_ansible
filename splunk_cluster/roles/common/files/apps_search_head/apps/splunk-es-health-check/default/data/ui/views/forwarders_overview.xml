@@ -1,0 +1,229 @@
+<dashboard theme="dark" version="1.1">
+  <label>Forwarders Overview</label>
+  <row>
+    <panel>
+      <title>Number of Universal Forwarders (last 7 days)</title>
+      <single>
+        <search>
+          <query>| inputlookup core_forwarders_info.csv 
+| search fwdType=uf 
+| stats dc(hostname)</query>
+          <earliest>0</earliest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051", "0x0877a6", "0xf8be34", "0xf1813f", "0xdc4e41"]</option>
+        <option name="rangeValues">[0,30,70,100]</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">0</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Number of HF/SH/Full Installs reporting in (last 7 days)</title>
+      <single>
+        <search>
+          <query>| inputlookup core_forwarders_info.csv 
+| search fwdType=full 
+| stats dc(hostname)</query>
+          <earliest>0</earliest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051", "0x0877a6", "0xf8be34", "0xf1813f", "0xdc4e41"]</option>
+        <option name="rangeValues">[0,30,70,100]</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">0</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Number of Spunk Versions in Universal Forwarder</title>
+      <single>
+        <search>
+          <query>| inputlookup core_forwarders_info.csv 
+| search fwdType=uf 
+| stats dc(version)</query>
+          <earliest>0</earliest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051", "0x0877a6", "0xf8be34", "0xf1813f", "0xdc4e41"]</option>
+        <option name="rangeValues">[0,30,70,100]</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">0</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Number of Splunk Versions in Full Forwarders (HF/SH/etc.)</title>
+      <single>
+        <search>
+          <query>| inputlookup core_forwarders_info.csv 
+| search fwdType=full 
+| stats dc(version)</query>
+          <earliest>0</earliest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051", "0x0877a6", "0xf8be34", "0xf1813f", "0xdc4e41"]</option>
+        <option name="rangeValues">[0,30,70,100]</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">0</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Forwarders not sending to all Indexers</title>
+      <table>
+        <search>
+          <query>index=_internal sourcetype=splunkd log_level=INFO  Connected 
+| stats dc(idx) AS idx_count values(idx) by host 
+| eventstats mode(idx_count) AS mode_idx 
+| eval Status=if(mode_idx!=idx_count, "severe", "low") 
+| eval indexer_deviation=idx_count-mode_idx 
+| fields - mode* 
+| rename values(*) AS *
+| search Status="severe" 
+| table host, idx_count, indexer_deviation, idx
+| rename host AS Forwarder idx_count AS "Connected Indexers" idx AS "Indexers" indexer_deviation AS "Deviation from norm"</query>
+          <earliest>-7d@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Forwarders not sending data (last 7 days)</title>
+      <table>
+        <search>
+          <query>index="_internal" source="*metrics.log" group=tcpin_connections version=*
+| eventstats max(_time) AS maxtime min(_time) AS mintime 
+| eval sourceHost=if(isnull(hostname), sourceHost,hostname) 
+| eval connectionType=case(fwdType=="uf","Universal Forwarder", fwdType=="lwf", "Light Weight Forwarder",fwdType=="full", "HF/SH/Full Install", connectionType=="cooked" or connectionType=="cookedSSL","Splunk Forwarder", connectionType=="raw" or connectionType=="rawSSL","Legacy Forwarder") 
+| eval build=if(isnull(build),"n/a",build) 
+| eval version=if(isnull(version),"pre 4.2",version) 
+| eval guid=if(isnull(guid),sourceHost,guid) 
+| eval os=if(isnull(os),"n/a",os)
+| eval arch=if(isnull(arch),"n/a",arch) 
+| eval my_splunk_server = splunk_server 
+| fields maxtime connectionType sourceIp sourceHost sourcePort destPort kb tcp_eps tcp_Kprocessed tcp_KBps my_splunk_server build version os arch 
+| eval lastReceived = if(kb&gt;0, _time, null) 
+| stats max(maxtime) AS maxtime first(sourceIp) as sourceIp first(connectionType) as connectionType first(sourcePort) as sourcePort first(build) as build first(version) as version first(os) as os first(arch) as arch max(_time) as lastConnected max(lastReceived) as lastReceived sum(kb) as kb avg(tcp_eps) as avg_eps by sourceHost 
+| stats max(maxtime) as maxtime first(sourceIp) as sourceIp first(connectionType) as connectionType first(sourcePort) as sourcePort first(build) as build first(version) as version first(os) as os first(arch) as arch max(lastConnected) as lastConnected max(lastReceived) as lastReceived first(kb) as KB first(avg_eps) as eps by sourceHost 
+| eval status = if(isnull(KB) or lastConnected&lt;(maxtime-900),"missing",if(lastConnected&gt;(lastReceived+300) or KB==0,"quiet","active"))
+| sort sourceHost
+| eval lastConnected = strftime(lastConnected,"%m/%d/%y %H:%M:%S")
+| eval lastReceived = strftime(lastReceived,"%m/%d/%y %H:%M:%S")
+| search status!=active
+| table sourceHost sourceIp connectionType version lastConnected lastReceived KB eps status 
+| rename sourceHost AS "Forwarder Name" sourceIp AS "Forwarder IP" connectionType AS "Forwarder Type" lastConnected AS "Last Indexer Connection" lastReceived AS "Last Time Data Received" KB AS "KB of Data Received" eps AS "Events Per Second"</query>
+          <earliest>-7d@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>All Forwarder Details (last 7 days)</title>
+      <table>
+        <search>
+          <query>index="_internal" source="*metrics.log" group=tcpin_connections version=*
+| eventstats max(_time) AS maxtime min(_time) AS mintime 
+| eval sourceHost=if(isnull(hostname), sourceHost,hostname) 
+| eval connectionType=case(fwdType=="uf","Universal Forwarder", fwdType=="lwf", "Light Weight Forwarder",fwdType=="full", "HF/SH/Full Install", connectionType=="cooked" or connectionType=="cookedSSL","Splunk Forwarder", connectionType=="raw" or connectionType=="rawSSL","Legacy Forwarder") 
+| eval build=if(isnull(build),"n/a",build) 
+| eval version=if(isnull(version),"pre 4.2",version) 
+| eval guid=if(isnull(guid),sourceHost,guid) 
+| eval os=if(isnull(os),"n/a",os)
+| eval arch=if(isnull(arch),"n/a",arch) 
+| eval my_splunk_server = splunk_server 
+| fields maxtime connectionType sourceIp sourceHost sourcePort destPort kb tcp_eps tcp_Kprocessed tcp_KBps my_splunk_server build version os arch 
+| eval lastReceived = if(kb&gt;0, _time, null) 
+| stats max(maxtime) AS maxtime first(sourceIp) as sourceIp first(connectionType) as connectionType first(sourcePort) as sourcePort first(build) as build first(version) as version first(os) as os first(arch) as arch max(_time) as lastConnected max(lastReceived) as lastReceived sum(kb) as kb avg(tcp_eps) as avg_eps by sourceHost 
+| stats max(maxtime) as maxtime first(sourceIp) as sourceIp first(connectionType) as connectionType first(sourcePort) as sourcePort first(build) as build first(version) as version first(os) as os first(arch) as arch max(lastConnected) as lastConnected max(lastReceived) as lastReceived first(kb) as KB first(avg_eps) as eps by sourceHost 
+| eval status = if(isnull(KB) or lastConnected&lt;(maxtime-900),"missing",if(lastConnected&gt;(lastReceived+300) or KB==0,"quiet","active"))
+| sort sourceHost
+| eval lastConnected = strftime(lastConnected,"%m/%d/%y %H:%M:%S")
+| eval lastReceived = strftime(lastReceived,"%m/%d/%y %H:%M:%S")
+| table sourceHost sourceIp connectionType version lastConnected lastReceived KB eps status 
+| rename sourceHost AS "Forwarder Name" sourceIp AS "Forwarder IP" connectionType AS "Forwarder Type" lastConnected AS "Last Indexer Connection" lastReceived AS "Last Time Data Received" KB AS "KB of Data Received" eps AS "Events Per Second"</query>
+          <earliest>-7d@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+</dashboard>

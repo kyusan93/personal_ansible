@@ -1,0 +1,650 @@
+<dashboard hideEdit="false" script="table_icons.js, cell_fill_gauge.js" stylesheet="table_decorations.css">
+  <label>Health Check - Appendix</label>
+  <search id="parallel_pipe_api_base">
+    <query>
+      <![CDATA[
+        | rest splunk_server_group=dmc_group_indexer splunk_server_group="*" /services/server/introspection/queues
+        | search title=parsingQueue* OR title=aggQueue* OR title=typingQueue* OR title=indexQueue*
+        | eval fill_perc=round(current_size_bytes / max_size_bytes * 100,2)
+        | fields splunk_server, title, fill_perc
+        | rex field=title "(?<queue_name>^\w+)(?:\.(?<pipeline_number>\d+))?"
+        | eval fill_perc = if(isnotnull(pipeline_number), "pset".pipeline_number.": ".fill_perc, fill_perc)
+        | chart values(fill_perc) over splunk_server by queue_name
+        | eval pset_count = mvcount(parsingQueue)
+        | join type=outer splunk_server [
+          | rest splunk_server_group=dmc_group_indexer splunk_server_group="*" /services/server/introspection/indexer
+          | eval average_KBps = round(average_KBps, 0)
+          | eval status = if((reason == ".") OR (reason == "") OR isnull(reason), status, status.": ".reason)
+          | fields splunk_server, average_KBps, status]
+        | fields splunk_server pset_count average_KBps status parsingQueue aggQueue typingQueue indexQueue
+        | sort -average_KBps
+      ]]>
+    </query>
+  </search>
+  <row>
+    <panel>
+      <title>CPU usage</title>
+      <single>
+        <search>
+          <query>index=_introspection sourcetype=splunk_resource_usage component=Hostwide host=*
+| eval percentage = 'data.cpu_system_pct' + 'data.cpu_user_pct' 
+| stats Median(percentage) AS percentage by host
+| where percentage &gt; 60
+| stats count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,30,70,100]</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">large</option>
+        <option name="trellis.splitBy">host</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="underLabel">Host(s) exceeding 50% CPU usage</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Crash logs</title>
+      <single>
+        <search>
+          <query>index=_internal sourcetype=splunkd_crash_log 
+| rex "^\[build\s+(?&lt;splunk_build&gt;\w+)" 
+| rex "Cause:\s+(?&lt;crash_cause&gt;[^\n\r]+)" 
+| rex "Crashing\sthread:\s+(?&lt;crash_thread&gt;\S+)" 
+| search crash_thread=* 
+| table _time, host, splunk_build, crash_thread, crash_cause 
+| stats count</query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,30,70,100]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">large</option>
+        <option name="trellis.splitBy">host</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="underLabel">Crash logs found in last 30 days</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>6.1 - Splunk Assets and Role and Hardware Specifications</title>
+      <table>
+        <search>
+          <query>| rest splunk_server=* /services/server/status/resource-usage/hostwide 
+| eval cpu_count = if(isnull(cpu_count), "N/A", cpu_count." / 12" )
+| eval mem = round(mem, 0) 
+| eval mem=round(mem/1024,0)
+| eval mem=tostring(mem, "commas")." / 12" 
+| join type=outer splunk_server 
+[| rest /services/server/roles splunk_server=* | fields *]
+| fields splunk_server, os_name, splunk_version, role_list, cpu_count, mem
+| sort splunk_server 
+| rename splunk_server AS Instance, os_name AS "OS", splunk_version AS "Splunk Version", role_list as Roles, cpu_count AS "CPU Count (current / recommended)", mem AS "Physical Memory Capacity (GB) (current / recommended)"</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>6.2 - Ulimit</title>
+      <table>
+        <search>
+          <query>| rest splunk_server_group=* /services/server/info 
+| join type=outer splunk_server [rest splunk_server_group=* /services/server/sysinfo | fields splunk_server ulimits.data_segment_size ulimits.open_files ulimits.user_processes] 
+| eval ulimits.data_segment_size = if(isnotnull('ulimits.data_segment_size'), 'ulimits.data_segment_size', "unavailable") 
+| eval ulimits.open_files = if(isnotnull('ulimits.open_files'), 'ulimits.open_files', "unavailable") 
+| eval ulimits.user_processes = if(isnotnull('ulimits.user_processes'), 'ulimits.user_processes', "unavailable") 
+| eval sev_segment_size = case('ulimits.data_segment_size' == -1 OR 'ulimits.data_segment_size' &gt;= 1073741824, 0, 'ulimits.data_segment_size' == "unavailable", -1, True(), 2) 
+| eval sev_open_files = case('ulimits.open_files' == -1 OR 'ulimits.open_files' &gt;= 64000, 0, 'ulimits.open_files' == "unavailable", -1, True(), 2) 
+| eval sev_user_processes = case('ulimits.user_processes' == -1 OR 'ulimits.user_processes' &gt;= 16000, 0, 'ulimits.user_processes' == "unavailable", -1, True(), 2) 
+| fields splunk_server ulimits.data_segment_size ulimits.open_files ulimits.user_processes
+| sort splunk_server
+| rename splunk_server AS instance ulimits.data_segment_size AS "ulimits.data_segment_size (current / recommended)" ulimits.open_files AS "ulimits.open_files (current / recommended)" ulimits.user_processes AS "ulimits.user_processes (current / recommended)" 
+| fieldformat ulimits.data_segment_size (current / recommended) = if('ulimits.data_segment_size (current / recommended)' &gt;= 0, 'ulimits.data_segment_size (current / recommended)'." / 1073741824", 'ulimits.data_segment_size (current / recommended)') 
+| fieldformat ulimits.open_files (current / recommended) = if('ulimits.open_files (current / recommended)' &gt;= 0, 'ulimits.open_files (current / recommended)'." / 64000", 'ulimits.open_files (current / recommended)') 
+| fieldformat ulimits.user_processes (current / recommended) = if('ulimits.user_processes (current / recommended)' &gt;= 0, 'ulimits.user_processes (current / recommended)'." / 16000", 'ulimits.user_processes (current / recommended)') 
+| fields - _timediff</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+    <panel>
+      <title>6.3 - THP</title>
+      <table>
+        <search>
+          <query>| rest splunk_server_group=* /services/server/info 
+| join type=outer splunk_server [rest splunk_server_group=* /services/server/sysinfo | fields splunk_server transparent_hugepages.*] 
+| eval transparent_hugepages.effective_state = if(isnotnull('transparent_hugepages.effective_state'), 'transparent_hugepages.effective_state', "unknown") 
+| eval transparent_hugepages.enabled = case(len('transparent_hugepages.enabled') &gt; 0, 'transparent_hugepages.enabled', 'transparent_hugepages.effective_state' == "ok" AND (isnull('transparent_hugepages.enabled') OR len('transparent_hugepages.enabled') = 0), "feature not available", 'transparent_hugepages.effective_state' == "unknown" AND isnull('transparent_hugepages.enabled'), "unknown", True(), "unknown") 
+| eval transparent_hugepages.defrag = case(len('transparent_hugepages.defrag') &gt; 0, 'transparent_hugepages.defrag', 'transparent_hugepages.effective_state' == "ok" AND (isnull('transparent_hugepages.defrag') OR len('transparent_hugepages.defrag') = 0), "feature not available", 'transparent_hugepages.effective_state' == "unknown" AND isnull('transparent_hugepages.defrag'), "unknown", True(), "unknown") 
+| fields splunk_server transparent_hugepages.enabled transparent_hugepages.defrag transparent_hugepages.effective_state 
+| sort splunk_server
+| rename splunk_server AS instance 
+| fields - _timediff</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>6.4 - Splunk Internal Logs Analyzer</title>
+      <table>
+        <search>
+          <query>index=_internal sourcetype=splunkd NOT info (log_level="ERROR" OR log_level="CRIT" OR log_level="FATAL") * | eventstats sparkline by component, log_level | cluster showcount=t | table _time, log_level, component, sparkline, _raw, cluster_count | sort - cluster_count | rename sparkline AS sparkline_by_component</query>
+          <earliest>-15m</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>6.5 - File integrity Check</title>
+      <event>
+        <search>
+          <query>| rest splunk_server_group=* /services/server/info 
+| join type=outer splunk_server [rest splunk_server_group=* /services/server/status/installed-file-integrity 
+    | fields splunk_server check_ready check_failures.* 
+    | untable splunk_server file_path check_result 
+    | replace "check_failures.*" WITH "*" IN file_path 
+    | eval check_ready = if(file_path == "check_ready", check_result, NULL) 
+    | eval file_path = if(file_path == "check_ready", NULL, file_path) 
+    | eval checker_not_working = if(file_path == "fail", check_result, NULL) 
+    | stats count(eval(isnotnull(file_path))) AS file_integrity_failures max(check_ready) AS check_ready first(checker_not_working) AS checker_not_working by splunk_server] 
+| fields splunk_server check_ready file_integrity_failures checker_not_working 
+| eval file_integrity_failures = if(isnotnull(checker_not_working), checker_not_working, file_integrity_failures) 
+| eval file_integrity_failures = if(isnotnull(file_integrity_failures), file_integrity_failures, "integrity check not available")
+| sort splunk_server
+| rename splunk_server AS instance 
+| fields - checker_not_working _timediff</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="list.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </event>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>6.6 - Resource Utilization</title>
+      <table>
+        <search>
+          <query>| rest splunk_server_group=* splunk_server_group="*" /services/server/status/resource-usage/hostwide
+| join type=outer splunk_server [
+  | rest splunk_server_group=* splunk_server_group="*" /services/server/status/resource-usage/iostats
+  | eval iops = round(reads_ps + writes_ps)
+  | eval iops_mountpoint = iops." (".mount_point.")"
+  | eval cpupct_mountpoint = cpu_pct."% (".mount_point.")"
+  | stats values(iops_mountpoint) as iops_mountpoint, values(cpupct_mountpoint) as cpupct_mountpoint by splunk_server]
+| eventstats min(eval(if(isnull(normalized_load_avg_1min), "0", "1"))) as _load_avg_full_availability
+| eval normalized_load_avg_1min = if(isnull(normalized_load_avg_1min), "N/A", normalized_load_avg_1min)
+| eval core_info = if(isnull(cpu_count), "N/A", cpu_count)." / ".if(isnull(virtual_cpu_count), "N/A", virtual_cpu_count)
+| eval cpu_usage = cpu_system_pct + cpu_user_pct
+| eval mem_used_pct = round(mem_used / mem * 100 , 2)
+| eval mem_used = round(mem_used, 0)
+| eval mem = round(mem, 0)
+| fields splunk_server, normalized_load_avg_1min, core_info, cpu_usage, mem, mem_used, mem_used_pct, iops_mountpoint, cpupct_mountpoint
+| sort splunk_server 
+| rename splunk_server AS Instance, normalized_load_avg_1min AS "Load Average", core_info AS "CPU Cores (Physical / Virtual)", cpu_usage AS "CPU Usage (%)", mem AS "Physical Memory Capacity (MB)", mem_used AS "Physical Memory Usage (MB)", mem_used_pct AS "Physical Memory Usage (%)", iops_mountpoint as "I/O Operations per second (Mount Point)", cpupct_mountpoint as "I/O Bandwidth Utilization (Mount Point)"</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>6.7 - Inconsistent Apps and Addons</title>
+      <table id="btool_table">
+        <search>
+          <query>|rest splunk_server_group=* splunk_server=* /services/apps/local | search core=0 title!=splunk_datapreview | fields disabled eai:acl.sharing managed_by_deployment_client title splunk_server core  | lookup assets.csv host AS splunk_server OUTPUT search_group | eval search_group=mvjoin(search_group,"; ") | stats dc(title) AS app_count values(title) AS apps by splunk_server search_group | eval apps=mvjoin(apps,"; ") | eventstats mode(app_count) AS mode_app_count mode(apps) AS mode_apps by search_group | eval app_deviation=app_count-mode_app_count | eval Status=case(apps!=mode_apps,"elevated!!!deviation found",app_count!=mode_app_count,"elevated!!!deviation found",1==1,"low!!!ok") | table splunk_server search_group app_count apps mode_apps app_deviation Status | rename splunk_server AS Host search_group AS "Server Roles" app_count AS "Unique Apps" apps AS "Installed Apps" mode_apps AS "Mode of Apps" app_deviation AS "App Deviation Count" | sort + Status</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>6.8 - Misconfigured Splunk Settings</title>
+      <html>
+        <style>
+          #tableWithCustomColumnWidth th[data-sort-key=Reason] {
+              width: 100px !important;
+          }
+        </style>
+      </html>
+      <table id="tableWithCustomColumnWidth">
+        <search>
+          <query>| btool check | multikv noheader=true | search NOT checking NOT "No spec file for" NOT "Did you mean" 
+| rex "\s*(?&lt;reason&gt;.*?)\sin\sstanza\s+\[(?&lt;config_stanza&gt;[^ ]+)\]\s+.+\/etc\/(apps)?\/?(?&lt;app_name&gt;[^ ]+)\/(?&lt;app_context&gt;[^\/]+)\/(?&lt;config_file&gt;[^\,]+)\,\s+line\s+(?&lt;line_number&gt;\d+)\:\s+(?&lt;stanza_setting&gt;[^ ]+)\s+\(value\:\s+(?&lt;setting_value&gt;[^ ]+)\)\."
+| stats list(eval("Setting:".stanza_setting." in Stanza:[".config_stanza."]")) AS "Stanza Error", list(reason) AS Reason, values(config_file) AS "Config File", values(sos_server) AS "Host(s)" by app_name, app_context
+| rename app_name AS "App Name", app_context AS "App Context"</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>6.9 Truncation Issue (15 mins)</title>
+      <table>
+        <search>
+          <query>index=_internal sourcetype=splunkd component=LineBreakingProcessor | extract | rex "because\slimit\sof\s(?&lt;limit&gt;\S+).*&gt;=\s(?&lt;actual&gt;\S+)" | stats count avg(actual) max(actual) values(data_source) values(data_host) dc(data_source) dc(data_host) BY data_sourcetype, limit | eval avg(actual)=round('avg(actual)') | sort - count</query>
+          <earliest>-15m</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>6.10 - Line Merging Issue (15 mins)</title>
+      <table>
+        <search>
+          <query>index=_internal sourcetype=splunkd component=Aggregator* NOT "Too many events * with the same timestamp" | rex "\s-\s(?&lt;message_content&gt;.*?)\s-\sdata" | extract | stats count values(message_content) values(data_source) values(data_host) dc(data_source) dc(data_host) BY data_sourcetype, limit | eval avg(actual)=round('avg(actual)') | sort - count</query>
+          <earliest>-7d@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>6.11 - Date Parsing Issue (15 mins)</title>
+      <table>
+        <search>
+          <query>index=_internal sourcetype=splunkd component=DateParserVerbose log_level=WARN | rex "Context:\s+source::(?&lt;data_source&gt;[^\|]+)\|host::(?&lt;data_host&gt;[^\|]+)\|(?&lt;data_sourcetype&gt;[^\|]+)" | stats count dc(data_source) dc(data_host) BY data_sourcetype | sort - count</query>
+          <earliest>-15m</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>6.12 - Data Ingestion by Indexers (Yesterday)</title>
+      <table>
+        <search>
+          <query>index=_internal sourcetype=splunkd source=*license_usage.log [| rest /services/server/info | rename guid AS i | fields i ] | eval gb=round(b/1024/1024/1024,5) | join i [| rest /services/server/info | rename guid AS i | fields serverName i ] | stats sum(b) as bytes by serverName | eval gb=round(bytes/1024/1024/1024,3) | fields - bytes | rename gb AS "GB Indexed"</query>
+          <earliest>-1d@d</earliest>
+          <latest>@d</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>6.13 - Indexing Performance</title>
+      <table>
+        <search>
+          <query>| rest splunk_server_group=dmc_group_indexer splunk_server_group="*" /services/server/introspection/queues
+        | search title=parsingQueue* OR title=aggQueue* OR title=typingQueue* OR title=indexQueue*
+        | eval fill_perc=round(current_size_bytes / max_size_bytes * 100,2)
+        | fields splunk_server, title, fill_perc
+        | rex field=title "(?&lt;queue_name&gt;^\w+)(?:\.(?&lt;pipeline_number&gt;\d+))?"
+        | eval fill_perc = if(isnotnull(pipeline_number), "pset".pipeline_number.": ".fill_perc, fill_perc)
+        | chart values(fill_perc) over splunk_server by queue_name
+        | eval pset_count = mvcount(parsingQueue)
+        | join type=outer splunk_server [
+          | rest splunk_server_group=dmc_group_indexer splunk_server_group="*" /services/server/introspection/indexer
+          | eval average_KBps = round(average_KBps, 0)
+          | eval status = if((reason == ".") OR (reason == "") OR isnull(reason), status, status.": ".reason)
+          | fields splunk_server, average_KBps, status]
+        | fields splunk_server pset_count average_KBps status parsingQueue aggQueue typingQueue indexQueue
+        | sort -average_KBps | rename splunk_server as Instance, pset_count as "Pipeline Set Count", average_KBps as "Indexing Rate (KB/s)", status as "Status", parsingQueue as "Parsing Queue Fill Ratio (%)", aggQueue as "Aggregation Queue Fill Ratio (%)", "typingQueue" as "Typing Queue Fill Ratio (%)", indexQueue as "Indexing Queue Fill Ratio (%)"</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>6.13 - Indexing Performance</title>
+      <!-- this panel is only about indexer count and indexing rate, which is not affected by parallel pipeline, so no need to handle that -->
+      <single>
+        <search base="parallel_pipe_api_base">
+          <query>stats count</query>
+        </search>
+        <option name="underLabel">Indexers</option>
+        <option name="height">80px</option>
+      </single>
+      <single>
+        <search base="parallel_pipe_api_base">
+          <query>stats sum(average_KBps)</query>
+        </search>
+        <option name="underLabel">Total Indexing Rate</option>
+        <option name="afterLabel">KB/s</option>
+        <option name="height">80px</option>
+      </single>
+      <single>
+        <search base="parallel_pipe_api_base">
+          <query>
+stats avg(average_KBps) as avg_indexing_rate
+| eval avg_indexing_rate = round(avg_indexing_rate, 0)
+          </query>
+        </search>
+        <option name="underLabel">Average Indexing Rate</option>
+        <option name="afterLabel">KB/s</option>
+        <option name="height">80px</option>
+      </single>
+      <single>
+        <search base="parallel_pipe_api_base">
+          <query>stats median(average_KBps)</query>
+        </search>
+        <option name="underLabel">Median Indexing Rate</option>
+        <option name="afterLabel">KB/s</option>
+        <option name="height">80px</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>6.14 - Data Feed Status</title>
+      <table>
+        <search>
+          <query>| metadata type=sourcetypes index=* | sort - totalCount | eval Delay=now()-recentTime | rangemap default=severe field=Delay low=0-1800 | convert ctime(recentTime) AS "Last Indexed" | table range, sourcetype, "Last Indexed", Delay, totalCount | eval Delay=tostring(Delay,"duration") | eval totalCount=tostring(totalCount, "commas") | rename totalCount AS Events, range AS Status, sourcetype AS Sourcetype | sort + "Last Indexed"</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>6.15 - License Overview</title>
+      <table>
+        <search>
+          <query>| rest splunk_server_group=* splunk_server_group=dmc_group_license_master /services/licenser/slaves 
+| join type=outer splunk_server [rest splunk_server_group=* /services/server/info | fields version, splunk_server] 
+| fields label splunk_server version warning_count 
+| eval in_violation = if(warning_count &gt;= 5, 1, 0) 
+| rename label AS instance splunk_server AS license_master version AS "license_master version" warning_count AS "warning_count (current / limit)" 
+| fieldformat warning_count (current / limit) = 'warning_count (current / limit)'." / 5" 
+| fields - _timediff</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>6.15 - Today's License Usage (GB)</title>
+      <chart>
+        <search>
+          <query>| rest splunk_server=* /services/licenser/pools | rename title AS Pool | search [rest splunk_server=* /services/licenser/groups | search is_active=1 | eval stack_id=stack_ids | fields stack_id] | join type=outer stack_id [rest splunk_server=* /services/licenser/stacks | eval stack_id=title | eval stack_quota=quota | fields stack_id stack_quota] | stats sum(used_bytes) as used max(stack_quota) as total | eval usedGB=round(used/1024/1024/1024,3) | eval totalGB=round(total/1024/1024/1024,3) | eval gauge_base=0 | eval gauge_danger=totalGB*0.8 | eval gauge_top=totalGB+0.001 | gauge usedGB gauge_base gauge_danger totalGB gauge_top</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="charting.chart">fillerGauge</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="refresh.time.visible">1</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>6.15 - Today's License Usage per Pool</title>
+      <chart>
+        <search>
+          <query>
+            | rest splunk_server=* /services/licenser/pools | rename title AS Pool | search [rest splunk_server=* /services/licenser/groups | search is_active=1 | eval stack_id=stack_ids | fields stack_id] | eval quota=if(isnull(effective_quota),quota,effective_quota) | eval "Used"=round(used_bytes/1024/1024/1024, 3) | eval "Quota"=round(quota/1024/1024/1024, 3) | fields Pool "Used" "Quota"
+          </query>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="refresh.time.visible">true</option>
+        <option name="charting.axisTitleX.text">Pool</option>
+        <option name="charting.axisTitleY.text">GB</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>6.15 - Today's Percentage of Daily License Quota Used per Pool</title>
+      <chart>
+        <search>
+          <query>
+            | rest splunk_server=* /services/licenser/pools | rename title AS Pool | search [rest splunk_server=* /services/licenser/groups | search is_active=1 | eval stack_id=stack_ids | fields stack_id] | eval quota=if(isnull(effective_quota),quota,effective_quota) | eval "% used"=round(used_bytes/quota*100,2) | fields Pool "% used"
+          </query>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="refresh.time.visible">true</option>
+        <option name="charting.axisTitleX.text">Pool</option>
+        <option name="charting.axisTitleY.text">%</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="charting.axisY.scale">log</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>6.15 - Daily License Usage (Past 30 Days)</title>
+      <chart>
+        <search>
+          <query>index=_internal source=*license_usage.log* type="RolloverSummary" earliest=-30d@d
+| eval _time=_time - 43200 | bin _time span=1d 
+| stats latest(b) AS b by slave, pool, _time 
+| timechart span=1d sum(b) AS "volume" fixedrange=false 
+| join type=outer _time [search index=_internal source=*license_usage.log* type="RolloverSummary" earliest=-30d@d | eval _time=_time - 43200 | bin _time span=1d | stats latest(stacksz) AS "stack size" by _time] | fields - _timediff
+| foreach * [eval &lt;&lt;FIELD&gt;&gt;=round('&lt;&lt;FIELD&gt;&gt;'/1024/1024/1024, 3)]</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="charting.axisTitleX.text">Date</option>
+        <option name="charting.axisTitleY.text">GB</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.nullValueMode">connect</option>
+        <option name="charting.chart.overlayFields">"stack size","pool size"</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.fieldColors">{"stack size": 0xff0000, "pool size": 0xff0000}</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="refresh.time.visible">1</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>6.15 - Average and Peak Daily Volume</title>
+      <chart>
+        <search>
+          <query>index=_internal source=*license_usage.log* type="RolloverSummary" earliest=-30d@d
+| eval _time=_time - 43200 
+| bin _time span=1d 
+| stats latest(b) AS b by slave, pool, _time 
+| stats sum(b) AS volume by _time 
+| stats avg(volume) AS avgVolume max(volume) AS maxVolume 
+| eval maxVolumeGB=round(maxVolume/1024/1024/1024,3) 
+| eval avgVolumeGB=round(avgVolume/1024/1024/1024,3) 
+| rename avgVolumeGB AS "average" maxVolumeGB AS "peak" 
+| eval "All Pools" = "" 
+| fields "All Pools", "average", "peak"</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="charting.axisTitleY.text">GB</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisEnd</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="refresh.time.visible">1</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>6.16 - Bucker Counts by State (Last 30 Days)</title>
+      <table>
+        <search>
+          <query>| dbinspect index=* | eval state=case(state=="warm" OR state=="hot", "hot/warm", 1=1, state) | chart dc(bucketId) over index by state</query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>6.17 - Bucket Counts by Indexers</title>
+      <table id="table1">
+        <search>
+          <query>| rest splunk_server_group=dmc_group_indexer splunk_server_group="*" /services/data/indexes/_audit
+            | join title splunk_server type=outer [| rest splunk_server_group=dmc_group_indexer splunk_server_group="*" /services/data/indexes-extended/_audit]
+            | eval bucketCount = if(isnotnull(total_bucket_count), total_bucket_count, 0)
+            | eval eventCount = if(isnotnull(totalEventCount), totalEventCount, 0)
+            | eval coldBucketSize = if(isnotnull('bucket_dirs.cold.bucket_size'), 'bucket_dirs.cold.bucket_size', 'bucket_dirs.cold.size')
+            | eval coldBucketSizeGB = if(isnull(coldBucketSize), 0, round(coldBucketSize/ 1024, 2))
+            | eval coldBucketMaxSizeGB = if(isnull('coldPath.maxDataSizeMB') OR 'coldPath.maxDataSizeMB' = 0, "unlimited", round('coldPath.maxDataSizeMB' / 1024, 2))
+            | eval coldBucketUsageGB = coldBucketSizeGB." / ".coldBucketMaxSizeGB
+            | eval homeBucketSizeGB = round((total_size - if(isnull(coldBucketSize), 0, coldBucketSize)) / 1024, 2)
+            | eval homeBucketSizeGB = if(isnull(homeBucketSizeGB), 0, homeBucketSizeGB)
+            | eval homeBucketMaxSizeGB = round('homePath.maxDataSizeMB' / 1024, 2)
+            | eval homeBucketMaxSizeGB = if(isnull(homeBucketMaxSizeGB) OR homeBucketMaxSizeGB == 0, "unlimited", homeBucketMaxSizeGB)
+            | eval homeBucketUsageGB = homeBucketSizeGB." / ".homeBucketMaxSizeGB
+            | eval dataAgeSeconds = now() - strptime(minTime,"%Y-%m-%dT%H:%M:%S%z")
+            | eval dataAgeDays = ceiling(dataAgeSeconds / 86400)
+            | eval frozenTimePeriodDays = round(frozenTimePeriodInSecs / 86400, 0)
+            | eval freezeRatioDays = dataAgeDays." / ".frozenTimePeriodDays
+            | eval indexSizeGB = if(currentDBSizeMB &gt;= 1 AND totalEventCount &gt;=1, round(currentDBSizeMB/1024, 2), 0)
+            | eval indexMaxSizeGB = if(maxTotalDataSizeMB &gt; 0, round(maxTotalDataSizeMB / 1024, 2), "unlimited")
+            | eval indexSizeUsageGB = indexSizeGB." / ".indexMaxSizeGB
+            | eval indexSizeUsagePerc = if(isNum(indexMaxSizeGB) AND (indexMaxSizeGB &gt; 0), round(indexSizeGB / indexMaxSizeGB * 100, 2)."%", "N/A")
+            | eval total_raw_size = if(isnotnull(total_raw_size), total_raw_size, 0) | eval avgBucketSize = round(indexSizeGB / bucketCount, 2)
+            | fields splunk_server, freezeRatioDays, indexSizeUsageGB, homeBucketUsageGB, coldBucketUsageGB, eventCount, bucketCount, avgBucketSize
+            | rename splunk_server as "Indexer"
+            freezeRatioDays as "Data Age vs Frozen Age (days)"
+            indexSizeUsageGB as "Index Usage (GB)"
+            homeBucketUsageGB as "Home Path Usage (GB)"
+            coldBucketUsageGB as "Cold Path Usage (GB)"
+            eventCount as "Total Event Count"
+            bucketCount as "Total Bucket Count"
+            avgBucketSize as "Average Bucket Size (GB)"</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>6.18 - Index Capacity vs. Limit by Indexer</title>
+      <table>
+        <search>
+          <query>| rest /services/data/indexes search="totalEventCount!=0" 
+| eval coldPath.maxDataSizeMB=if('coldPath.maxDataSizeMB'=0, null(), 'coldPath.maxDataSizeMB') 
+| eval roof=min((coalesce('homePath.maxDataSizeMB', 4294967295) + coalesce('coldPath.maxDataSizeMB', 4294967295)), maxTotalDataSizeMB)
+| eval span=tostring(currentDBSizeMB) + " / " + tostring(roof) + " MB" 
+| eval PercentFull=tostring(round(currentDBSizeMB * 100/ roof, 2)) + "%" 
+| eval "Total Events"=tostring(totalEventCount,"commas") 
+| stats first(span) AS "Capacity vs Limit" by splunk_server, title, minTime, maxTime, "Total Events", PercentFull 
+| rename splunk_server AS Indexer, title AS Index, minTime AS "Oldest Event", maxTime AS "Newest Event"
+| table Indexer, Index, "Capacity vs Limit", "Oldest Event", "Newest Event", "Total Events", PercentFull
+| sort - PercentFull</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>6.19 - Index Time Operation by Props Stanza (SPL)</title>
+      <table>
+        <search>
+          <query>| btool props | multikv noheader=true 
+| rex "^(?&lt;file&gt;\S+)\s+" 
+| rex field=file "(default|local)\/(?&lt;conf&gt;.*)$" 
+| where NOT match(file, "\/system\/default\/") 
+| rex "\s+(?=[^\[])(?&lt;key&gt;\S+)\s*=\s*(?&lt;value&gt;.*)$" 
+| eval key=if(isnull(key),"",key) 
+| eval value=if(isnull(value),"",split(value, ",")) 
+| where match(key, "^TRANSFORMS-") 
+| table app, file, stanza, key, value, sos_server
+| rename * AS props_* props_value AS transforms_stanza 
+| mvexpand transforms_stanza 
+| eval transforms_stanza=trim(transforms_stanza) 
+| eventstats count AS props_stanza_transforms_count by props_stanza 
+| join transforms_stanza type=outer [ | btool transforms | multikv noheader=true | rex "^(?&lt;file&gt;\S+)\s+" | where NOT match(file, "\/system\/default\/") | rex "\s+(?=[^\[])(?&lt;key&gt;\S+)\s*=\s*(?&lt;value&gt;.*)$" | eval key=if(isnull(key),"",key) | eval value=if(isnull(value),"",value) | eval setting=key." = ".value | stats list(eval(if(key=="",null(),"%%%".setting))) AS transforms_settings, list(eval(if(key=="","%%%",file))) AS transforms_file by stanza | rename stanza AS transforms_stanza] 
+| foreach transforms_* [makemv delim="%%%" &lt;&lt;FIELD&gt;&gt;] 
+| table props_sos_server, props_*, transforms_*
+| sort - props_stanza_transforms_count 
+| eval possible_justification = case(match(transforms_settings, "FORMAT\s*=\s*host:::"), "host re-mapping", match(transforms_settings, "FORMAT\s*=\s*sourcetype::"), "sourcetype re-mapping", match(transforms_settings, "FORMAT\s*=\s*nullQueue"), "null queue routing", isnull(transforms_settings) OR transforms_settings=="", "no transforms settings have been found", 1=1, "no idea")</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+</dashboard>

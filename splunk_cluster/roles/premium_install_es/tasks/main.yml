@@ -1,0 +1,4 @@
+---
+
+- name: Install and setup splunk es
+  import_tasks: premium_install_es.yml

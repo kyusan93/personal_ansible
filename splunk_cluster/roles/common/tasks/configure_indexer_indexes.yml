@@ -1,0 +1,75 @@
+---
+
+- name: Set the path
+  set_fact:
+    indexes_path: "{{ splunk.home }}/etc/{% if ansible_host in groups['cluster_master'] and groups['cluster_master'] | length>0 %}manager-apps/_cluster{% else %}system{% endif %}/local/indexes.conf"
+
+- name: Backup existing indexes.conf
+  become: true
+  copy:
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    src: "{{ indexes_path }}"
+    dest: "{{ indexes_path }}.backup{{ ansible_date_time.epoch }}"
+    remote_src: true
+  when: "indexes_path is file"
+
+- name: Delete existing indexes.conf
+  become: true
+  file:
+    path: "{{ indexes_path }}"
+    state: absent
+
+- name: Creates indexes.conf in manager-apps/_cluster/local/ directory
+  become: true
+  ini_file:
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    dest: "{{ indexes_path }}"
+    section: "{{ item.section }}"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+  with_items:
+    - { section: "default", key: 'repFactor', value: 'auto' }
+    - { section: "default", key: 'homePath', value: '{{ splunk.storage_information.homePath }}' }
+    - { section: "default", key: 'coldPath', value: '{{ splunk.storage_information.coldPath }}' }
+    - { section: "default", key: 'thawedPath', value: '{{ splunk.storage_information.thawedPath }}' }
+    - { section: "default", key: 'tstatsHomePath', value: '{{ splunk.storage_information.tstatsHomePath }}' }
+    - { section: "default", key: 'coldToFrozenDir', value: '{{ splunk.storage_information.coldToFrozenDir }}' }
+    - { section: "default", key: 'frozenTimePeriodInSecs', value: '{{ splunk.storage_information.frozenTimePeriodInSecs }}' }
+    - { section: "default", key: 'maxTotalDataSizeMB', value: '{{ splunk.storage_information.maxTotalDataSizeMB }}' }
+    - { section: "volume:hot_warm", key: 'path', value: '{{ splunk.storage_information.volume.hot_warm.path }}' }
+    - { section: "volume:hot_warm", key: 'maxVolumeDataSizeMB', value: '{{ splunk.storage_information.volume.hot_warm.maxVolumeDataSizeMB }}' }
+    - { section: "volume:cold", key: 'path', value: '{{ splunk.storage_information.volume.cold.path }}' }
+    - { section: "volume:cold", key: 'maxVolumeDataSizeMB', value: '{{ splunk.storage_information.volume.cold.maxVolumeDataSizeMB }}' }
+  register: indexes_configured
+
+- name: Add in all indexes
+  become: true
+  lineinfile:
+      path: "{{ indexes_path }}"
+      line: "[{{ item.key }}]\n{% if item.value is not none %}{{ item.value | zip(item.value.values())| map('join', '=')| join(',') }}{% endif %}"
+      state: present
+  with_dict: 
+    - "{{ splunk.indexes }}"
+
+- name: Fomatting of indexes.conf
+  become: true
+  replace:
+      path: "{{ indexes_path }}"
+      regexp: '^(\[.*\])$'
+      replace: '\n\1'
+
+- name: Apply cluster bundle
+  command: "{{ splunk.home }}/bin/splunk apply cluster-bundle -auth {{ splunk.admin.username }}:{{ splunk.admin.password }} --answer-yes"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  when: 
+    - indexes_configured is changed
+    - "'manager' in indexes_path"
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/restart_splunk.yml"
+  when: 
+    - indexes_configured is changed
+    - "'manager' not in indexes_path"
+  

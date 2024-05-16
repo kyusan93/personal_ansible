@@ -1,0 +1,67 @@
+---
+
+#- name: Copy Installer to Windows
+#  ansible.windows.win_copy:
+#    src: "../files/{{ installer_name }}"
+#    dest: "{{ installer_path }}"
+#  register: test
+
+- name: SET
+  set_fact:
+    test: |
+        "changed": false,
+        "msg": "All items completed",
+        "results": [
+            {
+                "ansible_loop_var": "item",
+                "changed": false,
+                "disconnected": false,
+                "failed": false,
+                "invocation": {
+                    "module_args": {
+                        "api_key": null,
+                        "cmd": "show config list changes",
+                        "cmd_is_xml": false,
+                        "ignore_disconnect": null,
+                        "ip_address": null,
+                        "password": null,
+                        "port": 443,
+                        "provider": {
+                            "api_key": "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER",
+                            "ip_address": "10.60.18.30",
+                            "password": null,
+                            "port": 443,
+                            "serial_number": null,
+                            "username": "admin"
+                        },
+                        "username": "admin",
+                        "vsys": "vsys1"
+                    }
+                },
+                "item": {
+                    "api_key": "LUFRPT1qVWxDVlhVTDBrY25pUXYwWDcrc3NpTFB0UFk9Ri9zTENSZXRWakZ4MmRENVRPVXd4Z3Q2bDVHM3dTUE51WU9hczZ5WlNPUjNLeFh5em9ZWTFFcENDTzBscjRpMw==",
+                    "ip_address": "10.60.18.30"
+                },
+                "msg": "Done",
+                "stdout": "{\"response\": {\"@status\": \"success\", \"result\": {\"journal\": {\"entry\": {\"xpath\": \"/config/panorama/log-settings/syslog/entry[@name='syslog']\", \"owner\": \"admin\", \"action\": \"CREATE\", \"admin-history\": \"admin\", \"component-type\": \"device-network\"}}}}}",
+                "stdout_lines": [
+                    "{\"response\": {\"@status\": \"success\", \"result\": {\"journal\": {\"entry\": {\"xpath\": \"/config/panorama/log-settings/syslog/entry[@name='syslog']\", \"owner\": \"admin\", \"action\": \"CREATE\", \"admin-history\": \"admin\", \"component-type\": \"device-network\"}}}}}"
+                ],
+                "stdout_xml": "<response status=\"success\"><result><journal><entry><xpath>/config/panorama/log-settings/syslog/entry[@name='syslog']</xpath><owner>admin</owner><action> CREATE</action><admin-history>admin</admin-history><component-type>device-network</component-type></entry></journal></result></response>"
+            },
+            {"values": "1"}
+        ]
+
+- name:
+  set_fact:
+    test_json: "{{ dict( (test.split('\\n')) | select() | map('split','=') | list) }}"
+
+- name: DEBUG
+  debug:
+    msg: "{{ test_json }}"
+
+#- name: Installing Nxlog on Windows
+#  ansible.windows.win_package:
+#    path: "{{ installer_path }}/{{ installer_name }}"
+#    state: present
+#  when: ansible_distribution == 'Windows'

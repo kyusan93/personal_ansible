@@ -1,0 +1,23 @@
+---
+
+- name: Creates /tmp/splunk/ directory in AWX
+  file:
+    path: "{{ base.awx_tmp_dir }}"
+    state: directory
+
+- name: "Create {{ splunk.ssl.cacert_name }} key"
+  openssl_privatekey:
+    path: "{{ base.awx_tmp_dir }}{{ splunk.ssl.cacert_name }}_key.pem"
+
+- name: "Create the {{ splunk.ssl.cacert_name }} CSR"
+  openssl_csr:
+    path: "{{ base.awx_tmp_dir }}{{ splunk.ssl.cacert_name }}.csr"
+    privatekey_path: "{{ base.awx_tmp_dir }}{{ splunk.ssl.cacert_name }}_key.pem"
+    common_name: "my-ca"
+
+- name: "Sign the {{ splunk.ssl.cacert_name }} CSR"
+  openssl_certificate:
+    path: "{{ base.awx_tmp_dir }}{{ splunk.ssl.cacert_name }}.pem"
+    csr_path: "{{ base.awx_tmp_dir }}{{ splunk.ssl.cacert_name }}.csr"
+    privatekey_path: "{{ base.awx_tmp_dir }}{{ splunk.ssl.cacert_name }}_key.pem"
+    provider: selfsigned

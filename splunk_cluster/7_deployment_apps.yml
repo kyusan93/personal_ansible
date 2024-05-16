@@ -1,0 +1,6 @@
+
+# Deployment Apps
+- name: Deployment Apps
+  hosts: all
+  roles:
+    - { role: apps_deployment, tags: apps_deployment }

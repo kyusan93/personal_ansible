@@ -1,0 +1,17 @@
+---
+
+- name: Block for non-root splunk user setup
+  become: true
+  block:
+    - name: "set group with gid 1020"
+      group:
+        name: "{{ splunk.nix.group }}"
+        gid: 1020
+
+    - name: set user with uid 1020, and group "{{ splunk.nix.group }}"
+      become: true
+      user:
+        name: "{{ splunk.nix.user }}"
+        uid: 1020
+        group: "{{ splunk.nix.group }}"
+

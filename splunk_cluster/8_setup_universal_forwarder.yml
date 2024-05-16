@@ -1,0 +1,8 @@
+---
+
+# Setup Universal Forwarder
+- name: Setup Universal Forwarder
+  hosts: "{{ servers | default('universal_forwarder') }}"
+  order: sorted
+  roles:
+    - { role: universal_forwarder, tags: universal_forwarder }

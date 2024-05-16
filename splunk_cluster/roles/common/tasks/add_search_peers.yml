@@ -1,0 +1,18 @@
+---
+
+- name: Get list of search_peers
+  shell: "{{ splunk.home }}/bin/splunk list search-server -auth {{ splunk.admin.username}}:{{ splunk.admin.password }}"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  register: list_search_peers
+
+- name: Add all search servers
+  command: "{% if(item not in list_search_peers.stdout) %}{{ splunk.home }}/bin/splunk add search-server https://{{ item }}:{{ splunk.ports.mgmt }} -auth {{ splunk.admin.username }}:{{ splunk.admin.password }} -remoteUsername {{ splunk.admin.username }} -remotePassword {{ splunk.admin.password }}{% else %}echo {{ item }} is in {{ list_search_peers.stdout }}{% endif %}"
+  ignore_errors: yes
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  with_items:
+    - "{{ groups['all'] }}"
+  when: 
+   - "'monitoring_console' not in hostvars[item]['group_names']"
+   - "item not in groups['universal_forwarder'] and item not in groups['universal_forwarder_windows']"

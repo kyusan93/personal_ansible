@@ -1,0 +1,13 @@
+---
+
+#	1) Generate CSR from server and hand it to PKI team
+#	2) PKI team will return us with a p7b file
+#	3) we will convert the p7b files to .pem file. Rearrange the certs into the following format. The key will have to be manually added in because p7b does not have the key.
+#		a. Cert
+#		b. Key
+#		c. ICA
+#		d. RCA
+# 4) Extract out RCA and name it rca.pem. Rca.pem has to be added into server.conf.
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/convert_p7b.yml"
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/copy_pem.yml"

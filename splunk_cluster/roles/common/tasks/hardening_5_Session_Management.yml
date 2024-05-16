@@ -1,0 +1,54 @@
+---
+
+# 5.1 - Session Time Out
+
+- name: "5.1 - Run the below search string to verify that Splunk web session timeout value is set 15 mins"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  shell: "cat {{ splunk.home }}/etc/system/local/server.conf  | grep sessionTimeout "
+  register: sessionTime
+  ignore_errors: true
+
+- name: "[Results] 5.1 - Run the below search string to verify that Splunk web session timeout value is set 15 mins"
+  debug:
+    msg: "{{ sessionTime.msg }}"
+  failed_when: sessionTime.msg == "non-zero return code"
+  ignore_errors: true
+
+#- name: copy output to a local file
+#  copy:
+#    content: "{{ sessionTime }}"
+#    dest: "/tmp/5.1_Session_Timeout.txt"
+#  delegate_to: localhost
+  
+#- debug:
+#    msg:
+#      - "Result generated into /tmp/5.1_Session_Timeout.txt"
+
+######################################################################################################################################################
+
+# 5.2 - Account Lockout Treshold
+
+- name: "5.2 - Run the below search string to verify that Splunk Account Lockout Treshold is set."
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  shell: "cat {{ splunk.home }}/etc/system/default/authentication.conf | egrep 'lockoutThresholdMins|lockoutMins' "
+  register: accountTreshold
+  ignore_errors: true
+
+- name: "[Results] 5.2 - Run the below search string to verify that Splunk Account Lockout Treshold is set."
+  debug:
+    msg: "{{ accountTreshold.stdout_lines }}"
+  #failed_when: accountTreshold == "non-zero return code"
+  ignore_errors: true
+
+#- name: copy output to a local file
+#  copy:
+#    content: "{{ accountTreshold }}"
+#    dest: "/tmp/5.2_Account_Treshold.txt"
+#  delegate_to: localhost
+  
+#- debug:
+#    msg:
+#      - "Result generated into /tmp/5.2_Account_Treshold.txt"
+

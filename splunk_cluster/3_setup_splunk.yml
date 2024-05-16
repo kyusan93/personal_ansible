@@ -1,0 +1,75 @@
+---
+
+# Configure all splunk nodes with common configuration
+- name: Setup base config on Splunk servers
+  hosts: all,!universal_forwarder,!universal_forwarder_windows
+  max_fail_percentage: 0
+  roles:
+    - { role: base_splunk, tags: base_splunk }
+
+# Configure license_master configuration
+- name: Setup license master
+  hosts: "{{ servers | default('license_master') }}"
+  order: sorted
+  max_fail_percentage: 0
+  roles:
+    - { role: license_master, tags: license_master }
+
+# Configure cluster_master configuration
+- name: Setup cluster master
+  hosts: "{{ servers | default('cluster_master') }}"
+  order: sorted
+  max_fail_percentage: 0
+  roles:
+    - { role: cluster_master, tags: cluster_master }
+    
+# Configure deployment_server configuration
+- name: Setup deployment server
+  hosts: "{{ servers | default('deployment_server') }}"
+  order: sorted
+  max_fail_percentage: 0
+  roles:
+    - { role: deployment_server, tags: deployment_server }
+
+# Configure deployer configuration
+- name: Setup deployer
+  hosts: "{{ servers | default('deployer') }}"
+  order: sorted
+  max_fail_percentage: 0
+  roles:
+    - { role: deployer, tags: deployer }
+
+# Configure indexer configuration
+- name: Setup indexer
+  hosts: "{{ servers | default('indexer') }}"
+  order: sorted
+  max_fail_percentage: 0
+  roles:
+    - { role: indexer, tags: indexer }
+
+# Configure search head configuration
+- name: Setup search head
+  hosts: "{{ servers | default('search_head') }}"
+  order: sorted
+  max_fail_percentage: 0
+  roles:
+    - { role: search_head, tags: search_head }
+
+# Configure heavy forwarder configuration
+- name: Setup heavy forwarder
+  hosts: "{{ servers | default('heavy_forwarder') }}"
+  order: sorted
+  max_fail_percentage: 0
+  roles:
+    - { role: heavy_forwarder, tags: heavy_forwarder }
+
+# Configure monitoring_console configuration
+- name: Setup monitoring console
+  hosts: "{{ servers | default('monitoring_console') }}"
+  order: sorted
+  max_fail_percentage: 0
+  roles:
+    - { role: monitoring_console, tags: monitoring_console }
+    
+
+

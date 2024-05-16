@@ -1,0 +1,5 @@
+---
+
+- name: Install license
+  import_tasks: install_license.yml
+

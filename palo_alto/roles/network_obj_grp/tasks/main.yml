@@ -1,0 +1,161 @@
+##########################
+#
+# FW ADDRESS OBJECT
+#
+##########################
+- name: Read objects_addresses.csv
+  read_csv:
+    path: objects_addresses.csv
+  register: objects_addresses
+  delegate_to: localhost
+
+#- name:
+#  debug:
+#    msg: "{{ item[0] }} - {{ item[1].Name }} - {{ item[1].Address }} - {{ item[1].Location }} - {{ item[1].Type }}"
+#  with_nested:
+#    - "{{ groups['fw'] }}"
+#    - "{{ objects_addresses.list }}"
+
+- name: Create address objects
+  paloaltonetworks.panos.panos_address_object:
+    ip_address: "{{ item[0] }}"
+    username: "{{ fw.username }}"
+    password: "{{ fw.password }}"
+    name: "{{ item[1].Name }}"
+    value: "{{ item[1].Address }}"
+    description: '{{ item[1].Location }}'
+    commit: false
+  with_nested:
+    - "{{ groups['fw'] }}"
+    - "{{ objects_addresses.list }}"
+
+##########################
+#
+# FW ADDRESS OBJECT GROUPS
+#
+##########################
+- name: Read objects_address_groups.csv
+  read_csv:
+    path: objects_address_groups.csv
+  register: objects_address_groups
+  delegate_to: localhost
+
+#- name:
+#  debug:
+#    msg: "{{ item[0] }} - {{ item[1].Name }} - {{ item[1].Addresses | split(',') }}"
+#  with_nested:
+#    - "{{ groups['fw'] }}"
+#    - "{{ objects_address_groups.list }}"
+
+- name: Create address groups
+  paloaltonetworks.panos.panos_address_group:
+    ip_address: "{{ item[0] }}"
+    username: "{{ fw.username }}"
+    password: "{{ fw.password }}"
+    name: "{{ item[1].Name }}"
+    static_value: "{{ item[1].Addresses | split(',') }}"
+    commit: false
+  with_nested:
+    - "{{ groups['fw'] }}"
+    - "{{ objects_address_groups.list }}"
+
+##########################
+#
+# FW SERVICE OBJECT
+#
+##########################
+- name: Read objects_services.csv
+  read_csv:
+    path: objects_services.csv
+  register: objects_services
+  delegate_to: localhost
+
+#- name:
+#  debug:
+#    msg: "{{ item[0] }} - {{ item[1].Name }} - {{ item[1]['Destination Port'] }}"
+#  with_nested:
+#    - "{{ groups['fw'] }}"
+#    - "{{ objects_services.list }}"
+
+- name: Create service objects
+  paloaltonetworks.panos.panos_service_object:
+    ip_address: "{{ item[0] }}"
+    username: "{{ fw.username }}"
+    password: "{{ fw.password }}"
+    name: "{{ item[1].Name }}"
+    destination_port: "{{ item[1]['Destination Port']}}"
+    commit: false
+  with_nested:
+    - "{{ groups['fw'] }}"
+    - "{{ objects_services.list }}"
+
+##########################
+#
+# FW SERVICE OBJECT GROUPS
+#
+##########################
+- name: Read objects_service_groups.csv
+  read_csv:
+    path: objects_service_groups.csv
+  register: objects_service_groups
+  delegate_to: localhost
+
+#- name:
+#  debug:
+#    msg: "{{ item[0] }} - {{ item[1].Name }} - {{ item[1].Services | split(';') }}"
+#  with_nested:
+#    - "{{ groups['fw'] }}"
+#    - "{{ objects_service_groups.list }}"
+
+- name: Create service group objects
+  paloaltonetworks.panos.panos_service_group:
+    ip_address: "{{ item[0] }}"
+    username: "{{ fw.username }}"
+    password: "{{ fw.password }}"
+    name: "{{ item[1].Name }}"
+    value: "{{ item[1].Services | split(';') }}"
+    commit: false
+  with_nested:
+    - "{{ groups['fw'] }}"
+    - "{{ objects_service_groups.list }}"
+
+##########################
+#
+# FW RULES
+#
+##########################
+- name: Read policies_security_rulebase_pre-rules.csv
+  read_csv:
+    path: policies_security_rulebase_pre-rules.csv
+  register: policies_security_rulebase
+  delegate_to: localhost
+
+- name:
+  debug:
+    msg: "{{ item[0] }} - {{ item[1].Name }} - ['{{ item[1]['Source Zone'] }}'] ['{{ item[1]['Destination Zone'] }}']"
+  with_nested:
+    - "{{ groups['fw'] }}"
+    - "{{ policies_security_rulebase.list }}"
+
+- name: Create security rule
+  paloaltonetworks.panos.panos_security_rule:
+    ip_address: "{{ item[0] }}"
+    username: "{{ fw.username }}"
+    password: "{{ fw.password }}"
+    rule_name: "{{ item[1].Name }}"
+    source_zone: "['{{ item[1]['Source Zone'] }}']"
+    destination_zone: "['{{ item[1]['Destination Zone'] }}']"
+    source_ip: "['{{ item[1]['Source Address'] }}']"
+    destination_ip: "['{{ item[1]['Destination Address'] }}']"
+    application: "['{{ item[1]['Application'] }}']"
+    service: ['service-http', 'service-https']
+    action: "{{ item[1]['Action'] | lower }}"
+    commit: false
+  with_nested:
+    - "{{ groups['fw'] }}"
+    - "{{ policies_security_rulebase.list }}"
+
+# "","Name","Location","Tags","Type","Source Zone","Source Address","Source User","Source Device","Destination Zone","Destination Address","Destination Device","Application","Service","Action","Profile","Options","Target","Rule Usage Rule Usage","Rule Usage Apps Seen","Days With No New Apps","Modified","Created"
+#"1","DNS Conditional Forwarding between OnPrem DNS and ETMON DNS","DemoPAFW_DG","none","universal","any","SGGBSBPDCSV301_Int_Supporting_Infra;SGGBSBPDCSV302_Int_Supporting_Infra;SGGCSBPDCSV301_Int_Supporting_Infra;SGGCSBPDCSV302_Int_Supporting_Infra","any","any","any","etmon_az1_domain_controller;etmon_az2_domain_controller","any","any","application-default","Allow","none","Traffic log sent at session end","any","Unused","0","-","2023-03-27 01:01:16","2023-03-27 01:01:16"
+#"2","test_rule","DemoPAFW_DG","none","universal","VlanZone","test_group","any","any","any","SGGCSBPDCSV301_Int_Supporting_Infra","any","any","svr_grp","Allow","none","Traffic log sent at session end","any","-","0","-","-","-"
+

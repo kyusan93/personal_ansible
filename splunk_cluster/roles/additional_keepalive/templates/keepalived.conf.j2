@@ -1,0 +1,29 @@
+! Configuration File for keepalived
+global_defs {
+}
+vrrp_script chk_service {               # Requires keepalived-1.1.13
+        script "pidof {{ splunk.keepalived.check_process }}"
+        interval 1                      # check every 1 seconds
+        weight 3                        # add 3 points of prio if OK
+}
+vrrp_instance VI_1 {
+    state {{ keepalived_role }}
+    interface {{ splunk.keepalived.shared_iface }}
+    virtual_router_id {{ splunk.keepalived.router_id }}
+    {% if keepalived_role.lower() == "master" %}
+    priority {{ splunk.keepalived.priority }}
+    {% else %}
+    priority {{ splunk.keepalived.backup_priority }}
+    {% endif %}
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass {{ splunk.keepalived.auth_pass }}
+    }
+    virtual_ipaddress {
+        {{ splunk.keepalived.shared_ip }}
+    }
+    track_script {
+        chk_service
+    }
+}

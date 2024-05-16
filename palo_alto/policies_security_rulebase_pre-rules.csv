@@ -1,0 +1,2 @@
+"","Name","Location","Tags","Type","Source Zone","Source Address","Source User","Source Device","Destination Zone","Destination Address","Destination Device","Application","Service","Action","Profile","Options","Target","Rule Usage Rule Usage","Rule Usage Apps Seen","Days With No New Apps","Modified","Created"
+"1","test_rule","DemoPAFW_DG","none","universal","VlanZone","test_group","any","any","any","test_group","any","any","svr_grp","Allow","none","Traffic log sent at session end","any","-","0","-","-","-"

@@ -1,0 +1,196 @@
+<form theme="dark" version="1.1">
+  <label>Incident Management</label>
+  <description>We are looking for evidence that ES incident management components are in use.  External systems could be in use here, so if nothing significant shows up, we need to follow on with the SOC team to understand their processes</description>
+  <fieldset submitButton="false" autoRun="false">
+    <input type="time" token="time" searchWhenChanged="true">
+      <label></label>
+      <default>
+        <earliest>-30d@d</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+  <search id="inv"><query>| rest /services/storage/investigation/investigation all="true" earliest="0" latest="" splunk_server=local 
+| lookup update=true user_realnames_lookup user as "creator" OUTPUTNEW realname as "creator_realname" 
+| eval creator_realname=if(isnull(creator_realname),creator,creator_realname) 
+| eval _time=create_time, id=title 
+| spath output="temp_es_status" input="status" path={} 
+| spath output="current_status_name" input="temp_es_status" path=name 
+| spath output="current_status_id" input="temp_es_status" path=id 
+| spath output="current_status_time" input="temp_es_status" path=time
+| spath output="temp_es_collab" input="collaborators" path={} 
+| spath output="collaborator_name" input="temp_es_collab" path=name 
+| fields - "temp_es_*" temp_es_collab collaborators status</query>
+    <earliest>$time.earliest$</earliest>
+    <latest>$time.latest$</latest>
+  </search>
+  <search id="ir"><query>| inputlookup incident_review_lookup append=1
+| rename user as reviewer
+| lookup update=true user_realnames_lookup user as "owner" OUTPUTNEW realname as "owner_realname"
+| eval owner_realname=if(isnull(owner_realname),owner,owner_realname)
+| lookup update=true user_realnames_lookup user as "reviewer" OUTPUTNEW realname as "reviewer_realname"
+| eval reviewer_realname=if(isnull(reviewer_realname),reviewer,reviewer_realname), nullstatus=if(isnull(status),"true","false"), temp_status=if(isnull(status),-1,status)
+| lookup update=true reviewstatuses_lookup _key as temp_status OUTPUT status,label as status_label,description as status_description,default as status_default,end as status_end
+| eval status_label=if(isnull(status_label),"Unassigned",status_label)
+| fields - temp_status
+| eval status_label=if((isnull(status_label) AND (nullstatus == "false")),"Unassigned",status_label), _time=time
+| fields - nullstatus
+| rename status_label as status
+| sort 100 - _time</query>
+    <earliest>$time.earliest$</earliest>
+    <latest>$time.latest$</latest>
+</search>
+  <search id="ns">
+    <query>index=notable eventtype="notable_suppression-*" 
+| rex field=eventtype "notable_suppression-(?&lt;suppression&gt;.+)"</query>
+    <earliest>$time.earliest$</earliest>
+    <latest>$time.latest$</latest>
+  </search>
+  <row>
+    <panel depends="$show_usage_1_html$"><title>Enterprise Security Usage - Unique Users Accessing Which Dashboards</title><html>No dashboard usage statistics</html></panel>
+    <panel rejects="$show_usage_1_html$">
+      <title>Enterprise Security Usage - Unique Users Accessing Which Dashboards</title>
+      <single>
+        <search>
+          <query>| tstats count from datamodel=Splunk_Audit.View_Activity where `es_context_only("View_Activity")` by _time View_Activity.view View_Activity.user span=1h 
+| rename View_Activity.* AS *
+| lookup es_view_name.csv view OUTPUT name
+| eval name=if(name="",view,name)
+| stats dc(user) AS user_count by name</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_usage_1_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_usage_1_html"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="height">150</option>
+        <option name="rangeColors">["0xdc4e41","0x0877a6","0x53a051"]</option>
+        <option name="rangeValues">[5,10]</option>
+        <option name="trellis.enabled">1</option>
+        <option name="trellis.size">small</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_usage_2_html$"><title>Enterprise Security Usage - Total Access Count</title><html>No dashboard usage statistics</html></panel>
+    <panel rejects="$show_usage_2_html$">
+      <title>Enterprise Security Usage - Total Access Count</title>
+      <single>
+        <search>
+          <query>| tstats count from datamodel=Splunk_Audit.View_Activity where `es_context_only("View_Activity")` by _time View_Activity.view View_Activity.user span=1h 
+| rename View_Activity.* AS *
+| lookup es_view_name.csv view OUTPUT name
+| eval name=if(name="",view,name)
+| stats count AS access_count by name</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_usage_2_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_usage_2_html"></unset>
+            </condition>
+          </progress>
+        </search>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="height">150</option>
+        <option name="rangeColors">["0xdc4e41","0x0877a6","0x53a051"]</option>
+        <option name="rangeValues">[100,500]</option>
+        <option name="trellis.enabled">1</option>
+        <option name="trellis.size">small</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_investigation_html$">
+      <title>Investigations - Collaborators by Investigation Name (All Time)</title>
+      <html>Investigations do not appear be used</html>
+    </panel>
+    <panel rejects="$show_investigation_html$">
+      <title>Investigations - Collaborators by Investigation Name (All Time)</title>
+      <chart>
+        <search base="inv">
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_investigation_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_investigation_html"></unset>
+            </condition>
+          </progress>
+    <query>| timechart dc(collaborator_name) AS collaborator_count by name</query>
+        </search>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.nullValueMode">zero</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_incident_review_html$">
+      <title>Incident Review - Status Changes (number of rules. All time)</title>
+      <html>Incident Review doesnt appear to be used</html>
+    </panel>
+    <panel rejects="$show_incident_review_html$">
+      <title>Incident Review - Status Changes (number of rules. All time)</title>
+      <chart>
+        <search base="ir">
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_incident_review_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_incident_review_html"></unset>
+            </condition>
+          </progress>
+          <query>| timechart dc(rule_id) AS rules by status</query>
+        </search>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.nullValueMode">zero</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$show_notable_supression_html$">
+      <title>Notable Suppressions</title>
+      <html>Notable Suppressions do not appear to be used</html>
+    </panel>
+    <panel rejects="$show_notable_supression_html$">
+      <title>Notable Suppressions</title>
+      <chart>
+        <search base="ns">
+          <progress>
+            <condition match="'job.resultCount'== 0">
+              <set token="show_notable_supression_html">1</set>
+            </condition>
+            <condition>
+              <unset token="show_notable_supression_html"></unset>
+            </condition>
+          </progress>
+          <query>| timechart count by suppression</query>
+        </search>
+        <option name="charting.chart">area</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+</form>

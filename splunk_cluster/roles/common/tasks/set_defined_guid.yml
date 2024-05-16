@@ -1,0 +1,25 @@
+---
+
+- name: Comment out existing guid in instance.cfg
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  lineinfile:
+    path: "{{ splunk.home }}/etc/instance.cfg"
+    backrefs: yes
+    regexp: "^(guid.*)$"
+    line: '#OLD---\1'
+
+- name: Add the defined instance guid in instance.cfg
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  ini_file:
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    dest: "{{ splunk.home }}/etc/instance.cfg"
+    section: "{{ item.section }}"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+  with_items:
+    - { section: "general", key: 'guid', value: "{{ host_guid }}" }
+  register: host_guid_results
+

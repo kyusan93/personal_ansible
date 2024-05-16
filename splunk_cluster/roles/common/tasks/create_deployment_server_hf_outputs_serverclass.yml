@@ -1,0 +1,75 @@
+---
+
+- name: Check for existing serverclass.conf
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  stat:
+    path: "{{ splunk.home }}/etc/system/local/serverclass.conf"
+  register: serverclass_conf
+
+#- name: Define outputs serverClass - whitelist wildcard all
+#  become: true
+#  become_user: "{{ splunk.nix.user }}"
+#  ini_file:
+#    path: "{{ splunk.home }}/etc/system/local/serverclass.conf"
+#    section: "serverClass:hf_outputs"
+#    option: "{{ item.key }}"
+#    value: "{{ item.value }}"
+#    owner: "{{ splunk.nix.user }}"
+#    group: "{{ splunk.nix.group }}"
+#  with_items:
+#    - { key: "whitelist.0", value: "{{ groups['heavy_forwarder'] | join(',') }}" }
+
+- name: Define outputs serverClass - whitelist
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/serverclass.conf"
+    section: "serverClass:hf_outputs"
+    option: "whitelist.{{ item.0 }}"
+    value: "{{ item.1 }}"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+  with_indexed_items:
+    - "{{ groups['heavy_forwarder'] }}"
+
+- name: Define outputs serverClass - blacklist
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/serverclass.conf"
+    section: "serverClass:hf_outputs"
+    option: "blacklist.{{ item.0 }}"
+    value: "{{ item.1 }}"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+  with_indexed_items:
+    - "{{ groups['universal_forwarder'] }}"
+    - "{{ groups['indexer'] }}"
+
+- name: Gather all deployment server apps
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  find:
+    path: "{{ splunk.home }}/etc/deployment-apps"
+    recurse: no
+    file_type: directory
+  register: deployment_apps
+
+- name: Define outputs:app serverClass
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/serverclass.conf"
+    section: "serverClass:hf_outputs:app:{{ item.path | basename }}"
+    option: restartSplunkd
+    value: "true"
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    allow_no_value: true
+  with_items: "{{ deployment_apps.files }}"
+  register: serverclass_configured
+
+- include_tasks: "{{ playbook_dir }}/roles/common/tasks/reload_deployment_server.yml"
+  when: serverclass_configured is changed
+

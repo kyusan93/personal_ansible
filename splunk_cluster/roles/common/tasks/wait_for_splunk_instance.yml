@@ -1,0 +1,16 @@
+---
+- name: Check Splunk instance is running
+  become: true
+  uri:
+    url: "https://{{ splunk_instance }}:{{ splunk.ports.mgmt }}"
+    method: GET
+    validate_certs: false
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{% if('universal_forwarder' in group_names) %}forwarder_app.pem{% else %}{{ host_suffix }}_web_cert.pem{% endif %}"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{% if('universal_forwarder' in group_names) %}forwarder_app_key.pem{% else %}{{ host_suffix }}.key{% endif %}"
+    use_proxy: no
+  register: task_response
+  until:
+    - task_response.status == 200
+  retries: "10"
+  delay: "30"
+  ignore_errors: true

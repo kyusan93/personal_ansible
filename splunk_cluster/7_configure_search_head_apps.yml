@@ -1,0 +1,6 @@
+
+# Search Head  Apps
+- name: Search head apps
+  hosts: search_head,deployer
+  roles:
+    - { role: configure_search_head_apps, tags: configure_search_head_apps }

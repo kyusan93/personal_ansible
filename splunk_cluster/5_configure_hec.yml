@@ -1,0 +1,6 @@
+
+# Configure hec configuration
+- name: Setup hec
+  hosts: all
+  roles:
+    - { role: additional_hec, tags: hec }

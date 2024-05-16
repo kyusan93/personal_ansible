@@ -1,0 +1,15 @@
+---
+
+- name: Set index discovery in server.conf
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  ini_file:
+    owner: "{{ splunk.nix.user }}"
+    group: "{{ splunk.nix.group }}"
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "{{ item.section }}"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+  with_items:
+    - { section: 'indexer_discovery', key: 'pass4SymmKey', value: '{{ splunk.pass4SymmKey }}' }
+    - { section: 'indexer_discovery', key: 'indexerWeightByDiskCapacity', value: 'true' }

@@ -1,0 +1,47 @@
+---
+
+- name: Check /etc/init.d/splunk exists
+  become: true
+  stat:
+    path: /etc/init.d/splunk
+  register: initd_exist
+
+- name: Check /etc/systemd/system/Splunkd.service exists
+  become: true
+  stat:
+    path: /etc/systemd/system/Splunkd.service
+  register: systemd_exist
+
+
+- name: Stop splunk - initd
+  command: "{{ splunk.home }}/bin/splunk stop"
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  when: (splunk.systemd == 'false') and (initd_exist.stat.exists)
+
+- name: Stop splunk - systemd
+  become: true
+  systemd:
+    name: Splunkd
+    state: stopped
+    enabled: no
+  when: (splunk.systemd == 'true') and (systemd_exist.stat.exists)
+
+- name: Reload systemd daemons
+  become: true
+  systemd:
+    daemon_reload: yes
+
+- name: Uninstall splunk
+  become: true
+  yum:
+    name: splunk*
+    state: absent
+  ignore_errors: yes
+
+- name: "Clean up {{ splunk.home }}"
+  become: true
+  file:
+    state: absent
+    path: "{{ splunk.home }}"
+  ignore_errors: yes

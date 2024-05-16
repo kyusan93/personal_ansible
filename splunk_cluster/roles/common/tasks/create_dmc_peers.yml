@@ -1,0 +1,30 @@
+---
+
+- name: Create dmc peers body
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  set_fact:
+    dmc_peers: "{{ dmc_peers|d([]) + [ prepend ~ hostvars[item].inventory_hostname ~ append ] | map('join') | list }}"
+  loop: "{{ groups['all'] }}"
+  vars:
+    prepend: "&name="
+    append: ":{{ splunk.ports.mgmt }}&remoteUsername={{ splunk.admin.username }}&remotePassword={{ splunk.admin.password }}"
+  when: 
+    - cold_standby is not defined
+    - "item not in groups['universal_forwarder'] and item not in groups['universal_forwarder_windows']"
+
+- name: Create dmc peers
+  become: true
+  become_user: "{{ splunk.nix.user }}"
+  uri:
+    url: "https://{{ splunk.monitoring_console_ip }}:{{ splunk.ports.mgmt }}/services/search/distributed/peers"
+    method: POST
+    user: "{{ splunk.admin.username }}"
+    password: "{{ splunk.admin.password }}"
+    body: "{{ item }}"
+    validate_certs: false
+    client_cert: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}_web_cert.pem"
+    client_key: "{{ splunk.home }}/etc/auth/{{ base.company_name }}/{{ host_suffix }}.key"
+    status_code: 201,409
+    use_proxy: no
+  loop: "{{ dmc_peers }}"
